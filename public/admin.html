@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Remnant Exchange</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav>
+    <a href="/" class="nav-logo">Remnant<span>Exchange</span></a>
+    <div class="nav-links">
+        <span style="color:#94a3b8;font-size:0.85rem;">Admin Panel</span>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard-grid">
+    <div class="sidebar">
+        <a href="#" class="active" onclick="showSection('overview', this)">&#128202; Overview</a>
+        <a href="#" onclick="showSection('pending', this)">&#9203; Pending Approval</a>
+        <a href="#" onclick="showSection('fabricators', this)">&#128101; Fabricators</a>
+        <a href="#" onclick="showSection('locations', this)">&#128205; Manage Locations</a>
+        <a href="#" onclick="showSection('plans', this)">&#9881; Plan Settings</a>
+    </div>
+
+    <div class="main-panel">
+
+        <!-- OVERVIEW -->
+        <div id="section-overview">
+            <h2 style="margin-bottom:24px;">Overview</h2>
+            <div class="stats-grid" id="statsGrid">Loading...</div>
+        </div>
+
+        <!-- PENDING -->
+        <div id="section-pending" style="display:none">
+            <h2 style="margin-bottom:24px;">Pending Approval</h2>
+            <div id="pendingContent">Loading...</div>
+        </div>
+
+        <!-- FABRICATORS -->
+        <div id="section-fabricators" style="display:none">
+            <h2 style="margin-bottom:24px;">All Fabricators</h2>
+            <div id="fabricatorsContent">Loading...</div>
+        </div>
+
+        <!-- LOCATIONS -->
+        <div id="section-locations" style="display:none">
+            <h2 style="margin-bottom:24px;">Manage Locations</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <div>
+                    <div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                        <h3 style="margin-bottom:16px;">States</h3>
+                        <div id="statesList" style="max-height:400px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                        <h3 style="margin-bottom:16px;">Metro Areas</h3>
+                        <p style="color:#94a3b8;font-size:0.85rem;margin-bottom:12px;">Select a state to manage its metro areas.</p>
+                        <div id="metrosList"></div>
+                        <div id="addMetroForm" style="display:none;margin-top:16px;">
+                            <input type="text" id="newMetroName" placeholder="New metro area name" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:8px;">
+                            <button class="btn btn-primary btn-sm" onclick="addMetro()">Add Metro</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLAN SETTINGS -->
+        <div id="section-plans" style="display:none">
+            <h2 style="margin-bottom:24px;">Plan Settings</h2>
+            <div id="planSettings" style="max-width:500px;"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!token || user.role !== 'admin') window.location.href = '/login.html';
+
+    let selectedStateId = null;
+
+    function showSection(name, el) {
+        document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+        document.getElementById(`section-${name}`).style.display = 'block';
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        if (el) el.classList.add('active');
+        if (name === 'pending') loadPending();
+        if (name === 'fabricators') loadFabricators();
+        if (name === 'locations') loadStates();
+        if (name === 'plans') loadPlanSettings();
+    }
+
+    async function loadStats() {
+        const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } });
+        const s = await res.json();
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card"><div class="value">${s.totalFabricators}</div><div class="label">Approved Fabricators</div></div>
+            <div class="stat-card"><div class="value" style="color:#f59e0b">${s.pendingApproval}</div><div class="label">Pending Approval</div></div>
+            <div class="stat-card"><div class="value" style="color:#22c55e">${s.activeListings}</div><div class="label">Active Listings</div></div>
+            <div class="stat-card"><div class="value" style="color:#ef4444">${s.expiredListings}</div><div class="label">Expired Listings</div></div>
+        `;
+    }
+
+    async function loadPending() {
+        const res = await fetch('/api/admin/pending-fabricators', { headers: { Authorization: `Bearer ${token}` } });
+        const users = await res.json();
+        if (!users.length) {
+            document.getElementById('pendingContent').innerHTML = `<div class="empty-state"><h3>No pending applications</h3></div>`;
+            return;
+        }
+        document.getElementById('pendingContent').innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Applied</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        ${users.map(u => `
+                            <tr>
+                                <td>${u.name}</td>
+                                <td>${u.business_name}</td>
+                                <td>${u.email}</td>
+                                <td>${u.phone || '—'}</td>
+                                <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm" onclick="approve('${u.id}')" style="margin-right:6px;">Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick="reject('${u.id}')">Reject</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function approve(userId) {
+        await fetch(`/api/admin/approve/${userId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+        loadPending();
+        loadStats();
+    }
+
+    async function reject(userId) {
+        const reason = prompt('Reason for rejection (optional):');
+        await fetch(`/api/admin/reject/${userId}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+        loadPending();
+        loadStats();
+    }
+
+    async function loadFabricators() {
+        const res = await fetch('/api/admin/fabricators', { headers: { Authorization: `Bearer ${token}` } });
+        const users = await res.json();
+        document.getElementById('fabricatorsContent').innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+                    <tbody>
+                        ${users.map(u => `
+                            <tr>
+                                <td>${u.name}</td>
+                                <td>${u.business_name}</td>
+                                <td>${u.email}</td>
+                                <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
+                                <td><span class="badge ${u.approved ? 'badge-active' : 'badge-pending'}">${u.approved ? 'Approved' : 'Pending'}</span></td>
+                                <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function loadStates() {
+        const res = await fetch('/api/admin/states', { headers: { Authorization: `Bearer ${token}` } });
+        const states = await res.json();
+        document.getElementById('statesList').innerHTML = states.map(s => `
+            <div style="padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+                 onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''"
+                 onclick="selectState('${s.id}', '${s.name}')">
+                <span style="font-size:0.9rem;">${s.name}</span>
+                <span style="font-size:0.75rem;color:#94a3b8;">${s.abbreviation}</span>
+            </div>
+        `).join('');
+    }
+
+    async function selectState(id, name) {
+        selectedStateId = id;
+        document.getElementById('addMetroForm').style.display = 'block';
+        const res = await fetch(`/api/admin/states/${id}/metros`, { headers: { Authorization: `Bearer ${token}` } });
+        const metros = await res.json();
+        document.getElementById('metrosList').innerHTML = `
+            <p style="font-size:0.85rem;font-weight:600;margin-bottom:10px;">${name}</p>
+            ${metros.map(m => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+                    <span style="font-size:0.9rem;">${m.name}</span>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMetro('${m.id}')">Remove</button>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    async function addMetro() {
+        const name = document.getElementById('newMetroName').value.trim();
+        if (!name || !selectedStateId) return;
+        await fetch(`/api/admin/states/${selectedStateId}/metros`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        document.getElementById('newMetroName').value = '';
+        const stateEl = document.querySelector(`[onclick*="${selectedStateId}"]`);
+        if (stateEl) stateEl.click();
+    }
+
+    async function deleteMetro(id) {
+        if (!confirm('Remove this metro area?')) return;
+        await fetch(`/api/admin/metros/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (selectedStateId) {
+            const stateEl = document.querySelector(`[onclick*="${selectedStateId}"]`);
+            if (stateEl) stateEl.click();
+        }
+    }
+
+    async function loadPlanSettings() {
+        const res = await fetch('/api/admin/plan-settings', { headers: { Authorization: `Bearer ${token}` } });
+        const settings = await res.json();
+        document.getElementById('planSettings').innerHTML = settings.map(s => `
+            <div style="background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:16px;">
+                <h3 style="margin-bottom:16px;text-transform:capitalize;">${s.plan} Plan</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Max Posts</label>
+                        <input type="number" id="maxPosts_${s.plan}" value="${s.max_posts}" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (days)</label>
+                        <input type="number" id="duration_${s.plan}" value="${s.duration_days}" min="1">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="savePlan('${s.plan}')">Save Changes</button>
+            </div>
+        `).join('');
+    }
+
+    async function savePlan(plan) {
+        const max_posts = parseInt(document.getElementById(`maxPosts_${plan}`).value);
+        const duration_days = parseInt(document.getElementById(`duration_${plan}`).value);
+        await fetch(`/api/admin/plan-settings/${plan}`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ max_posts, duration_days }),
+        });
+        alert('Plan settings saved!');
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+
+    loadStats();
+</script>
+</body>
+</html>

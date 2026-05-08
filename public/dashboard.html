@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Remnant Exchange</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav>
+    <a href="/" class="nav-logo">Remnant<span>Exchange</span></a>
+    <div class="nav-links">
+        <a href="/">Browse</a>
+        <span id="navUser" style="color:#94a3b8;font-size:0.9rem;"></span>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard-grid">
+    <div class="sidebar">
+        <a href="#listings" class="active" onclick="showSection('listings', this)">&#128247; My Listings</a>
+        <a href="#post" onclick="showSection('post', this)">&#43; Post Remnant</a>
+        <a href="#account" onclick="showSection('account', this)">&#9881; Account</a>
+    </div>
+
+    <div class="main-panel">
+        <!-- MY LISTINGS -->
+        <div id="section-listings">
+            <div class="section-header">
+                <h2>My Listings</h2>
+                <div id="planBadge"></div>
+            </div>
+            <div id="myListingsContent">Loading...</div>
+        </div>
+
+        <!-- POST REMNANT -->
+        <div id="section-post" style="display:none">
+            <h2 style="margin-bottom:24px;">Post a Remnant</h2>
+            <div id="postAlert" style="display:none"></div>
+            <form id="postForm" style="max-width:600px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Material Type *</label>
+                        <select id="material_type" required>
+                            <option value="">Select material</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Color / Pattern *</label>
+                        <input type="text" id="color" placeholder="e.g. Black Galaxy" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Length (inches) *</label>
+                        <input type="number" id="length" placeholder="e.g. 48" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Width (inches) *</label>
+                        <input type="number" id="width" placeholder="e.g. 26" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Thickness *</label>
+                    <select id="thickness" required>
+                        <option value="">Select thickness</option>
+                        <option value="3/4&quot;">3/4"</option>
+                        <option value="1-1/4&quot;">1-1/4"</option>
+                        <option value="1-1/2&quot;">1-1/2"</option>
+                        <option value="2cm">2cm</option>
+                        <option value="3cm">3cm</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>State *</label>
+                        <select id="state_id" required>
+                            <option value="">Select state</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Metro Area *</label>
+                        <select id="metro_id" required>
+                            <option value="">Select metro area</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="description" placeholder="Any additional details about the slab..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Photos (up to 5)</label>
+                    <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+                        <div style="font-size:2rem;">&#128247;</div>
+                        <p>Click to upload photos (JPG, PNG, max 5MB each)</p>
+                    </div>
+                    <input type="file" id="photoInput" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)">
+                    <div class="photo-previews" id="photoPreviews"></div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="postBtn">Post Listing</button>
+            </form>
+        </div>
+
+        <!-- ACCOUNT -->
+        <div id="section-account" style="display:none">
+            <h2 style="margin-bottom:24px;">Account</h2>
+            <div style="background:white;border-radius:12px;padding:24px;max-width:400px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                <div id="accountInfo"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login.html';
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    document.getElementById('navUser').textContent = user.business_name || user.name || '';
+
+    function showSection(name, el) {
+        document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+        document.getElementById(`section-${name}`).style.display = 'block';
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        if (el) el.classList.add('active');
+    }
+
+    async function loadMyListings() {
+        const res = await fetch('/api/listings/my', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401) { logout(); return; }
+        const listings = await res.json();
+
+        const planRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        const me = await planRes.json();
+
+        const planSettingsRes = await fetch('/api/admin/plan-settings', { headers: { Authorization: `Bearer ${token}` } });
+        let planSettings = null;
+        if (planSettingsRes.ok) {
+            const settings = await planSettingsRes.json();
+            planSettings = settings.find(s => s.plan === me.plan);
+        }
+
+        const activeCount = listings.filter(l => l.status === 'active').length;
+        const maxPosts = planSettings ? planSettings.max_posts : (me.plan === 'free' ? 5 : 50);
+
+        document.getElementById('planBadge').innerHTML = `
+            <span class="badge ${me.plan === 'paid' ? 'badge-active' : 'badge-pending'}" style="margin-right:8px;">
+                ${me.plan.toUpperCase()} PLAN
+            </span>
+            <span style="color:#64748b;font-size:0.85rem;">${activeCount} / ${maxPosts} active listings</span>
+        `;
+
+        if (!listings.length) {
+            document.getElementById('myListingsContent').innerHTML = `
+                <div class="empty-state">
+                    <h3>No listings yet</h3>
+                    <p>Start posting your remnants to reach buyers nationwide.</p>
+                    <button class="btn btn-primary" style="margin-top:16px;" onclick="showSection('post', null)">Post Your First Remnant</button>
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('myListingsContent').innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Material</th><th>Color</th><th>Dimensions</th><th>Location</th><th>Status</th><th>Expires</th><th></th></tr></thead>
+                    <tbody>
+                        ${listings.map(l => `
+                            <tr>
+                                <td>${l.material_type}</td>
+                                <td>${l.color}</td>
+                                <td>${l.length}" x ${l.width}" &bull; ${l.thickness}</td>
+                                <td>${l.metro_name}, ${l.state_abbr}</td>
+                                <td><span class="badge badge-${l.status}">${l.status}</span></td>
+                                <td style="font-size:0.8rem;color:#64748b;">${new Date(l.expires_at).toLocaleDateString()}</td>
+                                <td><button class="btn btn-danger btn-sm" onclick="deleteListing('${l.id}')">Delete</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function deleteListing(id) {
+        if (!confirm('Delete this listing?')) return;
+        const res = await fetch(`/api/listings/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) loadMyListings();
+    }
+
+    async function loadFormData() {
+        const [statesRes, materialsRes] = await Promise.all([
+            fetch('/api/listings/states'),
+            fetch('/api/listings/materials'),
+        ]);
+        const states = await statesRes.json();
+        const materials = await materialsRes.json();
+
+        const stateSel = document.getElementById('state_id');
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            stateSel.appendChild(opt);
+        });
+
+        stateSel.addEventListener('change', async () => {
+            const metroSel = document.getElementById('metro_id');
+            metroSel.innerHTML = '<option value="">Select metro area</option>';
+            if (!stateSel.value) return;
+            const res = await fetch(`/api/listings/states/${stateSel.value}/metros`);
+            const metros = await res.json();
+            metros.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                metroSel.appendChild(opt);
+            });
+        });
+
+        const matSel = document.getElementById('material_type');
+        materials.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            matSel.appendChild(opt);
+        });
+    }
+
+    function previewPhotos(input) {
+        const previews = document.getElementById('photoPreviews');
+        previews.innerHTML = '';
+        Array.from(input.files).slice(0, 5).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                previews.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('postAlert');
+        const btn = document.getElementById('postBtn');
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        const formData = new FormData();
+        formData.append('material_type', document.getElementById('material_type').value);
+        formData.append('color', document.getElementById('color').value);
+        formData.append('length', document.getElementById('length').value);
+        formData.append('width', document.getElementById('width').value);
+        formData.append('thickness', document.getElementById('thickness').value);
+        formData.append('state_id', document.getElementById('state_id').value);
+        formData.append('metro_id', document.getElementById('metro_id').value);
+        formData.append('description', document.getElementById('description').value);
+
+        const photos = document.getElementById('photoInput').files;
+        Array.from(photos).forEach(f => formData.append('photos', f));
+
+        try {
+            const res = await fetch('/api/listings', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error;
+                alertBox.style.display = 'block';
+            } else {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Listing posted successfully!';
+                alertBox.style.display = 'block';
+                document.getElementById('postForm').reset();
+                document.getElementById('photoPreviews').innerHTML = '';
+                loadMyListings();
+                setTimeout(() => showSection('listings', document.querySelector('.sidebar a')), 1500);
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong. Please try again.';
+            alertBox.style.display = 'block';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Post Listing';
+    });
+
+    async function loadAccount() {
+        const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        const me = await res.json();
+        document.getElementById('accountInfo').innerHTML = `
+            <p style="margin-bottom:10px;"><strong>${me.name}</strong></p>
+            <p style="margin-bottom:6px;color:#64748b;font-size:0.9rem;">${me.business_name}</p>
+            <p style="margin-bottom:6px;color:#64748b;font-size:0.9rem;">${me.email}</p>
+            <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0;">
+            <p style="font-size:0.85rem;">Plan: <span class="badge ${me.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${me.plan.toUpperCase()}</span></p>
+            <p style="font-size:0.85rem;margin-top:8px;color:#64748b;">Member since ${new Date(me.created_at).toLocaleDateString()}</p>
+        `;
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+
+    loadMyListings();
+    loadFormData();
+    loadAccount();
+</script>
+</body>
+</html>

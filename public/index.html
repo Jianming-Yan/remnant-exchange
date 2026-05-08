@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remnant Exchange — Find Stone Remnants Near You</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo">Remnant<span>Exchange</span></a>
+    <div class="nav-links" id="navLinks">
+        <a href="/">Browse</a>
+        <a href="/login.html" id="loginLink">Login</a>
+        <a href="/register.html" class="btn btn-primary" id="registerLink">List Your Remnants</a>
+        <a href="/dashboard.html" class="btn btn-primary" id="dashLink" style="display:none">My Dashboard</a>
+    </div>
+</nav>
+
+<div class="hero">
+    <h1>Find Stone <span>Remnants</span> Near You</h1>
+    <p>Browse thousands of granite, marble, quartz, and quartzite remnants from verified fabricators nationwide.</p>
+    <div class="search-bar">
+        <select id="filterState">
+            <option value="">All States</option>
+        </select>
+        <select id="filterMetro">
+            <option value="">All Metro Areas</option>
+        </select>
+        <select id="filterMaterial">
+            <option value="">All Materials</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Search color, material...">
+        <button class="btn btn-primary" onclick="applyFilters()">Search</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="section">
+        <div class="section-header">
+            <h2 id="resultsLabel">Available Remnants</h2>
+            <span id="resultsCount" style="color:#64748b;font-size:0.9rem;"></span>
+        </div>
+        <div class="listings-grid" id="listingsGrid">
+            <div class="empty-state" style="grid-column:1/-1">
+                <h3>Loading listings...</h3>
+            </div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</div>
+
+<!-- LISTING MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+        <div class="modal-img" id="modalImg">No photo available</div>
+        <div class="modal-body">
+            <h2 id="modalTitle"></h2>
+            <div class="detail-grid" id="modalDetails"></div>
+            <div id="modalDesc" style="margin-bottom:16px;color:#475569;font-size:0.9rem;"></div>
+            <div class="contact-box">
+                <h3>Contact Seller</h3>
+                <p id="modalBusiness"></p>
+                <p id="modalPhone"></p>
+                <p id="modalEmail"></p>
+                <div class="verified-badge">&#10003; Verified Fabricator</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = '';
+    let currentPage = 1;
+    let currentFilters = {};
+
+    async function init() {
+        await loadStates();
+        await loadMaterials();
+        await loadListings();
+        updateNav();
+    }
+
+    function updateNav() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            document.getElementById('loginLink').style.display = 'none';
+            document.getElementById('registerLink').style.display = 'none';
+            document.getElementById('dashLink').style.display = 'inline-block';
+        }
+    }
+
+    async function loadStates() {
+        const res = await fetch('/api/listings/states');
+        const states = await res.json();
+        const sel = document.getElementById('filterState');
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sel.appendChild(opt);
+        });
+
+        sel.addEventListener('change', async () => {
+            const metroSel = document.getElementById('filterMetro');
+            metroSel.innerHTML = '<option value="">All Metro Areas</option>';
+            if (!sel.value) return;
+            const res = await fetch(`/api/listings/states/${sel.value}/metros`);
+            const metros = await res.json();
+            metros.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                metroSel.appendChild(opt);
+            });
+        });
+    }
+
+    async function loadMaterials() {
+        const res = await fetch('/api/listings/materials');
+        const materials = await res.json();
+        const sel = document.getElementById('filterMaterial');
+        materials.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            sel.appendChild(opt);
+        });
+    }
+
+    async function loadListings(page = 1) {
+        currentPage = page;
+        const params = new URLSearchParams({ page, ...currentFilters });
+        const res = await fetch(`/api/listings?${params}`);
+        const data = await res.json();
+
+        const grid = document.getElementById('listingsGrid');
+        document.getElementById('resultsCount').textContent = `${data.total} listings found`;
+
+        if (!data.listings.length) {
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>No remnants found</h3><p>Try adjusting your filters</p></div>`;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        grid.innerHTML = data.listings.map(l => `
+            <div class="card" onclick="openModal(${JSON.stringify(l).replace(/"/g, '&quot;')})">
+                <div class="card-img">
+                    ${l.photos && l.photos.length ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.color}">` : 'No photo'}
+                </div>
+                <div class="card-body">
+                    <div class="card-material">${l.material_type}</div>
+                    <div class="card-title">${l.color}</div>
+                    <div class="card-dims">${l.length}" x ${l.width}" &bull; ${l.thickness}</div>
+                    <div class="card-location">&#128205; ${l.metro_name}, ${l.state_abbr}</div>
+                    <div class="verified-badge">&#10003; Verified Fabricator</div>
+                </div>
+            </div>
+        `).join('');
+
+        renderPagination(data.page, data.pages);
+    }
+
+    function renderPagination(current, total) {
+        const el = document.getElementById('pagination');
+        if (total <= 1) { el.innerHTML = ''; return; }
+        let html = `<button ${current === 1 ? 'disabled' : ''} onclick="loadListings(${current - 1})">&laquo; Prev</button>`;
+        for (let i = 1; i <= total; i++) {
+            html += `<button class="${i === current ? 'active' : ''}" onclick="loadListings(${i})">${i}</button>`;
+        }
+        html += `<button ${current === total ? 'disabled' : ''} onclick="loadListings(${current + 1})">Next &raquo;</button>`;
+        el.innerHTML = html;
+    }
+
+    function applyFilters() {
+        currentFilters = {};
+        const state = document.getElementById('filterState').value;
+        const metro = document.getElementById('filterMetro').value;
+        const material = document.getElementById('filterMaterial').value;
+        const search = document.getElementById('filterSearch').value.trim();
+        if (state) currentFilters.state = state;
+        if (metro) currentFilters.metro = metro;
+        if (material) currentFilters.material = material;
+        if (search) currentFilters.search = search;
+        loadListings(1);
+    }
+
+    function openModal(listing) {
+        document.getElementById('modalImg').innerHTML = listing.photos && listing.photos.length
+            ? `<img src="/uploads/${listing.photos[0].filename}" alt="${listing.color}">`
+            : 'No photo available';
+        document.getElementById('modalTitle').textContent = `${listing.material_type} — ${listing.color}`;
+        document.getElementById('modalDetails').innerHTML = `
+            <div class="detail-item"><label>Material</label><span>${listing.material_type}</span></div>
+            <div class="detail-item"><label>Color</label><span>${listing.color}</span></div>
+            <div class="detail-item"><label>Dimensions</label><span>${listing.length}" x ${listing.width}"</span></div>
+            <div class="detail-item"><label>Thickness</label><span>${listing.thickness}</span></div>
+            <div class="detail-item"><label>Location</label><span>${listing.metro_name}, ${listing.state_name}</span></div>
+            <div class="detail-item"><label>Listed</label><span>${new Date(listing.created_at).toLocaleDateString()}</span></div>
+        `;
+        document.getElementById('modalDesc').textContent = listing.description || '';
+        document.getElementById('modalBusiness').innerHTML = `<strong>${listing.business_name}</strong>`;
+        document.getElementById('modalPhone').textContent = listing.phone ? `Phone: ${listing.phone}` : '';
+        document.getElementById('modalEmail').textContent = `Email: ${listing.seller_email}`;
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(e) {
+        if (e.target === document.getElementById('modalOverlay')) {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

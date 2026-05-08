@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Receive-Job *)",
+      "PowerShell($env:PATH = \"C:\\\\Program Files\\\\nodejs;\" + $env:PATH; cd \"C:\\\\Users\\\\Shane\\\\my-todo\\\\remnant\"; & \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" create-admin.js)",
+      "PowerShell($env:PATH = \"C:\\\\Program Files\\\\nodejs;\" + $env:PATH; cd \"C:\\\\Users\\\\Shane\\\\my-todo\\\\remnant\"; & \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" -e \"const {getDb,run}=require\\('./database/db'\\);getDb\\(\\).then\\(\\(\\)=>{run\\('DELETE FROM email_tokens WHERE user_id IN \\(SELECT id FROM users WHERE role = ?  AND email_verified = 0\\)',['fabricator']\\);run\\('DELETE FROM users WHERE role = ? AND email_verified = 0',['fabricator']\\);console.log\\('done'\\);process.exit\\(0\\);}\\)\")",
+      "PowerShell($env:PATH = \"C:\\\\Program Files\\\\nodejs;\" + $env:PATH; cd \"C:\\\\Users\\\\Shane\\\\my-todo\\\\remnant\"; & \"C:\\\\Program Files\\\\nodejs\\\\node.exe\" -e \"const {getDb,query,run}=require\\('./database/db'\\);getDb\\(\\).then\\(\\(\\)=>{const users=query\\('SELECT id,email,email_verified FROM users WHERE role=?',['fabricator']\\);console.log\\(JSON.stringify\\(users\\)\\);process.exit\\(0\\);}\\)\")"
+    ]
+  }
+}
