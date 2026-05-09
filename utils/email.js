@@ -4,7 +4,7 @@ function getResend() {
     return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM = 'Remnant Exchange <onboarding@resend.dev>';
+const FROM = 'Remnant Exchange <info@remnantexchange.org>';
 
 async function sendVerificationEmail(email, name, token) {
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
