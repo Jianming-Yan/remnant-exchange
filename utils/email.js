@@ -1,23 +1,17 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-function getTransporter() {
-    return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT),
-        secure: false,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
+function getResend() {
+    return new Resend(process.env.RESEND_API_KEY);
 }
+
+const FROM = 'Remnant Exchange <onboarding@resend.dev>';
 
 async function sendVerificationEmail(email, name, token) {
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
-    const transporter = getTransporter();
+    const resend = getResend();
 
-    await transporter.sendMail({
-        from: `"Remnant Exchange" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+        from: FROM,
         to: email,
         subject: 'Verify your Remnant Exchange account',
         html: `
@@ -31,11 +25,11 @@ async function sendVerificationEmail(email, name, token) {
 }
 
 async function sendAdminNotification(user) {
-    const transporter = getTransporter();
+    const resend = getResend();
     const adminUrl = `${process.env.BASE_URL}/admin.html`;
 
-    await transporter.sendMail({
-        from: `"Remnant Exchange" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+        from: FROM,
         to: process.env.ADMIN_EMAIL,
         subject: 'New fabricator registration pending approval',
         html: `
@@ -53,10 +47,10 @@ async function sendAdminNotification(user) {
 }
 
 async function sendApprovalEmail(email, name) {
-    const transporter = getTransporter();
+    const resend = getResend();
 
-    await transporter.sendMail({
-        from: `"Remnant Exchange" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+        from: FROM,
         to: email,
         subject: 'Your Remnant Exchange account has been approved!',
         html: `
@@ -69,10 +63,10 @@ async function sendApprovalEmail(email, name) {
 }
 
 async function sendRejectionEmail(email, name, reason) {
-    const transporter = getTransporter();
+    const resend = getResend();
 
-    await transporter.sendMail({
-        from: `"Remnant Exchange" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+        from: FROM,
         to: email,
         subject: 'Update on your Remnant Exchange application',
         html: `
