@@ -103,12 +103,15 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (re
         const planSettings = await get(`SELECT * FROM plan_settings WHERE plan = ?`, [req.user.plan]);
         const activeCount = await get(`SELECT count(*) as cnt FROM listings WHERE user_id = ? AND status = 'active'`, [req.user.id]);
 
-        if (Number(activeCount.cnt) >= planSettings.max_posts) {
-            return res.status(403).json({ error: `Your ${req.user.plan} plan allows a maximum of ${planSettings.max_posts} active listings` });
+        const maxPosts = Number(planSettings.max_posts);
+        const durationDays = Number(planSettings.duration_days);
+
+        if (Number(activeCount.cnt) >= maxPosts) {
+            return res.status(403).json({ error: `Your ${req.user.plan} plan allows a maximum of ${maxPosts} active listings` });
         }
 
         const id = uuidv4();
-        const expiresAt = new Date(Date.now() + planSettings.duration_days * 24 * 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
         const slabShape = shape || 'rectangular';
 
         await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at)
