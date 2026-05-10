@@ -18,12 +18,20 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, allowed.includes(ext));
+        cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
     },
 });
 
-router.get('/', (req, res) => {
+const uploadMemory = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
+        cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+    },
+});
+
+router.get('/', async (req, res) => {
     const { state, metro, material, search, page = 1 } = req.query;
     const limit = 24;
     const offset = (parseInt(page) - 1) * limit;
@@ -42,28 +50,32 @@ router.get('/', (req, res) => {
     if (state) { sql += ` AND l.state_id = ?`; params.push(state); }
     if (metro) { sql += ` AND l.metro_id = ?`; params.push(metro); }
     if (material) { sql += ` AND l.material_type = ?`; params.push(material); }
-    if (search) { sql += ` AND (l.material_type LIKE ? OR l.stone_name LIKE ? OR l.color LIKE ? OR l.description LIKE ?)`; params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
+    if (search) {
+        sql += ` AND (l.material_type LIKE ? OR l.stone_name LIKE ? OR l.color LIKE ? OR l.description LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
 
     sql += ` ORDER BY l.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
 
-    const listings = query(sql, params);
+    const listings = await query(sql, params);
 
     for (const listing of listings) {
-        listing.photos = query(`SELECT filename FROM listing_photos WHERE listing_id = ? ORDER BY display_order ASC`, [listing.id]);
+        listing.photos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ? ORDER BY display_order ASC`, [listing.id]);
     }
 
-    const countSql = `SELECT count(*) as cnt FROM listings l WHERE l.status = 'active'` +
-        (state ? ` AND l.state_id = '${state}'` : '') +
-        (metro ? ` AND l.metro_id = '${metro}'` : '') +
-        (material ? ` AND l.material_type = '${material}'` : '');
+    let countSql = `SELECT count(*) as cnt FROM listings l WHERE l.status = 'active'`;
+    const countParams = [];
+    if (state) { countSql += ` AND l.state_id = ?`; countParams.push(state); }
+    if (metro) { countSql += ` AND l.metro_id = ?`; countParams.push(metro); }
+    if (material) { countSql += ` AND l.material_type = ?`; countParams.push(material); }
 
-    const total = get(countSql);
+    const total = await get(countSql, countParams);
 
-    res.json({ listings, total: total?.cnt || 0, page: parseInt(page), pages: Math.ceil((total?.cnt || 0) / limit) });
+    res.json({ listings, total: Number(total?.cnt) || 0, page: parseInt(page), pages: Math.ceil((Number(total?.cnt) || 0) / limit) });
 });
 
-router.get('/my', requireApprovedFabricator, (req, res) => {
-    const listings = query(`
+router.get('/my', requireApprovedFabricator, async (req, res) => {
+    const listings = await query(`
         SELECT l.*, s.name as state_name, s.abbreviation as state_abbr, m.name as metro_name
         FROM listings l
         JOIN states s ON l.state_id = s.id
@@ -73,13 +85,13 @@ router.get('/my', requireApprovedFabricator, (req, res) => {
     `, [req.user.id]);
 
     for (const listing of listings) {
-        listing.photos = query(`SELECT filename FROM listing_photos WHERE listing_id = ? ORDER BY display_order ASC`, [listing.id]);
+        listing.photos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ? ORDER BY display_order ASC`, [listing.id]);
     }
 
     res.json(listings);
 });
 
-router.post('/', requireApprovedFabricator, upload.array('photos', 5), (req, res) => {
+router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (req, res) => {
     try {
         const { material_type, stone_name, length, width, thickness, state_id, metro_id, description,
                 shape, length2, width2, vendor_name, bundle_number } = req.body;
@@ -88,10 +100,10 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), (req, res
             return res.status(400).json({ error: 'All required fields must be filled' });
         }
 
-        const planSettings = get(`SELECT * FROM plan_settings WHERE plan = ?`, [req.user.plan]);
-        const activeCount = get(`SELECT count(*) as cnt FROM listings WHERE user_id = ? AND status = 'active'`, [req.user.id]);
+        const planSettings = await get(`SELECT * FROM plan_settings WHERE plan = ?`, [req.user.plan]);
+        const activeCount = await get(`SELECT count(*) as cnt FROM listings WHERE user_id = ? AND status = 'active'`, [req.user.id]);
 
-        if (activeCount.cnt >= planSettings.max_posts) {
+        if (Number(activeCount.cnt) >= planSettings.max_posts) {
             return res.status(403).json({ error: `Your ${req.user.plan} plan allows a maximum of ${planSettings.max_posts} active listings` });
         }
 
@@ -99,7 +111,7 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), (req, res
         const expiresAt = new Date(Date.now() + planSettings.duration_days * 24 * 60 * 60 * 1000).toISOString();
         const slabShape = shape || 'rectangular';
 
-        run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at)
+        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, req.user.id, material_type, stone_name, stone_name, slabShape,
              parseFloat(length), parseFloat(width), thickness,
@@ -108,10 +120,10 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), (req, res
              state_id, metro_id, description || null, expiresAt]);
 
         if (req.files && req.files.length > 0) {
-            req.files.forEach((file, index) => {
-                run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
-                    [uuidv4(), id, file.filename, index]);
-            });
+            for (let i = 0; i < req.files.length; i++) {
+                await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
+                    [uuidv4(), id, req.files[i].filename, i]);
+            }
         }
 
         res.status(201).json({ id, message: 'Listing created successfully' });
@@ -119,15 +131,6 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), (req, res
         console.error(err);
         res.status(500).json({ error: 'Failed to create listing' });
     }
-});
-
-const uploadMemory = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
-        cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
-    },
 });
 
 router.post('/identify-stone', requireApprovedFabricator, uploadMemory.single('photo'), async (req, res) => {
@@ -169,29 +172,29 @@ router.post('/identify-stone', requireApprovedFabricator, uploadMemory.single('p
     }
 });
 
-router.delete('/:id', requireApprovedFabricator, (req, res) => {
-    const listing = get(`SELECT * FROM listings WHERE id = ? AND user_id = ?`, [req.params.id, req.user.id]);
+router.delete('/:id', requireApprovedFabricator, async (req, res) => {
+    const listing = await get(`SELECT * FROM listings WHERE id = ? AND user_id = ?`, [req.params.id, req.user.id]);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-    const photos = query(`SELECT filename FROM listing_photos WHERE listing_id = ?`, [listing.id]);
+    const photos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ?`, [listing.id]);
     photos.forEach(p => {
         const filePath = path.join(__dirname, '../uploads', p.filename);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     });
 
-    run(`DELETE FROM listing_photos WHERE listing_id = ?`, [listing.id]);
-    run(`DELETE FROM listings WHERE id = ?`, [listing.id]);
+    await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [listing.id]);
+    await run(`DELETE FROM listings WHERE id = ?`, [listing.id]);
 
     res.json({ message: 'Listing deleted' });
 });
 
-router.get('/states', (req, res) => {
-    const states = query(`SELECT * FROM states WHERE active = 1 ORDER BY name ASC`);
+router.get('/states', async (req, res) => {
+    const states = await query(`SELECT * FROM states WHERE active = 1 ORDER BY name ASC`);
     res.json(states);
 });
 
-router.get('/states/:stateId/metros', (req, res) => {
-    const metros = query(`SELECT * FROM metros WHERE state_id = ? AND active = 1 ORDER BY name ASC`, [req.params.stateId]);
+router.get('/states/:stateId/metros', async (req, res) => {
+    const metros = await query(`SELECT * FROM metros WHERE state_id = ? AND active = 1 ORDER BY name ASC`, [req.params.stateId]);
     res.json(metros);
 });
 

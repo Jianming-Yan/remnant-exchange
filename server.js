@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, run, get } = require('./database/db');
+const { initSchema, run, get } = require('./database/db');
 
 const app = express();
 
@@ -17,19 +17,19 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
 
-function expireListings() {
+async function expireListings() {
     try {
-        run(`UPDATE listings SET status = 'expired' WHERE status = 'active' AND expires_at < datetime('now')`);
+        await run(`UPDATE listings SET status = 'expired' WHERE status = 'active' AND expires_at < datetime('now')`);
     } catch (err) {
         console.error('Expiry job error:', err);
     }
 }
 
 async function ensureAdmin() {
-    const admin = get(`SELECT id FROM users WHERE role = 'admin'`);
+    const admin = await get(`SELECT id FROM users WHERE role = 'admin'`);
     if (!admin) {
         const hash = await bcrypt.hash('Admin1234!', 10);
-        run(`INSERT INTO users (id, name, business_name, email, password_hash, role, email_verified, approved)
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, role, email_verified, approved)
              VALUES (?, 'Admin', 'Remnant Exchange', 'admin@remnantexchange.com', ?, 'admin', 1, 1)`,
             [uuidv4(), hash]);
         console.log('Admin account created');
@@ -37,11 +37,11 @@ async function ensureAdmin() {
 }
 
 async function start() {
-    await getDb();
+    await initSchema();
     await ensureAdmin();
 
-    expireListings();
-    setInterval(expireListings, 60 * 60 * 1000);
+    await expireListings();
+    setInterval(() => expireListings(), 60 * 60 * 1000);
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {

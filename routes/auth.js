@@ -19,18 +19,18 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 8 characters' });
         }
 
-        const existing = get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
         if (existing) return res.status(400).json({ error: 'Email already registered' });
 
         const userId = uuidv4();
         const passwordHash = await bcrypt.hash(password, 10);
 
-        run(`INSERT INTO users (id, name, business_name, email, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?)`,
             [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
 
         const token = uuidv4();
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
             [uuidv4(), userId, token, 'verify', expires]);
 
         try {
@@ -51,17 +51,17 @@ router.get('/verify-email', async (req, res) => {
         const { token } = req.query;
         if (!token) return res.status(400).json({ error: 'Invalid token' });
 
-        const record = get(`SELECT * FROM email_tokens WHERE token = ? AND type = 'verify'`, [token]);
+        const record = await get(`SELECT * FROM email_tokens WHERE token = ? AND type = 'verify'`, [token]);
         if (!record) return res.status(400).json({ error: 'Invalid or expired verification link' });
 
         if (new Date(record.expires_at) < new Date()) {
             return res.status(400).json({ error: 'Verification link has expired' });
         }
 
-        run(`UPDATE users SET email_verified = 1 WHERE id = ?`, [record.user_id]);
-        run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
+        await run(`UPDATE users SET email_verified = 1 WHERE id = ?`, [record.user_id]);
+        await run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
 
-        const user = get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
+        const user = await get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
         try {
             await sendAdminNotification(user);
         } catch (emailErr) {
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = get(`SELECT * FROM users WHERE email = ?`, [email.toLowerCase()]);
+        const user = await get(`SELECT * FROM users WHERE email = ?`, [email.toLowerCase()]);
         if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
         const valid = await bcrypt.compare(password, user.password_hash);
@@ -109,13 +109,13 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = get(`SELECT id, name, business_name, email, role, plan, approved, created_at FROM users WHERE id = ?`, [decoded.id]);
+        const user = await get(`SELECT id, name, business_name, email, role, plan, approved, created_at FROM users WHERE id = ?`, [decoded.id]);
         if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
     } catch {

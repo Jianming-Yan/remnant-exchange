@@ -1,167 +1,126 @@
-const initSqlJs = require('sql.js');
-const fs = require('fs');
-const path = require('path');
+const { createClient } = require('@libsql/client');
 const { v4: uuidv4 } = require('uuid');
 
-const DB_PATH = path.join(__dirname, 'remnant.db');
+let client;
 
-let db;
-
-async function getDb() {
-    if (db) return db;
-
-    const SQL = await initSqlJs();
-
-    if (fs.existsSync(DB_PATH)) {
-        const fileBuffer = fs.readFileSync(DB_PATH);
-        db = new SQL.Database(fileBuffer);
-    } else {
-        db = new SQL.Database();
+function getDb() {
+    if (!client) {
+        client = createClient({
+            url: process.env.TURSO_DATABASE_URL,
+            authToken: process.env.TURSO_AUTH_TOKEN,
+        });
     }
-
-    initSchema();
-    save();
-
-    return db;
+    return client;
 }
 
-function save() {
-    if (!db) return;
-    const data = db.export();
-    fs.writeFileSync(DB_PATH, Buffer.from(data));
+async function query(sql, params = []) {
+    const db = getDb();
+    const result = await db.execute({ sql, args: params });
+    return result.rows.map(row =>
+        Object.fromEntries(result.columns.map((col, i) => [col, row[i]]))
+    );
 }
 
-function query(sql, params = []) {
-    const stmt = db.prepare(sql);
-    if (params.length) stmt.bind(params);
-    const rows = [];
-    while (stmt.step()) {
-        rows.push(stmt.getAsObject());
-    }
-    stmt.free();
-    return rows;
+async function run(sql, params = []) {
+    const db = getDb();
+    await db.execute({ sql, args: params });
 }
 
-function run(sql, params = []) {
-    db.run(sql, params);
-    save();
-}
-
-function get(sql, params = []) {
-    const rows = query(sql, params);
+async function get(sql, params = []) {
+    const rows = await query(sql, params);
     return rows[0] || null;
 }
 
-function initSchema() {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            business_name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            phone TEXT,
-            role TEXT NOT NULL DEFAULT 'fabricator',
-            email_verified INTEGER NOT NULL DEFAULT 0,
-            approved INTEGER NOT NULL DEFAULT 0,
-            plan TEXT NOT NULL DEFAULT 'free',
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    `);
+async function initSchema() {
+    await run(`CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        phone TEXT,
+        role TEXT NOT NULL DEFAULT 'fabricator',
+        email_verified INTEGER NOT NULL DEFAULT 0,
+        approved INTEGER NOT NULL DEFAULT 0,
+        plan TEXT NOT NULL DEFAULT 'free',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS email_tokens (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            token TEXT NOT NULL,
-            type TEXT NOT NULL,
-            expires_at TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    `);
+    await run(`CREATE TABLE IF NOT EXISTS email_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token TEXT NOT NULL,
+        type TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )`);
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS states (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            abbreviation TEXT NOT NULL UNIQUE,
-            active INTEGER NOT NULL DEFAULT 1
-        )
-    `);
+    await run(`CREATE TABLE IF NOT EXISTS states (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        abbreviation TEXT NOT NULL UNIQUE,
+        active INTEGER NOT NULL DEFAULT 1
+    )`);
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS metros (
-            id TEXT PRIMARY KEY,
-            state_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            active INTEGER NOT NULL DEFAULT 1,
-            FOREIGN KEY (state_id) REFERENCES states(id)
-        )
-    `);
+    await run(`CREATE TABLE IF NOT EXISTS metros (
+        id TEXT PRIMARY KEY,
+        state_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1,
+        FOREIGN KEY (state_id) REFERENCES states(id)
+    )`);
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS listings (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            material_type TEXT NOT NULL,
-            color TEXT NOT NULL,
-            length REAL NOT NULL,
-            width REAL NOT NULL,
-            thickness TEXT NOT NULL,
-            state_id TEXT NOT NULL,
-            metro_id TEXT NOT NULL,
-            description TEXT,
-            status TEXT NOT NULL DEFAULT 'active',
-            expires_at TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (state_id) REFERENCES states(id),
-            FOREIGN KEY (metro_id) REFERENCES metros(id)
-        )
-    `);
+    await run(`CREATE TABLE IF NOT EXISTS listings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        material_type TEXT NOT NULL,
+        color TEXT,
+        stone_name TEXT,
+        shape TEXT NOT NULL DEFAULT 'rectangular',
+        length REAL NOT NULL,
+        width REAL NOT NULL,
+        thickness TEXT NOT NULL,
+        length2 REAL,
+        width2 REAL,
+        vendor_name TEXT,
+        bundle_number TEXT,
+        state_id TEXT NOT NULL,
+        metro_id TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (state_id) REFERENCES states(id),
+        FOREIGN KEY (metro_id) REFERENCES metros(id)
+    )`);
 
-    const newCols = [
-        `ALTER TABLE listings ADD COLUMN stone_name TEXT`,
-        `ALTER TABLE listings ADD COLUMN shape TEXT NOT NULL DEFAULT 'rectangular'`,
-        `ALTER TABLE listings ADD COLUMN length2 REAL`,
-        `ALTER TABLE listings ADD COLUMN width2 REAL`,
-        `ALTER TABLE listings ADD COLUMN vendor_name TEXT`,
-        `ALTER TABLE listings ADD COLUMN bundle_number TEXT`,
-    ];
-    for (const col of newCols) {
-        try { db.run(col); } catch (e) { /* column already exists */ }
+    await run(`CREATE TABLE IF NOT EXISTS listing_photos (
+        id TEXT PRIMARY KEY,
+        listing_id TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (listing_id) REFERENCES listings(id)
+    )`);
+
+    await run(`CREATE TABLE IF NOT EXISTS plan_settings (
+        plan TEXT PRIMARY KEY,
+        max_posts INTEGER NOT NULL,
+        duration_days INTEGER NOT NULL
+    )`);
+
+    const planCount = await get(`SELECT count(*) as cnt FROM plan_settings`);
+    if (Number(planCount.cnt) === 0) {
+        await run(`INSERT INTO plan_settings VALUES ('free', 5, 90)`);
+        await run(`INSERT INTO plan_settings VALUES ('paid', 50, 730)`);
     }
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS listing_photos (
-            id TEXT PRIMARY KEY,
-            listing_id TEXT NOT NULL,
-            filename TEXT NOT NULL,
-            display_order INTEGER NOT NULL DEFAULT 0,
-            FOREIGN KEY (listing_id) REFERENCES listings(id)
-        )
-    `);
-
-    db.run(`
-        CREATE TABLE IF NOT EXISTS plan_settings (
-            plan TEXT PRIMARY KEY,
-            max_posts INTEGER NOT NULL,
-            duration_days INTEGER NOT NULL
-        )
-    `);
-
-    const planCount = query(`SELECT count(*) as cnt FROM plan_settings`);
-    if (planCount[0].cnt === 0) {
-        db.run(`INSERT INTO plan_settings VALUES ('free', 5, 90)`);
-        db.run(`INSERT INTO plan_settings VALUES ('paid', 50, 730)`);
-    }
-
-    seedStates();
+    await seedStates();
 }
 
-function seedStates() {
-    const stateCount = query(`SELECT count(*) as cnt FROM states`);
-    if (stateCount[0].cnt > 0) return;
+async function seedStates() {
+    const stateCount = await get(`SELECT count(*) as cnt FROM states`);
+    if (Number(stateCount.cnt) > 0) return;
 
     const states = [
         ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
@@ -191,13 +150,12 @@ function seedStates() {
 
     for (const [abbr, name] of states) {
         const stateId = uuidv4();
-        db.run(`INSERT INTO states (id, name, abbreviation) VALUES (?, ?, ?)`, [stateId, name, abbr]);
-
+        await run(`INSERT INTO states (id, name, abbreviation) VALUES (?, ?, ?)`, [stateId, name, abbr]);
         const metros = defaultMetros[abbr] || ['Metro Area', 'Others'];
         for (const metro of metros) {
-            db.run(`INSERT INTO metros (id, state_id, name) VALUES (?, ?, ?)`, [uuidv4(), stateId, metro]);
+            await run(`INSERT INTO metros (id, state_id, name) VALUES (?, ?, ?)`, [uuidv4(), stateId, metro]);
         }
     }
 }
 
-module.exports = { getDb, query, run, get, save };
+module.exports = { getDb, query, run, get, initSchema };
