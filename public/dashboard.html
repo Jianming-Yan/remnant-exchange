@@ -38,7 +38,7 @@
 
         <!-- POST REMNANT -->
         <div id="section-post" style="display:none">
-            <h2 style="margin-bottom:24px;">Post a Remnant</h2>
+            <h2 id="postHeading" style="margin-bottom:24px;">Post a Remnant</h2>
             <div id="postAlert" style="display:none"></div>
             <form id="postForm" style="max-width:600px;">
                 <div class="form-row">
@@ -130,7 +130,10 @@
                     <button type="button" class="btn btn-secondary" id="identifyBtn" onclick="identifyStone()" style="margin-top:10px;width:100%;">Identify Stone with AI</button>
                     <div id="identifyResult" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:6px;color:#166534;"></div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="postBtn">Post Listing</button>
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;padding:12px;" id="postBtn">Post Listing</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display:none;padding:12px;" onclick="cancelEdit()">Cancel</button>
+                </div>
             </form>
         </div>
 
@@ -147,6 +150,8 @@
 <script>
     const token = localStorage.getItem('token');
     if (!token) window.location.href = '/login.html';
+
+    let editingId = null;
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     document.getElementById('navUser').textContent = user.business_name || user.name || '';
@@ -207,13 +212,68 @@
                                 <td>${l.metro_name}, ${l.state_abbr}</td>
                                 <td><span class="badge badge-${l.status}">${l.status}</span></td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(l.expires_at).toLocaleDateString()}</td>
-                                <td><button class="btn btn-danger btn-sm" onclick="deleteListing('${l.id}')">Delete</button></td>
+                                <td style="white-space:nowrap;">
+                                    <button class="btn btn-secondary btn-sm" onclick="editListing(${JSON.stringify(l).replace(/"/g, '&quot;')})">Edit</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteListing('${l.id}')">Delete</button>
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         `;
+    }
+
+    async function editListing(l) {
+        editingId = l.id;
+        document.getElementById('postHeading').textContent = 'Edit Listing';
+        document.getElementById('postBtn').textContent = 'Save Changes';
+        document.getElementById('cancelEditBtn').style.display = 'block';
+        document.getElementById('postAlert').style.display = 'none';
+
+        document.getElementById('material_type').value = l.material_type || '';
+        document.getElementById('stone_name').value = l.stone_name || l.color || '';
+        document.getElementById('shape').value = l.shape || 'rectangular';
+        document.getElementById('lshapeDims').style.display = l.shape === 'lshape' ? 'flex' : 'none';
+        document.getElementById('length').value = l.length || '';
+        document.getElementById('width').value = l.width || '';
+        document.getElementById('length2').value = l.length2 || '';
+        document.getElementById('width2').value = l.width2 || '';
+        document.getElementById('thickness').value = l.thickness || '';
+        document.getElementById('vendor_name').value = l.vendor_name || '';
+        document.getElementById('bundle_number').value = l.bundle_number || '';
+        document.getElementById('description').value = l.description || '';
+
+        // Load state then metro
+        document.getElementById('state_id').value = l.state_id;
+        const metroSel = document.getElementById('metro_id');
+        metroSel.innerHTML = '<option value="">Loading...</option>';
+        const res = await fetch(`/api/listings/states/${l.state_id}/metros`);
+        const metros = await res.json();
+        metroSel.innerHTML = '<option value="">Select metro area</option>';
+        metros.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            metroSel.appendChild(opt);
+        });
+        metroSel.value = l.metro_id;
+
+        document.getElementById('photoPreviews').innerHTML = '';
+        document.getElementById('identifyResult').style.display = 'none';
+        showSection('post', null);
+        window.scrollTo(0, 0);
+    }
+
+    function cancelEdit() {
+        editingId = null;
+        document.getElementById('postHeading').textContent = 'Post a Remnant';
+        document.getElementById('postBtn').textContent = 'Post Listing';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('postForm').reset();
+        document.getElementById('lshapeDims').style.display = 'none';
+        document.getElementById('photoPreviews').innerHTML = '';
+        document.getElementById('postAlert').style.display = 'none';
     }
 
     async function deleteListing(id) {
@@ -303,8 +363,10 @@
         Array.from(photos).forEach(f => formData.append('photos', f));
 
         try {
-            const res = await fetch('/api/listings', {
-                method: 'POST',
+            const url = editingId ? `/api/listings/${editingId}` : '/api/listings';
+            const method = editingId ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
             });
@@ -316,8 +378,15 @@
                 alertBox.textContent = data.error;
                 alertBox.style.display = 'block';
             } else {
+                const wasEditing = !!editingId;
+                editingId = null;
+                document.getElementById('postHeading').textContent = 'Post a Remnant';
+                document.getElementById('postBtn').textContent = 'Post Listing';
+                document.getElementById('cancelEditBtn').style.display = 'none';
                 alertBox.className = 'alert alert-success';
-                alertBox.innerHTML = 'Listing posted! <a href="#" onclick="showSection(\'listings\', null);return false;" style="color:inherit;font-weight:bold;text-decoration:underline;">View My Listings</a> or post another below.';
+                alertBox.innerHTML = (wasEditing ? 'Listing updated! ' : 'Listing posted! ') +
+                    '<a href="#" onclick="showSection(\'listings\', null);return false;" style="color:inherit;font-weight:bold;text-decoration:underline;">View My Listings</a>' +
+                    (wasEditing ? '' : ' or post another below.');
                 alertBox.style.display = 'block';
                 document.getElementById('postForm').reset();
                 document.getElementById('photoPreviews').innerHTML = '';

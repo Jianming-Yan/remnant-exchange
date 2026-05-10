@@ -175,6 +175,55 @@ router.post('/identify-stone', requireApprovedFabricator, uploadMemory.single('p
     }
 });
 
+router.put('/:id', requireApprovedFabricator, upload.array('photos', 5), async (req, res) => {
+    try {
+        const listing = await get(`SELECT * FROM listings WHERE id = ? AND user_id = ?`, [req.params.id, req.user.id]);
+        if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+        const { material_type, stone_name, shape, length, width, thickness, length2, width2,
+                vendor_name, bundle_number, state_id, metro_id, description } = req.body;
+
+        if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
+            return res.status(400).json({ error: 'All required fields must be filled' });
+        }
+
+        const slabShape = shape || 'rectangular';
+
+        await run(`UPDATE listings SET
+            material_type = ?, color = ?, stone_name = ?, shape = ?,
+            length = ?, width = ?, thickness = ?,
+            length2 = ?, width2 = ?,
+            vendor_name = ?, bundle_number = ?,
+            state_id = ?, metro_id = ?, description = ?
+            WHERE id = ?`,
+            [material_type, stone_name, stone_name, slabShape,
+             parseFloat(length), parseFloat(width), thickness,
+             length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
+             vendor_name || null, bundle_number || null,
+             state_id, metro_id, description || null,
+             req.params.id]);
+
+        if (req.files && req.files.length > 0) {
+            const oldPhotos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ?`, [req.params.id]);
+            oldPhotos.forEach(p => {
+                const filePath = path.join(__dirname, '../uploads', p.filename);
+                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            });
+            await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [req.params.id]);
+
+            for (let i = 0; i < req.files.length; i++) {
+                await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
+                    [uuidv4(), req.params.id, req.files[i].filename, i]);
+            }
+        }
+
+        res.json({ message: 'Listing updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update listing' });
+    }
+});
+
 router.delete('/:id', requireApprovedFabricator, async (req, res) => {
     const listing = await get(`SELECT * FROM listings WHERE id = ? AND user_id = ?`, [req.params.id, req.user.id]);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
