@@ -402,12 +402,46 @@ tr:hover td { background: #f8fafc; }
 .empty-state { text-align: center; padding: 64px 24px; color: #94a3b8; }
 .empty-state h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #475569; }
 
+/* MOBILE NAV */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    z-index: 150;
+}
+
+.mobile-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px 8px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 500;
+    gap: 3px;
+}
+
+.mobile-nav a .nav-icon { font-size: 1.3rem; line-height: 1; }
+.mobile-nav a.active { color: #2563eb; }
+
 @media (max-width: 768px) {
     .hero h1 { font-size: 2rem; }
     .search-bar { flex-direction: column; }
     .dashboard-grid { grid-template-columns: 1fr; }
     .sidebar { display: none; }
+    .mobile-nav { display: flex; }
+    .main-panel { padding: 16px; padding-bottom: 80px; }
+    .table-wrap { overflow-x: auto; }
     .form-card { padding: 24px; margin: 24px 16px; }
     .form-row { grid-template-columns: 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
+    .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+    .photo-upload { padding: 32px 16px; }
+    .btn-sm { padding: 8px 14px; font-size: 0.85rem; }
 }

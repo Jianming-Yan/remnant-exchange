@@ -16,11 +16,23 @@
     </div>
 </nav>
 
+<nav class="mobile-nav">
+    <a href="#" data-section="listings" class="active" onclick="showSection('listings');return false;">
+        <span class="nav-icon">&#128247;</span>Listings
+    </a>
+    <a href="#" data-section="post" onclick="showSection('post');return false;">
+        <span class="nav-icon">&#43;</span>Post
+    </a>
+    <a href="#" data-section="account" onclick="showSection('account');return false;">
+        <span class="nav-icon">&#9881;</span>Account
+    </a>
+</nav>
+
 <div class="dashboard-grid">
     <div class="sidebar">
-        <a href="#listings" class="active" onclick="showSection('listings', this)">&#128247; My Listings</a>
-        <a href="#post" onclick="showSection('post', this)">&#43; Post Remnant</a>
-        <a href="#account" onclick="showSection('account', this)">&#9881; Account</a>
+        <a href="#listings" data-section="listings" class="active" onclick="showSection('listings')">&#128247; My Listings</a>
+        <a href="#post" data-section="post" onclick="showSection('post')">&#43; Post Remnant</a>
+        <a href="#account" data-section="account" onclick="showSection('account')">&#9881; Account</a>
     </div>
 
     <div class="main-panel">
@@ -30,7 +42,7 @@
                 <h2>My Listings</h2>
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                     <div id="planBadge"></div>
-                    <button class="btn btn-primary btn-sm" onclick="showSection('post', null)">+ Post Listing</button>
+                    <button class="btn btn-primary btn-sm" onclick="showSection('post')">+ Post Listing</button>
                 </div>
             </div>
             <div id="myListingsContent">Loading...</div>
@@ -156,11 +168,11 @@
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     document.getElementById('navUser').textContent = user.business_name || user.name || '';
 
-    function showSection(name, el) {
+    function showSection(name) {
         document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
         document.getElementById(`section-${name}`).style.display = 'block';
-        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-        if (el) el.classList.add('active');
+        document.querySelectorAll('.sidebar a, .mobile-nav a').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll(`[data-section="${name}"]`).forEach(a => a.classList.add('active'));
     }
 
     async function loadMyListings() {
@@ -193,7 +205,7 @@
                 <div class="empty-state">
                     <h3>No listings yet</h3>
                     <p>Start posting your remnants to reach buyers nationwide.</p>
-                    <button class="btn btn-primary" style="margin-top:16px;" onclick="showSection('post', null)">Post Your First Remnant</button>
+                    <button class="btn btn-primary" style="margin-top:16px;" onclick="showSection('post')">Post Your First Remnant</button>
                 </div>
             `;
             return;
@@ -261,7 +273,7 @@
 
         document.getElementById('photoPreviews').innerHTML = '';
         document.getElementById('identifyResult').style.display = 'none';
-        showSection('post', null);
+        showSection('post');
         window.scrollTo(0, 0);
     }
 
@@ -385,7 +397,7 @@
                 document.getElementById('cancelEditBtn').style.display = 'none';
                 alertBox.className = 'alert alert-success';
                 alertBox.innerHTML = (wasEditing ? 'Listing updated! ' : 'Listing posted! ') +
-                    '<a href="#" onclick="showSection(\'listings\', null);return false;" style="color:inherit;font-weight:bold;text-decoration:underline;">View My Listings</a>' +
+                    '<a href="#" onclick="showSection(\'listings\');return false;" style="color:inherit;font-weight:bold;text-decoration:underline;">View My Listings</a>' +
                     (wasEditing ? '' : ' or post another below.');
                 alertBox.style.display = 'block';
                 document.getElementById('postForm').reset();
