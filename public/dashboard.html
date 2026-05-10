@@ -305,7 +305,8 @@
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
             });
-            const data = await res.json();
+            let data;
+            try { data = await res.json(); } catch { data = { error: `Server error (${res.status})` }; }
 
             if (!res.ok) {
                 alertBox.className = 'alert alert-error';

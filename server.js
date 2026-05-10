@@ -2,9 +2,12 @@ if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { initSchema, run, get } = require('./database/db');
+
+fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
 const app = express();
 
@@ -16,6 +19,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
+
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(err.status || 500).json({ error: err.message || 'Server error' });
+});
 
 async function expireListings() {
     try {
