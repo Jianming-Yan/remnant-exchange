@@ -15,6 +15,7 @@
         <a href="/login.html" id="loginLink">Login</a>
         <a href="/register.html" class="btn btn-primary" id="registerLink">List Your Remnants</a>
         <a href="/dashboard.html" class="btn btn-primary" id="dashLink" style="display:none">My Dashboard</a>
+        <button class="btn btn-secondary btn-sm" id="logoutLink" style="display:none" onclick="logout()">Logout</button>
     </div>
 </nav>
 
@@ -88,7 +89,14 @@
             document.getElementById('loginLink').style.display = 'none';
             document.getElementById('registerLink').style.display = 'none';
             document.getElementById('dashLink').style.display = 'inline-block';
+            document.getElementById('logoutLink').style.display = 'inline-block';
         }
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
     }
 
     async function loadStates() {
