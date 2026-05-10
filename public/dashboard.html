@@ -314,12 +314,14 @@
                 alertBox.style.display = 'block';
             } else {
                 alertBox.className = 'alert alert-success';
-                alertBox.textContent = 'Listing posted successfully!';
+                alertBox.innerHTML = 'Listing posted! <a href="#" onclick="showSection(\'listings\', null);return false;" style="color:inherit;font-weight:bold;text-decoration:underline;">View My Listings</a> or post another below.';
                 alertBox.style.display = 'block';
                 document.getElementById('postForm').reset();
                 document.getElementById('photoPreviews').innerHTML = '';
+                document.getElementById('lshapeDims').style.display = 'none';
+                document.getElementById('identifyResult').style.display = 'none';
                 loadMyListings();
-                setTimeout(() => showSection('listings', document.querySelector('.sidebar a')), 1500);
+                window.scrollTo(0, 0);
             }
         } catch {
             alertBox.className = 'alert alert-error';
