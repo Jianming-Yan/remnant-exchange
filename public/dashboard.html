@@ -28,7 +28,10 @@
         <div id="section-listings">
             <div class="section-header">
                 <h2>My Listings</h2>
-                <div id="planBadge"></div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div id="planBadge"></div>
+                    <button class="btn btn-primary btn-sm" onclick="showSection('post', null)">+ Post Listing</button>
+                </div>
             </div>
             <div id="myListingsContent">Loading...</div>
         </div>
