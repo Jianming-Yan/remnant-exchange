@@ -46,8 +46,19 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Color / Pattern *</label>
-                        <input type="text" id="color" placeholder="e.g. Black Galaxy" required>
+                        <label>Stone Name *</label>
+                        <input type="text" id="stone_name" placeholder="e.g. Black Galaxy" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Shape *</label>
+                    <div style="display:flex;gap:20px;margin-top:6px;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;">
+                            <input type="radio" name="shape" value="rectangular" checked onchange="toggleShape(this)"> Rectangular
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;">
+                            <input type="radio" name="shape" value="lshape" onchange="toggleShape(this)"> L-Shape
+                        </label>
                     </div>
                 </div>
                 <div class="form-row">
@@ -60,6 +71,16 @@
                         <input type="number" id="width" placeholder="e.g. 26" min="1" required>
                     </div>
                 </div>
+                <div class="form-row" id="lshapeDims" style="display:none;">
+                    <div class="form-group">
+                        <label>Length 2 (inches)</label>
+                        <input type="number" id="length2" placeholder="e.g. 24" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Width 2 (inches)</label>
+                        <input type="number" id="width2" placeholder="e.g. 18" min="1">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Thickness *</label>
                     <select id="thickness" required>
@@ -70,6 +91,16 @@
                         <option value="2cm">2cm</option>
                         <option value="3cm">3cm</option>
                     </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Vendor Name</label>
+                        <input type="text" id="vendor_name" placeholder="e.g. MSI Stone">
+                    </div>
+                    <div class="form-group">
+                        <label>Bundle Number</label>
+                        <input type="text" id="bundle_number" placeholder="e.g. Bundle 42">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -97,6 +128,8 @@
                     </div>
                     <input type="file" id="photoInput" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)">
                     <div class="photo-previews" id="photoPreviews"></div>
+                    <button type="button" class="btn btn-secondary" id="identifyBtn" onclick="identifyStone()" style="margin-top:10px;width:100%;">Identify Stone with AI</button>
+                    <div id="identifyResult" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:6px;color:#166534;"></div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="postBtn">Post Listing</button>
             </form>
@@ -165,13 +198,13 @@
         document.getElementById('myListingsContent').innerHTML = `
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Material</th><th>Color</th><th>Dimensions</th><th>Location</th><th>Status</th><th>Expires</th><th></th></tr></thead>
+                    <thead><tr><th>Material</th><th>Stone Name</th><th>Dimensions</th><th>Location</th><th>Status</th><th>Expires</th><th></th></tr></thead>
                     <tbody>
                         ${listings.map(l => `
                             <tr>
                                 <td>${l.material_type}</td>
-                                <td>${l.color}</td>
-                                <td>${l.length}" x ${l.width}" &bull; ${l.thickness}</td>
+                                <td>${l.stone_name || l.color || '—'}</td>
+                                <td>${l.length}" x ${l.width}" &bull; ${l.thickness}${l.shape === 'lshape' ? ' (L)' : ''}</td>
                                 <td>${l.metro_name}, ${l.state_abbr}</td>
                                 <td><span class="badge badge-${l.status}">${l.status}</span></td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(l.expires_at).toLocaleDateString()}</td>
@@ -252,10 +285,17 @@
 
         const formData = new FormData();
         formData.append('material_type', document.getElementById('material_type').value);
-        formData.append('color', document.getElementById('color').value);
+        formData.append('stone_name', document.getElementById('stone_name').value);
+        formData.append('shape', document.querySelector('input[name="shape"]:checked').value);
         formData.append('length', document.getElementById('length').value);
         formData.append('width', document.getElementById('width').value);
+        const l2 = document.getElementById('length2').value;
+        const w2 = document.getElementById('width2').value;
+        if (l2) formData.append('length2', l2);
+        if (w2) formData.append('width2', w2);
         formData.append('thickness', document.getElementById('thickness').value);
+        formData.append('vendor_name', document.getElementById('vendor_name').value);
+        formData.append('bundle_number', document.getElementById('bundle_number').value);
         formData.append('state_id', document.getElementById('state_id').value);
         formData.append('metro_id', document.getElementById('metro_id').value);
         formData.append('description', document.getElementById('description').value);
@@ -311,6 +351,66 @@
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login.html';
+    }
+
+    function toggleShape(radio) {
+        const isL = radio.value === 'lshape';
+        document.getElementById('lshapeDims').style.display = isL ? 'flex' : 'none';
+    }
+
+    async function identifyStone() {
+        const input = document.getElementById('photoInput');
+        if (!input.files.length) {
+            const result = document.getElementById('identifyResult');
+            result.textContent = 'Upload a photo first, then click Identify.';
+            result.style.background = '#fef9c3';
+            result.style.color = '#854d0e';
+            result.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('identifyBtn');
+        const result = document.getElementById('identifyResult');
+        btn.disabled = true;
+        btn.textContent = 'Identifying...';
+        result.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('photo', input.files[0]);
+
+        try {
+            const res = await fetch('/api/listings/identify-stone', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (res.ok && (data.stone_name || data.material_type)) {
+                if (data.stone_name) document.getElementById('stone_name').value = data.stone_name;
+                if (data.material_type) {
+                    const matSel = document.getElementById('material_type');
+                    const match = Array.from(matSel.options).find(o => o.value.toLowerCase() === data.material_type.toLowerCase());
+                    if (match) matSel.value = match.value;
+                }
+                result.textContent = `Identified: ${data.material_type} — ${data.stone_name}`;
+                result.style.background = '#f0fdf4';
+                result.style.color = '#166534';
+            } else {
+                result.textContent = data.error || 'Could not identify. Please fill in manually.';
+                result.style.background = '#fef2f2';
+                result.style.color = '#991b1b';
+            }
+            result.style.display = 'block';
+        } catch {
+            result.textContent = 'Identification failed. Please try again.';
+            result.style.background = '#fef2f2';
+            result.style.color = '#991b1b';
+            result.style.display = 'block';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Identify Stone with AI';
     }
 
     loadMyListings();

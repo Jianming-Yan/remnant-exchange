@@ -147,12 +147,12 @@
         grid.innerHTML = data.listings.map(l => `
             <div class="card" onclick="openModal(${JSON.stringify(l).replace(/"/g, '&quot;')})">
                 <div class="card-img">
-                    ${l.photos && l.photos.length ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.color}">` : 'No photo'}
+                    ${l.photos && l.photos.length ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.stone_name || l.color}">` : 'No photo'}
                 </div>
                 <div class="card-body">
                     <div class="card-material">${l.material_type}</div>
-                    <div class="card-title">${l.color}</div>
-                    <div class="card-dims">${l.length}" x ${l.width}" &bull; ${l.thickness}</div>
+                    <div class="card-title">${l.stone_name || l.color}</div>
+                    <div class="card-dims">${l.length}" x ${l.width}"${l.shape === 'lshape' ? ` + ${l.length2 || '?'}" x ${l.width2 || '?'}"` : ''} &bull; ${l.thickness}</div>
                     <div class="card-location">&#128205; ${l.metro_name}, ${l.state_abbr}</div>
                     <div class="verified-badge">&#10003; Verified Fabricator</div>
                 </div>
@@ -187,15 +187,23 @@
     }
 
     function openModal(listing) {
+        const stoneName = listing.stone_name || listing.color;
         document.getElementById('modalImg').innerHTML = listing.photos && listing.photos.length
-            ? `<img src="/uploads/${listing.photos[0].filename}" alt="${listing.color}">`
+            ? `<img src="/uploads/${listing.photos[0].filename}" alt="${stoneName}">`
             : 'No photo available';
-        document.getElementById('modalTitle').textContent = `${listing.material_type} — ${listing.color}`;
+        document.getElementById('modalTitle').textContent = `${listing.material_type} — ${stoneName}`;
+        const isL = listing.shape === 'lshape';
+        const dims = isL && listing.length2
+            ? `${listing.length}" x ${listing.width}" + ${listing.length2}" x ${listing.width2}"`
+            : `${listing.length}" x ${listing.width}"`;
         document.getElementById('modalDetails').innerHTML = `
             <div class="detail-item"><label>Material</label><span>${listing.material_type}</span></div>
-            <div class="detail-item"><label>Color</label><span>${listing.color}</span></div>
-            <div class="detail-item"><label>Dimensions</label><span>${listing.length}" x ${listing.width}"</span></div>
+            <div class="detail-item"><label>Stone Name</label><span>${stoneName}</span></div>
+            <div class="detail-item"><label>Shape</label><span>${isL ? 'L-Shape' : 'Rectangular'}</span></div>
+            <div class="detail-item"><label>Dimensions</label><span>${dims}</span></div>
             <div class="detail-item"><label>Thickness</label><span>${listing.thickness}</span></div>
+            ${listing.vendor_name ? `<div class="detail-item"><label>Vendor</label><span>${listing.vendor_name}</span></div>` : ''}
+            ${listing.bundle_number ? `<div class="detail-item"><label>Bundle #</label><span>${listing.bundle_number}</span></div>` : ''}
             <div class="detail-item"><label>Location</label><span>${listing.metro_name}, ${listing.state_name}</span></div>
             <div class="detail-item"><label>Listed</label><span>${new Date(listing.created_at).toLocaleDateString()}</span></div>
         `;

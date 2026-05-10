@@ -120,6 +120,18 @@ function initSchema() {
         )
     `);
 
+    const newCols = [
+        `ALTER TABLE listings ADD COLUMN stone_name TEXT`,
+        `ALTER TABLE listings ADD COLUMN shape TEXT NOT NULL DEFAULT 'rectangular'`,
+        `ALTER TABLE listings ADD COLUMN length2 REAL`,
+        `ALTER TABLE listings ADD COLUMN width2 REAL`,
+        `ALTER TABLE listings ADD COLUMN vendor_name TEXT`,
+        `ALTER TABLE listings ADD COLUMN bundle_number TEXT`,
+    ];
+    for (const col of newCols) {
+        try { db.run(col); } catch (e) { /* column already exists */ }
+    }
+
     db.run(`
         CREATE TABLE IF NOT EXISTS listing_photos (
             id TEXT PRIMARY KEY,
