@@ -62,7 +62,11 @@ router.get('/verify-email', async (req, res) => {
         run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
 
         const user = get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
-        await sendAdminNotification(user);
+        try {
+            await sendAdminNotification(user);
+        } catch (emailErr) {
+            console.error('Admin notification failed:', emailErr.message);
+        }
 
         res.redirect('/email-verified.html');
     } catch (err) {
