@@ -2,7 +2,9 @@ if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { getDb, run } = require('./database/db');
+const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
+const { getDb, run, get } = require('./database/db');
 
 const app = express();
 
@@ -23,8 +25,20 @@ function expireListings() {
     }
 }
 
+async function ensureAdmin() {
+    const admin = get(`SELECT id FROM users WHERE role = 'admin'`);
+    if (!admin) {
+        const hash = await bcrypt.hash('Admin1234!', 10);
+        run(`INSERT INTO users (id, name, business_name, email, password_hash, role, email_verified, approved)
+             VALUES (?, 'Admin', 'Remnant Exchange', 'admin@remnantexchange.com', ?, 'admin', 1, 1)`,
+            [uuidv4(), hash]);
+        console.log('Admin account created');
+    }
+}
+
 async function start() {
     await getDb();
+    await ensureAdmin();
 
     expireListings();
     setInterval(expireListings, 60 * 60 * 1000);
