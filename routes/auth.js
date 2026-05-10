@@ -34,9 +34,7 @@ router.post('/register', async (req, res) => {
             [uuidv4(), userId, token, 'verify', expires]);
 
         try {
-            console.log('Sending email to:', email, '| RESEND_API_KEY set:', !!process.env.RESEND_API_KEY);
             await sendVerificationEmail(email, name, token);
-            console.log('Email sent successfully');
         } catch (emailErr) {
             console.error('Email send failed:', emailErr.message);
         }
