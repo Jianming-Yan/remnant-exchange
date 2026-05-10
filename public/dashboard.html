@@ -162,6 +162,26 @@
     </div>
 </div>
 
+<!-- LISTING DETAIL MODAL -->
+<div class="modal-overlay" id="detailOverlay" onclick="closeDetailModal(event)">
+    <div class="modal">
+        <div class="modal-img" id="detailImg">No photo available</div>
+        <div class="modal-body">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                <h2 id="detailTitle" style="margin-bottom:0;"></h2>
+                <button onclick="document.getElementById('detailOverlay').classList.remove('open')"
+                    style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#94a3b8;flex-shrink:0;">&#10005;</button>
+            </div>
+            <div class="detail-grid" id="detailGrid"></div>
+            <div id="detailDesc" style="color:#475569;font-size:0.9rem;margin-bottom:16px;"></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary" style="flex:1;" id="detailEditBtn">Edit Listing</button>
+                <button class="btn btn-danger btn-sm" id="detailDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const token = localStorage.getItem('token');
     if (!token) window.location.href = '/login.html';
@@ -215,28 +235,75 @@
         }
 
         document.getElementById('myListingsContent').innerHTML = `
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Material</th><th>Stone Name</th><th>Dimensions</th><th>Location</th><th>Status</th><th>Expires</th><th></th></tr></thead>
-                    <tbody>
-                        ${listings.map(l => `
-                            <tr>
-                                <td>${l.material_type}</td>
-                                <td>${l.stone_name || l.color || '—'}</td>
-                                <td>${l.length}" x ${l.width}" &bull; ${l.thickness}${l.shape === 'lshape' ? ' (L)' : ''}</td>
-                                <td>${l.metro_name}, ${l.state_abbr}</td>
-                                <td><span class="badge badge-${l.status}">${l.status}</span></td>
-                                <td style="font-size:0.8rem;color:#64748b;">${new Date(l.expires_at).toLocaleDateString()}</td>
-                                <td style="white-space:nowrap;">
-                                    <button class="btn btn-secondary btn-sm" onclick="editListing(${JSON.stringify(l).replace(/"/g, '&quot;')})">Edit</button>
-                                    <button class="btn btn-danger btn-sm" onclick="deleteListing('${l.id}')">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+            <div class="listings-grid">
+                ${listings.map(l => `
+                    <div class="card" onclick="viewListing(${JSON.stringify(l).replace(/"/g, '&quot;')})">
+                        <div class="card-img">
+                            ${l.photos && l.photos.length
+                                ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.stone_name || l.color}">`
+                                : 'No photo'}
+                        </div>
+                        <div class="card-body">
+                            <div class="card-material">${l.material_type}</div>
+                            <div class="card-title">${l.stone_name || l.color || '—'}</div>
+                            <div class="card-dims">${l.length}" x ${l.width}" &bull; ${l.thickness}${l.shape === 'lshape' ? ' (L)' : ''}</div>
+                            <div class="card-location">&#128205; ${l.metro_name}, ${l.state_abbr}</div>
+                            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+                                <span class="badge badge-${l.status}">${l.status}</span>
+                                <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">Exp: ${new Date(l.expires_at).toLocaleDateString()}</span>
+                            </div>
+                            <div style="margin-top:10px;display:flex;gap:6px;" onclick="event.stopPropagation()">
+                                <button class="btn btn-secondary btn-sm" style="flex:1;"
+                                    onclick="editListing(${JSON.stringify(l).replace(/"/g, '&quot;')})">Edit</button>
+                                <button class="btn btn-danger btn-sm"
+                                    onclick="deleteListing('${l.id}')">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         `;
+    }
+
+    function viewListing(l) {
+        const stoneName = l.stone_name || l.color || '—';
+        const isL = l.shape === 'lshape';
+        const dims = isL && l.length2
+            ? `${l.length}" x ${l.width}" + ${l.length2}" x ${l.width2}"`
+            : `${l.length}" x ${l.width}"`;
+
+        document.getElementById('detailImg').innerHTML = l.photos && l.photos.length
+            ? `<img src="/uploads/${l.photos[0].filename}" alt="${stoneName}">`
+            : 'No photo available';
+        document.getElementById('detailTitle').textContent = `${l.material_type} — ${stoneName}`;
+        document.getElementById('detailGrid').innerHTML = `
+            <div class="detail-item"><label>Material</label><span>${l.material_type}</span></div>
+            <div class="detail-item"><label>Stone Name</label><span>${stoneName}</span></div>
+            <div class="detail-item"><label>Shape</label><span>${isL ? 'L-Shape' : 'Rectangular'}</span></div>
+            <div class="detail-item"><label>Dimensions</label><span>${dims}</span></div>
+            <div class="detail-item"><label>Thickness</label><span>${l.thickness}</span></div>
+            ${l.vendor_name ? `<div class="detail-item"><label>Vendor</label><span>${l.vendor_name}</span></div>` : ''}
+            ${l.bundle_number ? `<div class="detail-item"><label>Bundle #</label><span>${l.bundle_number}</span></div>` : ''}
+            <div class="detail-item"><label>Location</label><span>${l.metro_name}, ${l.state_abbr}</span></div>
+            <div class="detail-item"><label>Status</label><span><span class="badge badge-${l.status}">${l.status}</span></span></div>
+            <div class="detail-item"><label>Expires</label><span>${new Date(l.expires_at).toLocaleDateString()}</span></div>
+        `;
+        document.getElementById('detailDesc').textContent = l.description || '';
+        document.getElementById('detailEditBtn').onclick = () => {
+            document.getElementById('detailOverlay').classList.remove('open');
+            editListing(l);
+        };
+        document.getElementById('detailDeleteBtn').onclick = () => {
+            document.getElementById('detailOverlay').classList.remove('open');
+            deleteListing(l.id);
+        };
+        document.getElementById('detailOverlay').classList.add('open');
+    }
+
+    function closeDetailModal(e) {
+        if (e.target === document.getElementById('detailOverlay')) {
+            document.getElementById('detailOverlay').classList.remove('open');
+        }
     }
 
     async function editListing(l) {
