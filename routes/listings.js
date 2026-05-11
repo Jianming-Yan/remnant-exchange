@@ -137,7 +137,7 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (re
     }
 });
 
-router.post('/identify-stone', requireApprovedFabricator, uploadMemory.single('photo'), async (req, res) => {
+router.post('/identify-stone', uploadMemory.single('photo'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No photo provided' });
 

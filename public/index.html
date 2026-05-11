@@ -56,6 +56,13 @@
         <input type="text" id="filterSearch" placeholder="Search color, material...">
         <button class="btn btn-primary" onclick="applyFilters()">Search</button>
     </div>
+    <div style="text-align:center;margin-top:10px;">
+        <label style="cursor:pointer;color:#93c5fd;font-size:0.9rem;">
+            &#128247; Don't know the stone name? <span style="text-decoration:underline;">Search by photo</span>
+            <input type="file" id="buyerPhotoInput" accept="image/*" style="display:none" onchange="identifyAndSearch(this)">
+        </label>
+        <span id="identifyStatus" style="display:none;margin-left:8px;font-size:0.85rem;color:#e2e8f0;"></span>
+    </div>
 </div>
 
 <div class="container">
@@ -214,6 +221,35 @@
         }
         html += `<button ${current === total ? 'disabled' : ''} onclick="loadListings(${current + 1})">Next &raquo;</button>`;
         el.innerHTML = html;
+    }
+
+    async function identifyAndSearch(input) {
+        if (!input.files[0]) return;
+        const status = document.getElementById('identifyStatus');
+        status.textContent = 'Identifying stone...';
+        status.style.display = 'inline';
+
+        const formData = new FormData();
+        formData.append('photo', input.files[0]);
+
+        try {
+            const res = await fetch('/api/listings/identify-stone', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.material_type) {
+                const sel = document.getElementById('filterMaterial');
+                for (const opt of sel.options) {
+                    if (opt.value === data.material_type) { opt.selected = true; break; }
+                }
+            }
+            if (data.stone_name) {
+                document.getElementById('filterSearch').value = data.stone_name;
+            }
+            status.textContent = `Identified: ${data.material_type || ''}${data.stone_name ? ' — ' + data.stone_name : ''}`;
+            applyFilters();
+        } catch {
+            status.textContent = 'Could not identify. Try another photo.';
+        }
+        input.value = '';
     }
 
     function applyFilters() {
