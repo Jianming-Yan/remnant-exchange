@@ -255,7 +255,9 @@
         `;
         document.getElementById('modalDesc').textContent = listing.description || '';
         document.getElementById('modalBusiness').innerHTML = `<strong>${listing.business_name}</strong>`;
-        document.getElementById('contactForm').reset();
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('contactMessage').value = "I'm interested in this remnant.";
         document.getElementById('contactAlert').style.display = 'none';
         document.getElementById('contactBtn').disabled = false;
         document.getElementById('contactBtn').textContent = 'Send Message';
