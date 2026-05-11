@@ -69,6 +69,10 @@ router.get('/', async (req, res) => {
     if (state) { countSql += ` AND l.state_id = ?`; countParams.push(state); }
     if (metro) { countSql += ` AND l.metro_id = ?`; countParams.push(metro); }
     if (material) { countSql += ` AND l.material_type = ?`; countParams.push(material); }
+    if (search) {
+        countSql += ` AND (l.material_type LIKE ? OR l.stone_name LIKE ? OR l.color LIKE ? OR l.description LIKE ?)`;
+        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
 
     const total = await get(countSql, countParams);
 

@@ -244,6 +244,11 @@
             if (data.stone_name) {
                 document.getElementById('filterSearch').value = data.stone_name;
             }
+            if (!data.stone_name) {
+                status.textContent = 'Could not identify a specific stone. Try a clearer photo.';
+                input.value = '';
+                return;
+            }
             status.textContent = `Identified: ${data.material_type || ''}${data.stone_name ? ' — ' + data.stone_name : ''}`;
             applyFilters();
         } catch {
