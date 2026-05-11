@@ -99,6 +99,29 @@
 
         .hero h1 em { font-style: normal; color: #60a5fa; }
 
+        .hero-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .hero-stamp {
+            font-size: 5.5rem;
+            font-weight: 900;
+            color: rgba(96,165,250,0.18);
+            letter-spacing: -0.04em;
+            line-height: 1;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            position: relative;
+            border: 5px solid rgba(96,165,250,0.2);
+            border-radius: 12px;
+            padding: 8px 18px;
+            transform: rotate(-4deg);
+            color: rgba(96,165,250,0.25);
+        }
+
         .hero p {
             font-size: 0.95rem;
             color: #94a3b8;
@@ -329,8 +352,13 @@
     <!-- HERO -->
     <div class="hero">
         <div class="tag">We're hiring</div>
-        <h1>Build a real startup.<br>This <em>summer</em>.</h1>
-        <p>Remnant Exchange is a live marketplace for the stone industry. We need 2–3 ambitious students to help us grow — not fetch coffee.</p>
+        <div class="hero-inner">
+            <div>
+                <h1>Build a real startup.<br>This <em>summer</em>.</h1>
+                <p>Remnant Exchange is a live marketplace for the stone industry. We need 2–3 ambitious students to help us grow — not fetch coffee.</p>
+            </div>
+            <div class="hero-stamp">INTERN</div>
+        </div>
     </div>
 
     <!-- OPEN ROLES -->
