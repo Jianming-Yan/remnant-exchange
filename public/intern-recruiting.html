@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Remnant Exchange — Summer Internship</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px;
+        }
+
+        .page {
+            max-width: 780px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 48px rgba(0,0,0,0.1);
+        }
+
+        /* TOP BAR */
+        .topbar {
+            background: #3b82f6;
+            padding: 10px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-logo {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.02em;
+        }
+
+        .topbar-logo span { color: #bfdbfe; }
+
+        .topbar-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #bfdbfe;
+        }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(150deg, #0f172a 0%, #1e3a5f 100%);
+            padding: 56px 48px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            right: -40px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(59,130,246,0.12);
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(96,165,250,0.15);
+            border: 1px solid rgba(96,165,250,0.3);
+            color: #93c5fd;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: #60a5fa;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            color: #94a3b8;
+            line-height: 1.65;
+            max-width: 460px;
+            position: relative;
+        }
+
+        /* ROLES */
+        .roles-section {
+            padding: 44px 48px 36px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .roles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .role-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            transition: border-color 0.15s;
+        }
+
+        .role-card:hover { border-color: #3b82f6; }
+
+        .role-icon { font-size: 1.6rem; margin-bottom: 12px; }
+
+        .role-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+
+        .role-card p {
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.55;
+        }
+
+        .role-tag {
+            display: inline-block;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 999px;
+            margin-top: 10px;
+        }
+
+        /* WHAT YOU GET */
+        .compensation {
+            padding: 36px 48px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .comp-item {
+            text-align: center;
+            padding: 20px 12px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .comp-icon { font-size: 1.5rem; margin-bottom: 8px; }
+
+        .comp-item h4 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
+        }
+
+        .comp-item p {
+            font-size: 0.72rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* WHO WE WANT */
+        .looking {
+            padding: 36px 48px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .trait {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 999px;
+            padding: 7px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trait::before { content: '✓'; color: #22c55e; font-weight: 800; }
+
+        /* ABOUT */
+        .about {
+            padding: 32px 48px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        .about-text { flex: 1; }
+
+        .about-text h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .about-text p {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.65;
+        }
+
+        .about-stat {
+            text-align: center;
+            padding: 20px 28px;
+            background: #eff6ff;
+            border-radius: 14px;
+            flex-shrink: 0;
+        }
+
+        .about-stat .big {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #1d4ed8;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .about-stat .small {
+            font-size: 0.75rem;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* CTA */
+        .cta {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            padding: 40px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .cta h2 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+        }
+
+        .cta p {
+            color: #bfdbfe;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .cta-contact { flex-shrink: 0; text-align: center; }
+
+        .email-box {
+            background: white;
+            border-radius: 10px;
+            padding: 14px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1d4ed8;
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+        }
+
+        .cta-note {
+            color: #bfdbfe;
+            font-size: 0.72rem;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .page { margin: 0; box-shadow: none; border-radius: 0; max-width: 100%; }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 0; }
+            .page { border-radius: 0; }
+            .hero { padding: 40px 24px 36px; }
+            .hero h1 { font-size: 2rem; }
+            .roles-section, .compensation, .looking, .about { padding: 28px 24px; }
+            .roles { grid-template-columns: 1fr; }
+            .comp-grid { grid-template-columns: 1fr 1fr; }
+            .about { flex-direction: column; }
+            .cta { padding: 32px 24px; flex-direction: column; text-align: center; }
+            .topbar { padding: 10px 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-logo">Remnant<span>Exchange</span></div>
+        <div class="topbar-tag">Summer 2026 &mdash; Internship</div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="tag">We're hiring</div>
+        <h1>Build a real startup.<br>This <em>summer</em>.</h1>
+        <p>Remnant Exchange is a growing marketplace for the stone industry. We're looking for 2–3 ambitious students to help us grow — not fetch coffee.</p>
+    </div>
+
+    <!-- OPEN ROLES -->
+    <div class="roles-section">
+        <div class="section-label">Open Roles</div>
+        <div class="roles">
+            <div class="role-card">
+                <div class="role-icon">📞</div>
+                <h3>Sales & Outreach</h3>
+                <p>Reach out to stone fabricators across the country. Sign them up, post their first listing, build relationships. High ownership, real results.</p>
+                <span class="role-tag">2 spots</span>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">📱</div>
+                <h3>Social Media & Marketing</h3>
+                <p>Grow our presence on Instagram and Facebook. Create content, run campaigns, tell our story to buyers and fabricators.</p>
+                <span class="role-tag">1 spot</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHAT YOU GET -->
+    <div class="compensation">
+        <div class="section-label">What you get</div>
+        <div class="comp-grid">
+            <div class="comp-item">
+                <div class="comp-icon">📈</div>
+                <h4>Equity Stake</h4>
+                <p>Real ownership in the company. Vests over your time with us.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">💼</div>
+                <h4>First Hire</h4>
+                <p>First consideration for a paid role when revenue grows.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">📝</div>
+                <h4>Strong Reference</h4>
+                <p>A detailed LinkedIn recommendation from the founder.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">🚀</div>
+                <h4>Real Experience</h4>
+                <p>Startup experience you can point to with real numbers.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHO WE WANT -->
+    <div class="looking">
+        <div class="section-label">Who we're looking for</div>
+        <div class="traits">
+            <span class="trait">Self-starter</span>
+            <span class="trait">Comfortable on the phone</span>
+            <span class="trait">Business or Marketing major</span>
+            <span class="trait">Entrepreneurial mindset</span>
+            <span class="trait">Reliable and organized</span>
+            <span class="trait">Hungry to build something</span>
+            <span class="trait">No stone experience needed</span>
+        </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="about">
+        <div class="about-text">
+            <h2>About Remnant Exchange</h2>
+            <p>We're a marketplace where stone fabricators — the shops that cut granite, marble, and quartz countertops — list their leftover slabs for sale to homeowners and contractors. The problem is huge: billions of dollars in stone sit unsold in shops every year. We're fixing that. The platform is live, users are signing up, and we need help growing.</p>
+        </div>
+        <div class="about-stat">
+            <div class="big">Live</div>
+            <div class="small">Platform is live<br>at remnantexchange.org</div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <div>
+            <h2>Interested? Let's talk.</h2>
+            <p>Send a short email — who you are,<br>what role interests you, and why.</p>
+        </div>
+        <div class="cta-contact">
+            <div class="email-box">info.remnantexchange@gmail.com</div>
+            <div class="cta-note">remnantexchange.org &nbsp;&bull;&nbsp; Summer 2026</div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
