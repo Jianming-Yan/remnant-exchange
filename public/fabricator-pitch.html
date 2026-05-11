@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Your Stone Remnants Free | Remnant Exchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 48px rgba(0,0,0,0.1);
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #162032 100%);
+            padding: 56px 64px 52px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 80% 0%, rgba(59,130,246,0.15) 0%, transparent 65%);
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: -0.02em;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .logo span { color: #60a5fa; }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: white;
+            line-height: 1.12;
+            letter-spacing: -0.04em;
+            max-width: 560px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .header h1 em {
+            font-style: normal;
+            color: #60a5fa;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            max-width: 480px;
+            line-height: 1.65;
+            position: relative;
+        }
+
+        /* PAIN POINTS */
+        .pain {
+            background: #fef2f2;
+            border-bottom: 1px solid #fecaca;
+            padding: 28px 64px;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .pain-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #ef4444;
+            white-space: nowrap;
+        }
+
+        .pain-items {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .pain-item {
+            font-size: 0.9rem;
+            color: #7f1d1d;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pain-item::before {
+            content: '✕';
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        /* BENEFITS */
+        .benefits {
+            padding: 52px 64px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        .benefit {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        .benefit-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .benefit-icon.green { background: #f0fdf4; }
+        .benefit-icon.blue { background: #eff6ff; }
+        .benefit-icon.amber { background: #fffbeb; }
+        .benefit-icon.purple { background: #faf5ff; }
+
+        .benefit h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .benefit p {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* STATS */
+        .stats {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 36px 64px;
+            display: flex;
+            gap: 0;
+        }
+
+        .stat {
+            flex: 1;
+            text-align: center;
+            padding: 0 24px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .stat:last-child { border-right: none; }
+
+        .stat .number {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #1e293b;
+            letter-spacing: -0.04em;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat .number span { color: #3b82f6; }
+
+        .stat .desc {
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* HOW IT WORKS */
+        .how {
+            padding: 48px 64px;
+        }
+
+        .how h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 28px;
+            color: #1e293b;
+        }
+
+        .steps {
+            display: flex;
+            gap: 0;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .step h4 {
+            font-size: 0.875rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .step p {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.5;
+            padding: 0 8px;
+        }
+
+        /* CTA */
+        .cta {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            padding: 44px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .cta-text h2 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .cta-text p {
+            color: #bfdbfe;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .cta-action {
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .cta-url {
+            display: inline-block;
+            background: white;
+            color: #1d4ed8;
+            font-weight: 800;
+            font-size: 1rem;
+            padding: 14px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            letter-spacing: -0.02em;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        .cta-note {
+            color: #bfdbfe;
+            font-size: 0.75rem;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        @media print {
+            body { background: white; }
+            .page { margin: 0; box-shadow: none; border-radius: 0; }
+        }
+
+        @media (max-width: 700px) {
+            .header { padding: 40px 28px 36px; }
+            .header h1 { font-size: 2rem; }
+            .pain { padding: 20px 28px; flex-direction: column; gap: 12px; }
+            .benefits { padding: 36px 28px; grid-template-columns: 1fr; }
+            .stats { padding: 28px; flex-direction: column; gap: 24px; }
+            .stat { border-right: none; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; }
+            .stat:last-child { border-bottom: none; }
+            .how { padding: 36px 28px; }
+            .steps { flex-direction: column; gap: 20px; }
+            .steps::before { display: none; }
+            .cta { padding: 36px 28px; flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">Remnant<span>Exchange</span></div>
+        <h1>Turn leftover stone<br>into <em>real revenue</em>.</h1>
+        <p>The free marketplace built for stone fabricators — list your remnants, reach buyers nationwide, and clear your shop floor.</p>
+    </div>
+
+    <!-- PAIN POINTS -->
+    <div class="pain">
+        <div class="pain-label">Sound familiar?</div>
+        <div class="pain-items">
+            <div class="pain-item">Remnants piling up in the shop</div>
+            <div class="pain-item">Giving slabs away just to free up space</div>
+            <div class="pain-item">No easy way to reach buyers</div>
+            <div class="pain-item">Lost revenue on every job</div>
+        </div>
+    </div>
+
+    <!-- BENEFITS -->
+    <div class="benefits">
+        <div class="benefit">
+            <div class="benefit-icon green">💰</div>
+            <div>
+                <h3>Turn waste into income</h3>
+                <p>Every remnant sitting in your shop is money tied up in stone. List it once and let buyers come to you — no negotiating, no hauling.</p>
+            </div>
+        </div>
+        <div class="benefit">
+            <div class="benefit-icon blue">📐</div>
+            <div>
+                <h3>Reclaim your shop floor</h3>
+                <p>Remnants take up space you need for active jobs. Move them faster and keep your operation running lean.</p>
+            </div>
+        </div>
+        <div class="benefit">
+            <div class="benefit-icon amber">⚡</div>
+            <div>
+                <h3>List in under 5 minutes</h3>
+                <p>Take a photo, enter dimensions, pick your location. AI even identifies the stone for you. Done.</p>
+            </div>
+        </div>
+        <div class="benefit">
+            <div class="benefit-icon purple">🔒</div>
+            <div>
+                <h3>Your contact info stays private</h3>
+                <p>Buyers message you through the platform. You decide who gets your number. No spam, no cold calls.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <div class="number"><span>$0</span></div>
+            <div class="desc">Free to list.<br>No commissions.</div>
+        </div>
+        <div class="stat">
+            <div class="number">5<span>min</span></div>
+            <div class="desc">Average time<br>to post a listing.</div>
+        </div>
+        <div class="stat">
+            <div class="number"><span>∞</span></div>
+            <div class="desc">Buyers can browse<br>without an account.</div>
+        </div>
+        <div class="stat">
+            <div class="number">AI<span>+</span></div>
+            <div class="desc">Stone identification<br>from a photo.</div>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how">
+        <h2>How it works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h4>Create your account</h4>
+                <p>Register free as a verified fabricator. Approval takes less than 24 hours.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h4>Post your remnants</h4>
+                <p>Upload photos, enter dimensions, and let AI suggest the stone name.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h4>Buyers reach out</h4>
+                <p>Interested buyers send you a message directly through the site.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <h4>Close the deal</h4>
+                <p>Reply by email, arrange pickup, and clear your shop floor.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <div class="cta-text">
+            <h2>Start listing for free today.</h2>
+            <p>No credit card. No commission. Cancel anytime.<br>Built by a fabricator, for fabricators.</p>
+        </div>
+        <div class="cta-action">
+            <a href="https://remnantexchange.org/register.html" class="cta-url">remnantexchange.org</a>
+            <div class="cta-note">Free account — takes 2 minutes</div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
