@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Remnant Exchange — Summer Internship</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px;
+        }
+
+        .page {
+            max-width: 780px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 48px rgba(0,0,0,0.1);
+        }
+
+        /* TOP BAR */
+        .topbar {
+            background: #3b82f6;
+            padding: 10px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-logo {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.02em;
+        }
+
+        .topbar-logo span { color: #bfdbfe; }
+
+        .topbar-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #bfdbfe;
+        }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(150deg, #0f172a 0%, #1e3a5f 100%);
+            padding: 44px 48px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            right: -40px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(59,130,246,0.12);
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(96,165,250,0.15);
+            border: 1px solid rgba(96,165,250,0.3);
+            color: #93c5fd;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 12px;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .hero h1 em { font-style: normal; color: #60a5fa; }
+
+        .hero p {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            max-width: 460px;
+            position: relative;
+        }
+
+        /* ROLES */
+        .roles-section {
+            padding: 36px 48px 28px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .roles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .role-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .role-icon { font-size: 1.4rem; margin-bottom: 10px; }
+
+        .role-card h3 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .role-card p {
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .role-tag {
+            display: inline-block;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 999px;
+            margin-top: 8px;
+        }
+
+        /* WHAT YOU GET */
+        .compensation {
+            padding: 28px 48px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .comp-item {
+            text-align: center;
+            padding: 16px 10px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .comp-icon { font-size: 1.3rem; margin-bottom: 6px; }
+
+        .comp-item h4 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .comp-item p { font-size: 0.7rem; color: #64748b; line-height: 1.4; }
+
+        /* WHO WE WANT */
+        .looking {
+            padding: 28px 48px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .trait {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trait::before { content: '✓'; color: #22c55e; font-weight: 800; }
+
+        /* ABOUT */
+        .about {
+            padding: 24px 48px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .about h2 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .about p {
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* TEAR-OFF SECTION */
+        .tearoff-wrapper {
+            border-top: 2px dashed #cbd5e1;
+            background: #f8fafc;
+            padding: 0;
+        }
+
+        .tearoff-label {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            padding: 6px 0 2px;
+        }
+
+        .tearoff-tabs {
+            display: flex;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .tearoff-tab {
+            flex: 1;
+            border-right: 1px dashed #cbd5e1;
+            padding: 16px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tearoff-tab:last-child { border-right: none; }
+
+        .tearoff-tab .inner {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tearoff-tab .tab-title {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #3b82f6;
+        }
+
+        .tearoff-tab .tab-phone {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: 0.02em;
+        }
+
+        .tearoff-tab .tab-site {
+            font-size: 0.58rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .page { margin: 0; box-shadow: none; border-radius: 0; max-width: 100%; }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 0; }
+            .page { border-radius: 0; }
+            .hero { padding: 32px 24px 28px; }
+            .hero h1 { font-size: 1.9rem; }
+            .roles-section, .compensation, .looking, .about { padding: 24px; }
+            .roles { grid-template-columns: 1fr; }
+            .comp-grid { grid-template-columns: 1fr 1fr; }
+            .topbar { padding: 10px 24px; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-logo">Remnant<span>Exchange</span></div>
+        <div class="topbar-tag">Summer 2026 &mdash; Internship</div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="tag">We're hiring</div>
+        <h1>Build a real startup.<br>This <em>summer</em>.</h1>
+        <p>Remnant Exchange is a live marketplace for the stone industry. We need 2–3 ambitious students to help us grow — not fetch coffee.</p>
+    </div>
+
+    <!-- OPEN ROLES -->
+    <div class="roles-section">
+        <div class="section-label">Open Roles</div>
+        <div class="roles">
+            <div class="role-card">
+                <div class="role-icon">📞</div>
+                <h3>Sales & Outreach</h3>
+                <p>Sign up stone fabricators across the country. Real ownership, real results.</p>
+                <span class="role-tag">2 spots</span>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">📱</div>
+                <h3>Social Media & Marketing</h3>
+                <p>Grow our Instagram and Facebook. Create content, build our audience.</p>
+                <span class="role-tag">1 spot</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHAT YOU GET -->
+    <div class="compensation">
+        <div class="section-label">What you get</div>
+        <div class="comp-grid">
+            <div class="comp-item">
+                <div class="comp-icon">📈</div>
+                <h4>Equity Stake</h4>
+                <p>Real ownership in the company.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">💼</div>
+                <h4>First Hire</h4>
+                <p>Priority for a paid role as we grow.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">📝</div>
+                <h4>Reference</h4>
+                <p>Founder LinkedIn recommendation.</p>
+            </div>
+            <div class="comp-item">
+                <div class="comp-icon">🚀</div>
+                <h4>Real Resume</h4>
+                <p>Startup experience with real numbers.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHO WE WANT -->
+    <div class="looking">
+        <div class="section-label">Who we're looking for</div>
+        <div class="traits">
+            <span class="trait">Self-starter</span>
+            <span class="trait">Comfortable on the phone</span>
+            <span class="trait">Business or Marketing major</span>
+            <span class="trait">Entrepreneurial mindset</span>
+            <span class="trait">Hungry to build something</span>
+            <span class="trait">No stone experience needed</span>
+        </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="about">
+        <h2>About Remnant Exchange</h2>
+        <p>A marketplace where stone fabricators list leftover granite, marble, and quartz slabs for sale. The platform is live at remnantexchange.org. We're early stage and growing — this is ground floor.</p>
+    </div>
+
+    <!-- TEAR-OFF TABS -->
+    <div class="tearoff-wrapper">
+        <div class="tearoff-label">&#9988; tear off a tab</div>
+        <div class="tearoff-tabs">
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+            <div class="tearoff-tab"><div class="inner"><span class="tab-title">Internship</span><span class="tab-phone">Ming: (617) 606-5840</span><span class="tab-site">remnantexchange.org</span></div></div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
