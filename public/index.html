@@ -121,8 +121,13 @@
     async function init() {
         await loadStates();
         await loadMaterials();
-        await loadListings();
         updateNav();
+        document.getElementById('listingsGrid').innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1">
+                <h3>Find Stone Remnants Near You</h3>
+                <p>Select a state, material, or enter a search term above, then click Search.</p>
+            </div>`;
+        document.getElementById('resultsCount').textContent = '';
     }
 
     function updateNav() {
