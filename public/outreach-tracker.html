@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabricator Outreach Tracker | Remnant Exchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px;
+        }
+        .page { max-width: 860px; margin: 0 auto; }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+        .subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 32px; }
+
+        .download-box {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .download-box h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+        .download-box p { font-size: 0.85rem; color: #64748b; }
+        .btn-download {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-download:hover { background: #2563eb; }
+
+        .columns {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .columns-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .columns-header h2 { font-size: 1rem; font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #f8fafc;
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td { padding: 12px 16px; font-size: 0.875rem; border-top: 1px solid #f1f5f9; }
+        td:first-child { font-weight: 600; color: #1e293b; }
+        td:last-child { color: #64748b; font-size: 0.82rem; }
+        tr:hover td { background: #fafbfc; }
+
+        .outcomes {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .outcomes h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+        .badge-list { display: flex; flex-wrap: wrap; gap: 10px; }
+        .badge {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .badge-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .badge-yellow { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
+        .badge-red { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .badge-gray { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+        .tips {
+            background: #eff6ff;
+            border: 1.5px solid #bfdbfe;
+            border-radius: 14px;
+            padding: 24px;
+        }
+        .tips h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #1d4ed8; }
+        .tips ul { padding-left: 18px; }
+        .tips li { font-size: 0.875rem; color: #1e40af; line-height: 1.7; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <h1>Fabricator Outreach Tracker</h1>
+    <p class="subtitle">Download the spreadsheet, open in Google Sheets or Excel, and log every call.</p>
+
+    <!-- DOWNLOAD -->
+    <div class="download-box">
+        <div>
+            <h2>Outreach Tracker — CSV</h2>
+            <p>Open in Google Sheets or Excel. One row per call.</p>
+        </div>
+        <a href="/fabricator-outreach-tracker.csv" download class="btn-download">Download Spreadsheet</a>
+    </div>
+
+    <!-- COLUMNS -->
+    <div class="columns">
+        <div class="columns-header">
+            <h2>Column Guide</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>What to Enter</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Date</td><td>Date you made the call (MM/DD)</td></tr>
+                <tr><td>Business Name</td><td>Full name of the fabricator shop</td></tr>
+                <tr><td>City</td><td>City they're located in</td></tr>
+                <tr><td>Phone</td><td>Phone number you called</td></tr>
+                <tr><td>Website</td><td>Their website if they have one</td></tr>
+                <tr><td>Contact Name</td><td>Name of owner or person you spoke to</td></tr>
+                <tr><td>Called By</td><td>Your name (intern tracking who made each call)</td></tr>
+                <tr><td>Outcome</td><td>Result of the call — see options below</td></tr>
+                <tr><td>Follow Up Date</td><td>Date to call back if needed</td></tr>
+                <tr><td>Listing Posted</td><td>Yes / No — did they end up posting a listing?</td></tr>
+                <tr><td>Notes</td><td>Anything useful — objections, what they said, best time to reach them</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- OUTCOMES -->
+    <div class="outcomes">
+        <h2>Outcome Options</h2>
+        <div class="badge-list">
+            <span class="badge badge-green">Interested — listing posted</span>
+            <span class="badge badge-blue">Interested — follow up needed</span>
+            <span class="badge badge-yellow">Call back — not available</span>
+            <span class="badge badge-gray">Voicemail left</span>
+            <span class="badge badge-gray">No answer</span>
+            <span class="badge badge-red">Not interested</span>
+        </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="tips">
+        <h2>Calling Tips</h2>
+        <ul>
+            <li>Call between 9–11am — owners are in the shop and not yet deep in the day</li>
+            <li>Log every call, even no-answers — it shows your activity and keeps you organized</li>
+            <li>If you get voicemail, leave a message and log it — call back in 2 days</li>
+            <li>Note objections in the Notes column — they'll help us improve the pitch</li>
+            <li>Goal: 10 calls per day minimum. Expect 2–3 interested per 10 calls.</li>
+            <li>A "not interested" today can become a "yes" in 3 months — keep the list</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
