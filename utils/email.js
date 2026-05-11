@@ -78,4 +78,26 @@ async function sendRejectionEmail(email, name, reason) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail };
+async function sendContactMessage(sellerEmail, sellerName, listingTitle, senderName, senderEmail, message) {
+    const resend = getResend();
+
+    await resend.emails.send({
+        from: FROM,
+        to: sellerEmail,
+        replyTo: senderEmail,
+        subject: `Message about your listing: ${listingTitle}`,
+        html: `
+            <h2>Someone is interested in your listing</h2>
+            <p><strong>Listing:</strong> ${listingTitle}</p>
+            <hr>
+            <p><strong>From:</strong> ${senderName}</p>
+            <p><strong>Email:</strong> ${senderEmail}</p>
+            <p><strong>Message:</strong></p>
+            <blockquote style="border-left:4px solid #2563eb;margin:0;padding:12px 16px;background:#f0f7ff;">${message.replace(/\n/g, '<br>')}</blockquote>
+            <hr>
+            <p style="color:#64748b;font-size:0.85rem;">Reply directly to this email to respond to ${senderName}. This message was sent via Remnant Exchange.</p>
+        `,
+    });
+}
+
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage };

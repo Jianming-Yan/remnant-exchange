@@ -5,6 +5,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireApprovedFabricator, requireAuth } = require('../middleware/auth');
+const { sendContactMessage } = require('../utils/email');
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.get('/', async (req, res) => {
     const offset = (parseInt(page) - 1) * limit;
 
     let sql = `
-        SELECT l.*, u.name as seller_name, u.business_name, u.phone, u.email as seller_email,
+        SELECT l.*, u.name as seller_name, u.business_name,
                s.name as state_name, s.abbreviation as state_abbr, m.name as metro_name
         FROM listings l
         JOIN users u ON l.user_id = u.id
@@ -238,6 +239,32 @@ router.delete('/:id', requireApprovedFabricator, async (req, res) => {
     await run(`DELETE FROM listings WHERE id = ?`, [listing.id]);
 
     res.json({ message: 'Listing deleted' });
+});
+
+router.post('/:id/contact', async (req, res) => {
+    const { sender_name, sender_email, message } = req.body;
+
+    if (!sender_name || !sender_email || !message) {
+        return res.status(400).json({ error: 'Name, email, and message are required' });
+    }
+
+    const listing = await get(`
+        SELECT l.*, u.email as seller_email, u.name as seller_name
+        FROM listings l JOIN users u ON l.user_id = u.id
+        WHERE l.id = ? AND l.status = 'active'
+    `, [req.params.id]);
+
+    if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+    const title = `${listing.material_type} — ${listing.stone_name || listing.color}`;
+
+    try {
+        await sendContactMessage(listing.seller_email, listing.seller_name, title, sender_name, sender_email, message);
+        res.json({ message: 'Your message has been sent to the seller.' });
+    } catch (err) {
+        console.error('Contact email error:', err);
+        res.status(500).json({ error: 'Could not send message. Please try again.' });
+    }
 });
 
 router.get('/states', async (req, res) => {

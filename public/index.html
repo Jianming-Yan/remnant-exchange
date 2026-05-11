@@ -84,9 +84,23 @@
             <div class="contact-box">
                 <h3>Contact Seller</h3>
                 <p id="modalBusiness"></p>
-                <p id="modalPhone"></p>
-                <p id="modalEmail"></p>
                 <div class="verified-badge">&#10003; Verified Fabricator</div>
+                <div id="contactAlert" style="display:none;margin:8px 0;"></div>
+                <form id="contactForm" onsubmit="sendMessage(event)">
+                    <div class="form-group" style="margin-top:12px;">
+                        <label>Your Name *</label>
+                        <input type="text" id="contactName" placeholder="Jane Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Email *</label>
+                        <input type="email" id="contactEmail" placeholder="jane@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Message *</label>
+                        <textarea id="contactMessage" rows="3" placeholder="I'm interested in this remnant..." required style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem;resize:vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="contactBtn" style="width:100%;padding:10px;">Send Message</button>
+                </form>
             </div>
         </div>
     </div>
@@ -215,7 +229,10 @@
         loadListings(1);
     }
 
+    let activeListingId = null;
+
     function openModal(listing) {
+        activeListingId = listing.id;
         const stoneName = listing.stone_name || listing.color;
         document.getElementById('modalImg').innerHTML = listing.photos && listing.photos.length
             ? `<img src="/uploads/${listing.photos[0].filename}" alt="${stoneName}">`
@@ -238,14 +255,53 @@
         `;
         document.getElementById('modalDesc').textContent = listing.description || '';
         document.getElementById('modalBusiness').innerHTML = `<strong>${listing.business_name}</strong>`;
-        document.getElementById('modalPhone').textContent = listing.phone ? `Phone: ${listing.phone}` : '';
-        document.getElementById('modalEmail').textContent = `Email: ${listing.seller_email}`;
+        document.getElementById('contactForm').reset();
+        document.getElementById('contactAlert').style.display = 'none';
+        document.getElementById('contactBtn').disabled = false;
+        document.getElementById('contactBtn').textContent = 'Send Message';
         document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    async function sendMessage(e) {
+        e.preventDefault();
+        const alert = document.getElementById('contactAlert');
+        const btn = document.getElementById('contactBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        try {
+            const res = await fetch(`/api/listings/${activeListingId}/contact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sender_name: document.getElementById('contactName').value,
+                    sender_email: document.getElementById('contactEmail').value,
+                    message: document.getElementById('contactMessage').value,
+                }),
+            });
+            const data = await res.json();
+            alert.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alert.textContent = res.ok ? data.message : data.error;
+            alert.style.display = 'block';
+            if (res.ok) {
+                document.getElementById('contactForm').style.display = 'none';
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Send Message';
+            }
+        } catch {
+            alert.className = 'alert alert-error';
+            alert.textContent = 'Something went wrong. Please try again.';
+            alert.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Send Message';
+        }
     }
 
     function closeModal(e) {
         if (e.target === document.getElementById('modalOverlay')) {
             document.getElementById('modalOverlay').classList.remove('open');
+            document.getElementById('contactForm').style.display = '';
         }
     }
 
