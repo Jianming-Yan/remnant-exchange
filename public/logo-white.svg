@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 100" width="520" height="100">
-  <!-- Left piece (lighter gray for dark backgrounds) -->
-  <path d="M0,4 L44,4 L38,22 L46,42 L38,62 L44,82 L0,82 Z" fill="#94a3b8"/>
-  <line x1="6" y1="22" x2="36" y2="22" stroke="rgba(255,255,255,0.32)" stroke-width="2" stroke-linecap="round"/>
-  <line x1="6" y1="42" x2="40" y2="42" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="6" y1="62" x2="36" y2="62" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 130" width="680" height="130">
+  <!-- Left piece -->
+  <path d="M0,6 L66,6 L57,33 L69,63 L57,93 L66,123 L0,123 Z" fill="#94a3b8"/>
+  <line x1="9" y1="33" x2="54" y2="33" stroke="rgba(255,255,255,0.32)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="9" y1="63" x2="60" y2="63" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="9" y1="93" x2="54" y2="93" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Right piece (blue) -->
-  <path d="M49,4 L96,4 L96,82 L49,82 L43,62 L51,42 L43,22 L49,4 Z" fill="#60a5fa"/>
-  <line x1="55" y1="22" x2="91" y2="22" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round"/>
-  <line x1="55" y1="42" x2="91" y2="42" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="55" y1="62" x2="91" y2="62" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Right piece -->
+  <path d="M73,6 L144,6 L144,123 L73,123 L64,93 L76,63 L64,33 L73,6 Z" fill="#60a5fa"/>
+  <line x1="82" y1="33" x2="136" y2="33" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="82" y1="63" x2="136" y2="63" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="82" y1="93" x2="136" y2="93" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
 
   <!-- Wordmark -->
-  <text x="114" y="56" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="46" font-weight="800" fill="#60a5fa" letter-spacing="-0.03em">Remnant</text>
-  <text x="116" y="82" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="500" fill="#94a3b8" letter-spacing="0.12em">EXCHANGE</text>
+  <text x="166" y="82" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="69" font-weight="800" fill="#60a5fa" letter-spacing="-0.03em">Remnant</text>
+  <text x="169" y="118" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="33" font-weight="500" fill="#94a3b8" letter-spacing="0.12em">EXCHANGE</text>
 </svg>
