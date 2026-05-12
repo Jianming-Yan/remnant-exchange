@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MA Fabricator Contacts & Visit Route | Remnant Exchange</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+        .header {
+            background: #1e293b;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header img { height: 40px; }
+        .header-text h1 { font-size: 1.1rem; font-weight: 700; color: #f8fafc; }
+        .header-text p { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            text-align: center;
+        }
+        .stat-num { font-size: 2rem; font-weight: 800; color: #3b82f6; line-height: 1; }
+        .stat-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+
+        .section { margin-bottom: 36px; }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .day-badge {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+        }
+        .day-badge.day2 { background: #7c3aed; }
+        .day-badge.day3 { background: #059669; }
+        .day-badge.day4 { background: #d97706; }
+        .day-badge.day5 { background: #dc2626; }
+        .day-badge.day6 { background: #475569; }
+
+        .route-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .fab-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 10px;
+        }
+
+        .fab-card {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: box-shadow 0.15s;
+        }
+        .fab-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .fab-card.nearest { border-color: #3b82f6; background: #eff6ff; }
+
+        .stop-num {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 800;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .fab-card.nearest .stop-num { background: #3b82f6; color: white; }
+
+        .fab-info { flex: 1; min-width: 0; }
+        .fab-name { font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+        .fab-addr { font-size: 0.78rem; color: #64748b; margin-bottom: 6px; line-height: 1.4; }
+        .fab-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        .btn-phone {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .btn-phone:hover { background: #2563eb; }
+
+        .btn-map {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .btn-map:hover { background: #e2e8f0; }
+
+        .nearest-tag {
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .route-tip {
+            background: #eff6ff;
+            border: 1.5px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            font-size: 0.85rem;
+            color: #1e40af;
+            line-height: 1.6;
+        }
+        .route-tip strong { font-weight: 700; }
+
+        .divider { height: 1px; background: #e2e8f0; margin: 32px 0; }
+
+        .all-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid #e2e8f0;
+            font-size: 0.82rem;
+        }
+        .all-table th {
+            background: #f8fafc;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+        .all-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        .all-table tr:last-child td { border-bottom: none; }
+        .all-table tr:hover td { background: #f8fafc; }
+        .region-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .r-canton { background: #dbeafe; color: #1d4ed8; }
+        .r-south { background: #d1fae5; color: #065f46; }
+        .r-metro { background: #ede9fe; color: #5b21b6; }
+        .r-north { background: #fef3c7; color: #92400e; }
+        .r-worcester { background: #fee2e2; color: #991b1b; }
+        .r-western { background: #f1f5f9; color: #334155; }
+        .r-cape { background: #ecfdf5; color: #064e3b; }
+
+        @media print {
+            @page { margin: 10mm; size: letter; }
+            .header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .btn-phone, .btn-map { display: none; }
+        }
+        @media (max-width: 640px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .fab-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="/logo-white.svg" alt="Remnant Exchange">
+    <div class="header-text">
+        <h1>Massachusetts Fabricator Outreach</h1>
+        <p>Visit route starting from 105 Chapman St, Canton MA &bull; 55 fabricators &bull; 6 day trips</p>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-num">55</div>
+            <div class="stat-label">Total Fabricators</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">6</div>
+            <div class="stat-label">Day Trips</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">7</div>
+            <div class="stat-label">Regions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">0.5mi</div>
+            <div class="stat-label">Nearest Stop</div>
+        </div>
+    </div>
+
+    <div class="route-tip">
+        <strong>Route strategy:</strong> Start with the stops nearest to you in Canton, then spiral outward by region. Each day trip is a loop that returns you home. Call ahead before visiting — confirm they're open and ask for the owner/shop manager. Use the pitch: <em>"We're building a platform for fabricators to sell remnants online. Takes 5 minutes to list, buyers come to you."</em>
+    </div>
+
+    <!-- DAY 1 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge">Day 1</span>
+                Canton · South Shore · Braintree
+            </div>
+            <div class="route-meta">8 stops &bull; ~45 min driving &bull; Start here first</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card nearest">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">Majestic Marble &amp; Granite <span class="nearest-tag">Closest!</span></div>
+                    <div class="fab-addr">253 Revere St, Canton, MA 02021</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7818301020">&#128222; (781) 830-1020</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=253+Revere+St+Canton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">Frangioso Granite</div>
+                    <div class="fab-addr">95 Grove St, Braintree, MA 02184</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7818490016">&#128222; (781) 849-0016</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=95+Grove+St+Braintree+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">Holbrook Granite &amp; Marble</div>
+                    <div class="fab-addr">13 Technical Park Dr, Holbrook, MA 02343</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7819865300">&#128222; (781) 986-5300</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=13+Technical+Park+Dr+Holbrook+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">Stone Design Pro</div>
+                    <div class="fab-addr">1235 Main St, Weymouth, MA 02190</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7813313000">&#128222; (781) 331-3000</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=1235+Main+St+Weymouth+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">5</div>
+                <div class="fab-info">
+                    <div class="fab-name">Boston Stone Works</div>
+                    <div class="fab-addr">142 Quincy Shore Dr Ste 155, Quincy, MA 02171</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:6178922795">&#128222; (617) 892-2795</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=142+Quincy+Shore+Dr+Quincy+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">6</div>
+                <div class="fab-info">
+                    <div class="fab-name">Marble and Granite Inc</div>
+                    <div class="fab-addr">270 University Ave, Westwood, MA 02090</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7814079560">&#128222; (781) 407-9560</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=270+University+Ave+Westwood+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">7</div>
+                <div class="fab-info">
+                    <div class="fab-name">Metropolitan Cabinets &amp; Countertops</div>
+                    <div class="fab-addr">505 University Ave, Norwood, MA 02062</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7819498900">&#128222; (781) 949-8900</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=505+University+Ave+Norwood+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">8</div>
+                <div class="fab-info">
+                    <div class="fab-name">New View Marble and Granite</div>
+                    <div class="fab-addr">1 Master Dr, Franklin, MA 02038</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5085413909">&#128222; (508) 541-3909</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=1+Master+Dr+Franklin+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge day2">Day 2</span>
+                MetroWest — Framingham · Hopkinton · Acton
+            </div>
+            <div class="route-meta">9 stops &bull; ~1.5 hr driving</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">Atlantis Stone</div>
+                    <div class="fab-addr">88A Elm St, Hopkinton, MA 01748</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5082838004">&#128222; (508) 283-8004</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=88A+Elm+St+Hopkinton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">Express Marble &amp; Granite</div>
+                    <div class="fab-addr">275 Hopping Brook Rd Ste 4, Holliston, MA 01746</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7742331973">&#128222; (774) 233-1973</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=275+Hopping+Brook+Rd+Holliston+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">Onyx Marble &amp; Granite</div>
+                    <div class="fab-addr">93 Beaver St, Framingham, MA 01702</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5086200775">&#128222; (508) 620-0775</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=93+Beaver+St+Framingham+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">Metrowest Granite Countertop</div>
+                    <div class="fab-addr">847 Edgell Rd, Framingham, MA 01701</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7744204749">&#128222; (774) 420-4749</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=847+Edgell+Rd+Framingham+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">5</div>
+                <div class="fab-info">
+                    <div class="fab-name">Granite Guy Inc</div>
+                    <div class="fab-addr">43 Turnpike Rd, Southborough, MA 01772</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5084607900">&#128222; (508) 460-7900</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=43+Turnpike+Rd+Southborough+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">6</div>
+                <div class="fab-info">
+                    <div class="fab-name">Bella Marble &amp; Granite</div>
+                    <div class="fab-addr">308 Central St, Hudson, MA 01749</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5088163991">&#128222; (508) 816-3991</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=308+Central+St+Hudson+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">7</div>
+                <div class="fab-info">
+                    <div class="fab-name">Stone Concepts</div>
+                    <div class="fab-addr">Hudson, MA 01749</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9785681911">&#128222; (978) 568-1911</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=Stone+Concepts+Hudson+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">8</div>
+                <div class="fab-info">
+                    <div class="fab-name">Mass Granite &amp; Marble</div>
+                    <div class="fab-addr">49 Knox Trl, Acton, MA 01720</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9788976405">&#128222; (978) 897-6405</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=49+Knox+Trl+Acton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">9</div>
+                <div class="fab-info">
+                    <div class="fab-name">New Capital Granite</div>
+                    <div class="fab-addr">6 Ledge Rock Way Ste 6, Acton, MA 01720</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:6176990114">&#128222; (617) 699-0114</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=6+Ledge+Rock+Way+Acton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge day3">Day 3</span>
+                North Shore — Waltham · Woburn · Danvers · Lowell
+            </div>
+            <div class="route-meta">11 stops &bull; ~2 hr driving</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">Marble &amp; Granite International (MGI)</div>
+                    <div class="fab-addr">99 Hammond St, Waltham, MA 02451</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7816471979">&#128222; (781) 647-1979</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=99+Hammond+St+Waltham+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">Stone Surfaces Inc</div>
+                    <div class="fab-addr">275 Salem St Bldg 2, Woburn, MA 01801</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7812704600">&#128222; (781) 270-4600</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=275+Salem+St+Woburn+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">Pablo Marble and Granite</div>
+                    <div class="fab-addr">10 Breed Ave, Woburn, MA 01801</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7816962990">&#128222; (781) 696-2990</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=10+Breed+Ave+Woburn+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">GerrityStone</div>
+                    <div class="fab-addr">100A Eames St, Wilmington, MA 01887</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7819381820">&#128222; (781) 938-1820</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=100A+Eames+St+Wilmington+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">5</div>
+                <div class="fab-info">
+                    <div class="fab-name">Granite Design USA</div>
+                    <div class="fab-addr">18 Republic Rd, North Billerica, MA 01862</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9783621373">&#128222; (978) 362-1373</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=18+Republic+Rd+North+Billerica+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">6</div>
+                <div class="fab-info">
+                    <div class="fab-name">Granite Plus</div>
+                    <div class="fab-addr">9 Progress Ave, Chelmsford, MA 01824</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9786777540">&#128222; (978) 677-7540</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=9+Progress+Ave+Chelmsford+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">7</div>
+                <div class="fab-info">
+                    <div class="fab-name">Direct Granite Countertop</div>
+                    <div class="fab-addr">174 Old Canal Dr, Lowell, MA 01854</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9786560060">&#128222; (978) 656-0060</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=174+Old+Canal+Dr+Lowell+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">8</div>
+                <div class="fab-info">
+                    <div class="fab-name">StoneOne Marble &amp; Granite</div>
+                    <div class="fab-addr">75 Mystic St, Methuen, MA 01844</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9786817664">&#128222; (978) 681-7664</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=75+Mystic+St+Methuen+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">9</div>
+                <div class="fab-info">
+                    <div class="fab-name">K&amp;B Granite &amp; Marble</div>
+                    <div class="fab-addr">474 Lowell St Unit 7, Peabody, MA 01960</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9785364434">&#128222; (978) 536-4434</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=474+Lowell+St+Peabody+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">10</div>
+                <div class="fab-info">
+                    <div class="fab-name">North Shore Marble &amp; Granite</div>
+                    <div class="fab-addr">100 Newbury St Ste A, Danvers, MA 01923</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9787774070">&#128222; (978) 777-4070</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=100+Newbury+St+Danvers+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">11</div>
+                <div class="fab-info">
+                    <div class="fab-name">Classic Rock Marble &amp; Granite</div>
+                    <div class="fab-addr">13 Mill St, Danvers, MA 01923</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9783047777">&#128222; (978) 304-7777</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=13+Mill+St+Danvers+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DAY 4 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge day4">Day 4</span>
+                South Shore + Cape Cod
+            </div>
+            <div class="route-meta">8 stops &bull; ~2.5 hr driving (full day)</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">South Shore Granite</div>
+                    <div class="fab-addr">145 Union St, Rockland, MA 02370</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7812089793">&#128222; (781) 208-9793</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=145+Union+St+Rockland+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">Global Granite MA</div>
+                    <div class="fab-addr">38 Corporate Park Dr Unit 900, Pembroke, MA 02359</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7818261522">&#128222; (781) 826-1522</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=38+Corporate+Park+Dr+Pembroke+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">Precision Marble &amp; Granite</div>
+                    <div class="fab-addr">Marshfield, MA 02050</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:7814888697">&#128222; (781) 488-8697</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=Precision+Marble+Granite+Marshfield+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">Plymouth Marble &amp; Granite</div>
+                    <div class="fab-addr">149 Camelot Dr, Plymouth, MA 02360</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087472483">&#128222; (508) 747-2483</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=149+Camelot+Dr+Plymouth+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">5</div>
+                <div class="fab-info">
+                    <div class="fab-name">Superior Marble &amp; Granite</div>
+                    <div class="fab-addr">31 Turnpike Rd, Ipswich, MA 01938</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9785398746">&#128222; (978) 539-8746</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=31+Turnpike+Rd+Ipswich+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">6</div>
+                <div class="fab-info">
+                    <div class="fab-name">Cape Granite Connection</div>
+                    <div class="fab-addr">18 Fruean Way, South Yarmouth, MA 02664</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5086947734">&#128222; (508) 694-7734</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=18+Fruean+Way+South+Yarmouth+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">7</div>
+                <div class="fab-info">
+                    <div class="fab-name">Cape Cod Marble &amp; Granite</div>
+                    <div class="fab-addr">38 Rosary Ln, Hyannis, MA 02601</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087712900">&#128222; (508) 771-2900</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=38+Rosary+Ln+Hyannis+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">8</div>
+                <div class="fab-info">
+                    <div class="fab-name">American Stone</div>
+                    <div class="fab-addr">160 Rosary Ln, Hyannis, MA 02601</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087781123">&#128222; (508) 778-1123</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=160+Rosary+Ln+Hyannis+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DAY 5 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge day5">Day 5</span>
+                Worcester Area
+            </div>
+            <div class="route-meta">8 stops &bull; ~1.5 hr driving</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">Continental Stone</div>
+                    <div class="fab-addr">791 Research Dr, Leominster, MA 01453</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9784228700">&#128222; (978) 422-8700</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=791+Research+Dr+Leominster+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">STONELINK Marble &amp; Granite</div>
+                    <div class="fab-addr">70 Fremont St, Worcester, MA 01603</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5083930720">&#128222; (508) 393-0720</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=70+Fremont+St+Worcester+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">AGF Marble and Granite</div>
+                    <div class="fab-addr">10 Nashua St, Worcester, MA 01605</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087572178">&#128222; (508) 757-2178</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=10+Nashua+St+Worcester+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">Granite Brothers</div>
+                    <div class="fab-addr">43 Mason St, Worcester, MA 01610</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5085008739">&#128222; (508) 500-8739</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=43+Mason+St+Worcester+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">5</div>
+                <div class="fab-info">
+                    <div class="fab-name">Traditional Marble Granite &amp; Cabinets</div>
+                    <div class="fab-addr">545 Southwest Cutoff, Worcester, MA 01607</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087963925">&#128222; (508) 796-3925</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=545+Southwest+Cutoff+Worcester+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">6</div>
+                <div class="fab-info">
+                    <div class="fab-name">United Granite Works</div>
+                    <div class="fab-addr">31 Sword St, Auburn, MA 01501</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5087522302">&#128222; (508) 752-2302</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=31+Sword+St+Auburn+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">7</div>
+                <div class="fab-info">
+                    <div class="fab-name">All Granite and Marble</div>
+                    <div class="fab-addr">381 Worcester Rd, Charlton, MA 01507</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:5082489393">&#128222; (508) 248-9393</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=381+Worcester+Rd+Charlton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">8</div>
+                <div class="fab-info">
+                    <div class="fab-name">Worcester Marble &amp; Granite</div>
+                    <div class="fab-addr">315 N Main St, Middleton, MA 01949</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:9787678353">&#128222; (978) 767-8353</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=315+N+Main+St+Middleton+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DAY 6 -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="day-badge day6">Day 6</span>
+                Western MA — Springfield · Wilbraham · West Springfield
+            </div>
+            <div class="route-meta">4 stops &bull; ~3 hr driving each way — plan a full day</div>
+        </div>
+        <div class="fab-grid">
+
+            <div class="fab-card">
+                <div class="stop-num">1</div>
+                <div class="fab-info">
+                    <div class="fab-name">ES Countertops</div>
+                    <div class="fab-addr">3 Century Way, West Springfield, MA 01089</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:4137328128">&#128222; (413) 732-8128</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=3+Century+Way+West+Springfield+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">2</div>
+                <div class="fab-info">
+                    <div class="fab-name">Northern Granite &amp; Marble</div>
+                    <div class="fab-addr">380 Union St, West Springfield, MA 01089</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:4137378700">&#128222; (413) 737-8700</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=380+Union+St+West+Springfield+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">3</div>
+                <div class="fab-info">
+                    <div class="fab-name">Granite Creations</div>
+                    <div class="fab-addr">2376 Boston Rd, Wilbraham, MA 01095</div>
+                    <div class="fab-actions">
+                        <a class="btn-phone" href="tel:4135963141">&#128222; (413) 596-3141</a>
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=2376+Boston+Rd+Wilbraham+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fab-card">
+                <div class="stop-num">4</div>
+                <div class="fab-info">
+                    <div class="fab-name">D&amp;C Granite &amp; Marble</div>
+                    <div class="fab-addr">Springfield, MA 01101</div>
+                    <div class="fab-actions">
+                        <a class="btn-map" href="https://www.google.com/maps/search/?api=1&query=D%26C+Granite+Marble+Springfield+MA" target="_blank">&#128205; Map</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- FULL TABLE -->
+    <div class="section">
+        <div class="section-title" style="margin-bottom: 16px;">Complete List — All 55 Fabricators</div>
+        <div style="overflow-x: auto;">
+        <table class="all-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Business Name</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Region</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>Majestic Marble &amp; Granite</td><td>253 Revere St, Canton</td><td><a href="tel:7818301020">(781) 830-1020</a></td><td><span class="region-tag r-canton">Canton</span></td></tr>
+                <tr><td>2</td><td>Frangioso Granite</td><td>95 Grove St, Braintree</td><td><a href="tel:7818490016">(781) 849-0016</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>3</td><td>Holbrook Granite &amp; Marble</td><td>13 Technical Park Dr, Holbrook</td><td><a href="tel:7819865300">(781) 986-5300</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>4</td><td>Stone Design Pro</td><td>1235 Main St, Weymouth</td><td><a href="tel:7813313000">(781) 331-3000</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>5</td><td>Boston Stone Works</td><td>142 Quincy Shore Dr, Quincy</td><td><a href="tel:6178922795">(617) 892-2795</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>6</td><td>Marble and Granite Inc</td><td>270 University Ave, Westwood</td><td><a href="tel:7814079560">(781) 407-9560</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>7</td><td>Metropolitan Cabinets &amp; Countertops</td><td>505 University Ave, Norwood</td><td><a href="tel:7819498900">(781) 949-8900</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>8</td><td>New View Marble and Granite</td><td>1 Master Dr, Franklin</td><td><a href="tel:5085413909">(508) 541-3909</a></td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>9</td><td>Atlantis Stone</td><td>88A Elm St, Hopkinton</td><td><a href="tel:5082838004">(508) 283-8004</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>10</td><td>Express Marble &amp; Granite</td><td>275 Hopping Brook Rd, Holliston</td><td><a href="tel:7742331973">(774) 233-1973</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>11</td><td>Onyx Marble &amp; Granite</td><td>93 Beaver St, Framingham</td><td><a href="tel:5086200775">(508) 620-0775</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>12</td><td>Metrowest Granite Countertop</td><td>847 Edgell Rd, Framingham</td><td><a href="tel:7744204749">(774) 420-4749</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>13</td><td>Granite Guy Inc</td><td>43 Turnpike Rd, Southborough</td><td><a href="tel:5084607900">(508) 460-7900</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>14</td><td>Bella Marble &amp; Granite</td><td>308 Central St, Hudson</td><td><a href="tel:5088163991">(508) 816-3991</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>15</td><td>Stone Concepts</td><td>Hudson, MA</td><td><a href="tel:9785681911">(978) 568-1911</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>16</td><td>Mass Granite &amp; Marble</td><td>49 Knox Trl, Acton</td><td><a href="tel:9788976405">(978) 897-6405</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>17</td><td>New Capital Granite</td><td>6 Ledge Rock Way, Acton</td><td><a href="tel:6176990114">(617) 699-0114</a></td><td><span class="region-tag r-metro">MetroWest</span></td></tr>
+                <tr><td>18</td><td>Marble &amp; Granite International (MGI)</td><td>99 Hammond St, Waltham</td><td><a href="tel:7816471979">(781) 647-1979</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>19</td><td>Stone Surfaces Inc</td><td>275 Salem St, Woburn</td><td><a href="tel:7812704600">(781) 270-4600</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>20</td><td>Pablo Marble and Granite</td><td>10 Breed Ave, Woburn</td><td><a href="tel:7816962990">(781) 696-2990</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>21</td><td>GerrityStone</td><td>100A Eames St, Wilmington</td><td><a href="tel:7819381820">(781) 938-1820</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>22</td><td>Granite Design USA</td><td>18 Republic Rd, N Billerica</td><td><a href="tel:9783621373">(978) 362-1373</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>23</td><td>Granite Plus</td><td>9 Progress Ave, Chelmsford</td><td><a href="tel:9786777540">(978) 677-7540</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>24</td><td>Direct Granite Countertop</td><td>174 Old Canal Dr, Lowell</td><td><a href="tel:9786560060">(978) 656-0060</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>25</td><td>StoneOne Marble &amp; Granite</td><td>75 Mystic St, Methuen</td><td><a href="tel:9786817664">(978) 681-7664</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>26</td><td>K&amp;B Granite &amp; Marble</td><td>474 Lowell St, Peabody</td><td><a href="tel:9785364434">(978) 536-4434</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>27</td><td>North Shore Marble &amp; Granite</td><td>100 Newbury St, Danvers</td><td><a href="tel:9787774070">(978) 777-4070</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>28</td><td>Classic Rock Marble &amp; Granite</td><td>13 Mill St, Danvers</td><td><a href="tel:9783047777">(978) 304-7777</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>29</td><td>Superior Marble &amp; Granite</td><td>31 Turnpike Rd, Ipswich</td><td><a href="tel:9785398746">(978) 539-8746</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>30</td><td>South Shore Granite</td><td>145 Union St, Rockland</td><td><a href="tel:7812089793">(781) 208-9793</a></td><td><span class="region-tag r-south">S Shore</span></td></tr>
+                <tr><td>31</td><td>Global Granite MA</td><td>38 Corporate Park Dr, Pembroke</td><td><a href="tel:7818261522">(781) 826-1522</a></td><td><span class="region-tag r-south">S Shore</span></td></tr>
+                <tr><td>32</td><td>Precision Marble &amp; Granite</td><td>Marshfield, MA</td><td><a href="tel:7814888697">(781) 488-8697</a></td><td><span class="region-tag r-south">S Shore</span></td></tr>
+                <tr><td>33</td><td>Plymouth Marble &amp; Granite</td><td>149 Camelot Dr, Plymouth</td><td><a href="tel:5087472483">(508) 747-2483</a></td><td><span class="region-tag r-south">S Shore</span></td></tr>
+                <tr><td>34</td><td>Cape Granite Connection</td><td>18 Fruean Way, S Yarmouth</td><td><a href="tel:5086947734">(508) 694-7734</a></td><td><span class="region-tag r-cape">Cape</span></td></tr>
+                <tr><td>35</td><td>Cape Cod Marble &amp; Granite</td><td>38 Rosary Ln, Hyannis</td><td><a href="tel:5087712900">(508) 771-2900</a></td><td><span class="region-tag r-cape">Cape</span></td></tr>
+                <tr><td>36</td><td>American Stone</td><td>160 Rosary Ln, Hyannis</td><td><a href="tel:5087781123">(508) 778-1123</a></td><td><span class="region-tag r-cape">Cape</span></td></tr>
+                <tr><td>37</td><td>Continental Stone</td><td>791 Research Dr, Leominster</td><td><a href="tel:9784228700">(978) 422-8700</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>38</td><td>STONELINK Marble &amp; Granite</td><td>70 Fremont St, Worcester</td><td><a href="tel:5083930720">(508) 393-0720</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>39</td><td>AGF Marble and Granite</td><td>10 Nashua St, Worcester</td><td><a href="tel:5087572178">(508) 757-2178</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>40</td><td>Granite Brothers</td><td>43 Mason St, Worcester</td><td><a href="tel:5085008739">(508) 500-8739</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>41</td><td>Traditional Marble Granite &amp; Cabinets</td><td>545 Southwest Cutoff, Worcester</td><td><a href="tel:5087963925">(508) 796-3925</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>42</td><td>United Granite Works</td><td>31 Sword St, Auburn</td><td><a href="tel:5087522302">(508) 752-2302</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>43</td><td>All Granite and Marble</td><td>381 Worcester Rd, Charlton</td><td><a href="tel:5082489393">(508) 248-9393</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>44</td><td>Worcester Marble &amp; Granite</td><td>315 N Main St, Middleton</td><td><a href="tel:9787678353">(978) 767-8353</a></td><td><span class="region-tag r-worcester">Worcester</span></td></tr>
+                <tr><td>45</td><td>ES Countertops</td><td>3 Century Way, West Springfield</td><td><a href="tel:4137328128">(413) 732-8128</a></td><td><span class="region-tag r-western">Western</span></td></tr>
+                <tr><td>46</td><td>Northern Granite &amp; Marble</td><td>380 Union St, West Springfield</td><td><a href="tel:4137378700">(413) 737-8700</a></td><td><span class="region-tag r-western">Western</span></td></tr>
+                <tr><td>47</td><td>Granite Creations</td><td>2376 Boston Rd, Wilbraham</td><td><a href="tel:4135963141">(413) 596-3141</a></td><td><span class="region-tag r-western">Western</span></td></tr>
+                <tr><td>48</td><td>D&amp;C Granite &amp; Marble</td><td>Springfield, MA</td><td>—</td><td><span class="region-tag r-western">Western</span></td></tr>
+                <tr><td>49</td><td>Boston Granite Countertops</td><td>58 Walnut St, Peabody, MA</td><td>—</td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>50</td><td>Select Stone Inc</td><td>Lowell, MA</td><td>—</td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>51</td><td>Granite Inc</td><td>Woburn, MA</td><td>—</td><td><span class="region-tag r-north">North Shore</span></td></tr>
+                <tr><td>52</td><td>L&amp;M Marble &amp; Granite</td><td>Massachusetts</td><td>—</td><td><span class="region-tag r-canton">Greater Boston</span></td></tr>
+                <tr><td>53</td><td>Stone Design Pro</td><td>Weymouth, MA</td><td>—</td><td><span class="region-tag r-canton">South</span></td></tr>
+                <tr><td>54</td><td>RKW Countertops</td><td>Massachusetts</td><td>—</td><td><span class="region-tag r-canton">Greater Boston</span></td></tr>
+                <tr><td>55</td><td>GerrityStone (Woburn)</td><td>225B Merrimac St, Woburn</td><td><a href="tel:7819381820">(781) 938-1820</a></td><td><span class="region-tag r-north">North Shore</span></td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
