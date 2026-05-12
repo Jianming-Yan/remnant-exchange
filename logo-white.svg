@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 130" width="680" height="130">
+  <!-- Left piece -->
+  <path d="M0,6 L66,6 L57,33 L69,63 L57,93 L66,123 L0,123 Z" fill="#94a3b8"/>
+  <line x1="9" y1="33" x2="54" y2="33" stroke="rgba(255,255,255,0.32)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="9" y1="63" x2="60" y2="63" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="9" y1="93" x2="54" y2="93" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Right piece -->
+  <path d="M73,6 L144,6 L144,123 L73,123 L64,93 L76,63 L64,33 L73,6 Z" fill="#60a5fa"/>
+  <line x1="82" y1="33" x2="136" y2="33" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="82" y1="63" x2="136" y2="63" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="82" y1="93" x2="136" y2="93" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Wordmark -->
+  <text x="166" y="82" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="69" font-weight="800" fill="#60a5fa" letter-spacing="-0.03em">Remnant</text>
+  <text x="169" y="118" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="33" font-weight="500" fill="#94a3b8" letter-spacing="0.12em">EXCHANGE</text>
+</svg>

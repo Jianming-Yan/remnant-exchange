@@ -58,7 +58,7 @@ router.get('/verify-email', async (req, res) => {
             return res.status(400).json({ error: 'Verification link has expired' });
         }
 
-        await run(`UPDATE users SET email_verified = 1 WHERE id = ?`, [record.user_id]);
+        await run(`UPDATE users SET email_verified = 1, approved = 1 WHERE id = ?`, [record.user_id]);
         await run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
 
         const user = await get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
