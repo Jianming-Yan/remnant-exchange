@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Preview | Remnant Exchange</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; padding: 40px 20px; color: #1e293b; }
+        .page { max-width: 700px; margin: 0 auto; }
+        h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+        .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 32px; }
+        .preview-box {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 40px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .preview-box.dark { background: #1e293b; }
+        .preview-box.blue { background: #3b82f6; }
+        .label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        .sizes {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 32px 40px;
+            margin-bottom: 16px;
+        }
+        .download-btn {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-decoration: none;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <h1>Remnant Exchange Logo</h1>
+    <p class="subtitle">SVG format — scales to any size without losing quality.</p>
+
+    <div class="label">On white background</div>
+    <div class="preview-box">
+        <img src="/logo.svg" width="320">
+    </div>
+
+    <div class="label">On dark background</div>
+    <div class="preview-box dark">
+        <img src="/logo.svg" width="320">
+    </div>
+
+    <div class="label">Different sizes</div>
+    <div class="sizes">
+        <img src="/logo.svg" width="240">
+        <img src="/logo.svg" width="160">
+        <img src="/logo.svg" width="100">
+        <img src="/logo.svg" width="60">
+    </div>
+
+    <a href="/logo.svg" download class="download-btn">Download SVG</a>
+</div>
+</body>
+</html>
