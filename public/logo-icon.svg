@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 60" width="56" height="60">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 80" width="56" height="80">
   <!-- Left piece (stone gray) -->
-  <path d="M0,4 L25,4 L21,16 L27,28 L21,40 L25,54 L0,54 Z" fill="#64748b"/>
-  <line x1="4" y1="16" x2="20" y2="16" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="4" y1="28" x2="22" y2="28" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" stroke-linecap="round"/>
-  <line x1="4" y1="40" x2="20" y2="40" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M0,4 L24,4 L19,22 L25,42 L19,62 L24,76 L0,76 Z" fill="#64748b"/>
+  <line x1="4" y1="22" x2="18" y2="22" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="4" y1="42" x2="20" y2="42" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="4" y1="62" x2="18" y2="62" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-linecap="round"/>
 
-  <!-- Right piece (blue, 4px gap) -->
-  <path d="M29,4 L54,4 L54,54 L29,54 L25,40 L31,28 L25,16 L29,4 Z" fill="#3b82f6"/>
-  <line x1="33" y1="16" x2="51" y2="16" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="33" y1="28" x2="51" y2="28" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-linecap="round"/>
-  <line x1="33" y1="40" x2="51" y2="40" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Right piece (blue, 5px gap) -->
+  <path d="M29,4 L54,4 L54,76 L29,76 L24,62 L30,42 L24,22 L29,4 Z" fill="#3b82f6"/>
+  <line x1="33" y1="22" x2="51" y2="22" stroke="rgba(255,255,255,0.32)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="33" y1="42" x2="51" y2="42" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="33" y1="62" x2="51" y2="62" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
