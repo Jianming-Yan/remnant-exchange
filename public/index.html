@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stone Remnants For Sale — Granite, Marble, Quartz | Remnant Exchange</title>
+    <title>Stone Remnants For Sale â€” Granite, Marble, Quartz | Remnant Exchange</title>
     <meta name="description" content="Find discounted granite, marble, quartz and quartzite stone remnants from verified fabricators near you. Perfect for countertops, backsplashes, and home projects.">
     <meta name="keywords" content="stone remnants, granite remnants, marble remnants, quartz remnants, quartzite remnants, countertop remnants, stone slabs for sale">
     <meta property="og:title" content="Stone Remnants For Sale | Remnant Exchange">
@@ -32,7 +32,7 @@
 <body>
 
 <nav>
-    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="36" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="42" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
     <div class="nav-links" id="navLinks">
         <a href="/">Browse</a>
         <a href="/login.html" id="loginLink">Login</a>
@@ -256,7 +256,7 @@
                 input.value = '';
                 return;
             }
-            status.textContent = `Identified: ${data.material_type || ''}${data.stone_name ? ' — ' + data.stone_name : ''}`;
+            status.textContent = `Identified: ${data.material_type || ''}${data.stone_name ? ' â€” ' + data.stone_name : ''}`;
             applyFilters();
         } catch {
             status.textContent = 'Could not identify. Try another photo.';
@@ -285,7 +285,7 @@
         document.getElementById('modalImg').innerHTML = listing.photos && listing.photos.length
             ? `<img src="/uploads/${listing.photos[0].filename}" alt="${stoneName}">`
             : 'No photo available';
-        document.getElementById('modalTitle').textContent = `${listing.material_type} — ${stoneName}`;
+        document.getElementById('modalTitle').textContent = `${listing.material_type} â€” ${stoneName}`;
         const isL = listing.shape === 'lshape';
         const dims = isL && listing.length2
             ? `${listing.length}" x ${listing.width}" + ${listing.length2}" x ${listing.width2}"`

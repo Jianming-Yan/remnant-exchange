@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — Remnant Exchange</title>
+    <title>Dashboard â€” Remnant Exchange</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <nav>
-    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="36" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="42" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
     <div class="nav-links">
         <a href="/">Browse</a>
         <span id="navUser" style="color:#94a3b8;font-size:0.9rem;"></span>
@@ -247,7 +247,7 @@
                         </div>
                         <div class="card-body">
                             <div class="card-material">${l.material_type}</div>
-                            <div class="card-title">${l.stone_name || l.color || '—'}</div>
+                            <div class="card-title">${l.stone_name || l.color || 'â€”'}</div>
                             <div class="card-dims">${l.length}" x ${l.width}" &bull; ${l.thickness}${l.shape === 'lshape' ? ' (L)' : ''}</div>
                             <div class="card-location">&#128205; ${l.metro_name}, ${l.state_abbr}</div>
                             <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
@@ -268,7 +268,7 @@
     }
 
     function viewListing(l) {
-        const stoneName = l.stone_name || l.color || '—';
+        const stoneName = l.stone_name || l.color || 'â€”';
         const isL = l.shape === 'lshape';
         const dims = isL && l.length2
             ? `${l.length}" x ${l.width}" + ${l.length2}" x ${l.width2}"`
@@ -277,7 +277,7 @@
         document.getElementById('detailImg').innerHTML = l.photos && l.photos.length
             ? `<img src="/uploads/${l.photos[0].filename}" alt="${stoneName}">`
             : 'No photo available';
-        document.getElementById('detailTitle').textContent = `${l.material_type} — ${stoneName}`;
+        document.getElementById('detailTitle').textContent = `${l.material_type} â€” ${stoneName}`;
         document.getElementById('detailGrid').innerHTML = `
             <div class="detail-item"><label>Material</label><span>${l.material_type}</span></div>
             <div class="detail-item"><label>Stone Name</label><span>${stoneName}</span></div>
@@ -547,7 +547,7 @@
                     const match = Array.from(matSel.options).find(o => o.value.toLowerCase() === data.material_type.toLowerCase());
                     if (match) matSel.value = match.value;
                 }
-                result.textContent = `Identified: ${data.material_type} — ${data.stone_name}`;
+                result.textContent = `Identified: ${data.material_type} â€” ${data.stone_name}`;
                 result.style.background = '#f0fdf4';
                 result.style.color = '#166534';
             } else {
