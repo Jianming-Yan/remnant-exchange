@@ -109,11 +109,8 @@ async function initSchema() {
         duration_days INTEGER NOT NULL
     )`);
 
-    const planCount = await get(`SELECT count(*) as cnt FROM plan_settings`);
-    if (Number(planCount.cnt) === 0) {
-        await run(`INSERT INTO plan_settings VALUES ('free', 5, 90)`);
-        await run(`INSERT INTO plan_settings VALUES ('paid', 50, 730)`);
-    }
+    await run(`INSERT OR REPLACE INTO plan_settings VALUES ('free', 20, 90)`);
+    await run(`INSERT OR REPLACE INTO plan_settings VALUES ('paid', 50, 730)`);
 
     await seedStates();
 }
