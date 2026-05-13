@@ -122,6 +122,20 @@ router.patch('/plan-settings/:plan', requireAdmin, async (req, res) => {
     res.json({ message: 'Plan settings updated' });
 });
 
+router.delete('/clear-fabricators', requireAdmin, async (req, res) => {
+    const users = await query(`SELECT id FROM users WHERE role != 'admin'`);
+    for (const u of users) {
+        const listings = await query(`SELECT id FROM listings WHERE user_id = ?`, [u.id]);
+        for (const l of listings) {
+            await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [l.id]);
+        }
+        await run(`DELETE FROM listings WHERE user_id = ?`, [u.id]);
+        await run(`DELETE FROM email_tokens WHERE user_id = ?`, [u.id]);
+        await run(`DELETE FROM users WHERE id = ?`, [u.id]);
+    }
+    res.json({ message: `Deleted ${users.length} user(s)` });
+});
+
 router.get('/stats', requireAdmin, async (req, res) => {
     const totalFabricators = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND approved = 1`);
     const pendingApproval = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND email_verified = 1 AND approved = 0`);
