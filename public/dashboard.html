@@ -10,7 +10,7 @@
 </head>
 <body>
 <nav>
-    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
     <div class="nav-links">
         <a href="/">Browse</a>
         <span id="navUser" style="color:#94a3b8;font-size:0.9rem;"></span>
@@ -140,9 +140,9 @@
                     <label>Photos (up to 5)</label>
                     <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
                         <div style="font-size:2rem;">&#128247;</div>
-                        <p>Click to upload photos (JPG, PNG, max 5MB each)</p>
+                        <p>Click to upload photos (JPG, PNG, WebP, HEIC &mdash; max 10MB each)</p>
                     </div>
-                    <input type="file" id="photoInput" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)">
+                    <input type="file" id="photoInput" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/*" style="display:none" onchange="previewPhotos(this)">
                     <div class="photo-previews" id="photoPreviews"></div>
                     <button type="button" class="btn btn-secondary" id="identifyBtn" onclick="identifyStone()" style="margin-top:10px;width:100%;">Identify Stone with AI</button>
                     <div id="identifyResult" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:6px;color:#166534;"></div>
@@ -242,7 +242,7 @@
                     <div class="card" onclick="viewListing(${JSON.stringify(l).replace(/"/g, '&quot;')})">
                         <div class="card-img">
                             ${l.photos && l.photos.length
-                                ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.stone_name || l.color}">`
+                                ? `<img src="${l.photos[0].filename.startsWith('http') ? l.photos[0].filename : '/uploads/' + l.photos[0].filename}" alt="${l.stone_name || l.color}">`
                                 : 'No photo'}
                         </div>
                         <div class="card-body">
@@ -275,7 +275,7 @@
             : `${l.length}" x ${l.width}"`;
 
         document.getElementById('detailImg').innerHTML = l.photos && l.photos.length
-            ? `<img src="/uploads/${l.photos[0].filename}" alt="${stoneName}">`
+            ? `<img src="${l.photos[0].filename.startsWith('http') ? l.photos[0].filename : '/uploads/' + l.photos[0].filename}" alt="${stoneName}">`
             : 'No photo available';
         document.getElementById('detailTitle').textContent = `${l.material_type} â€” ${stoneName}`;
         document.getElementById('detailGrid').innerHTML = `

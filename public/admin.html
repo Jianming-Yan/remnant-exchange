@@ -8,7 +8,7 @@
 </head>
 <body>
 <nav>
-    <a href="/" class="nav-logo">Remnant<span>Exchange</span></a>
+    <a href="/" class="nav-logo">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
     <div class="nav-links">
         <span style="color:#94a3b8;font-size:0.85rem;">Admin Panel</span>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
@@ -20,6 +20,7 @@
         <a href="#" class="active" onclick="showSection('overview', this)">&#128202; Overview</a>
         <a href="#" onclick="showSection('pending', this)">&#9203; Pending Approval</a>
         <a href="#" onclick="showSection('fabricators', this)">&#128101; Fabricators</a>
+        <a href="#" onclick="showSection('seeded', this)">&#127807; Seeded Listings</a>
         <a href="#" onclick="showSection('locations', this)">&#128205; Manage Locations</a>
         <a href="#" onclick="showSection('plans', this)">&#9881; Plan Settings</a>
     </div>
@@ -42,6 +43,16 @@
         <div id="section-fabricators" style="display:none">
             <h2 style="margin-bottom:24px;">All Fabricators</h2>
             <div id="fabricatorsContent">Loading...</div>
+        </div>
+
+        <!-- SEEDED LISTINGS -->
+        <div id="section-seeded" style="display:none">
+            <h2 style="margin-bottom:8px;">Seeded Listings</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">
+                These are placeholder listings created to make the platform look active while you're building your real user base.
+                Remove them once you have enough real listings (suggest: 30+ real listings before removing).
+            </p>
+            <div id="seededContent">Loading...</div>
         </div>
 
         <!-- LOCATIONS -->
@@ -91,6 +102,7 @@
         if (el) el.classList.add('active');
         if (name === 'pending') loadPending();
         if (name === 'fabricators') loadFabricators();
+        if (name === 'seeded') loadSeeded();
         if (name === 'locations') loadStates();
         if (name === 'plans') loadPlanSettings();
     }
@@ -103,6 +115,7 @@
             <div class="stat-card"><div class="value" style="color:#f59e0b">${s.pendingApproval}</div><div class="label">Pending Approval</div></div>
             <div class="stat-card"><div class="value" style="color:#22c55e">${s.activeListings}</div><div class="label">Active Listings</div></div>
             <div class="stat-card"><div class="value" style="color:#ef4444">${s.expiredListings}</div><div class="label">Expired Listings</div></div>
+            ${s.seededListings > 0 ? `<div class="stat-card"><div class="value" style="color:#8b5cf6">${s.seededListings}</div><div class="label">Seeded (Placeholder)</div></div>` : ''}
         `;
     }
 
@@ -123,7 +136,7 @@
                                 <td>${u.name}</td>
                                 <td>${u.business_name}</td>
                                 <td>${u.email}</td>
-                                <td>${u.phone || 'â€”'}</td>
+                                <td>${u.phone ? `<a href=”tel:${u.phone}” style=”color:#1e293b;text-decoration:none;”>${u.phone}</a>` : '—'}</td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
                                 <td>
                                     <button class="btn btn-success btn-sm" onclick="approve('${u.id}')" style="margin-right:6px;">Approve</button>
@@ -160,13 +173,14 @@
         document.getElementById('fabricatorsContent').innerHTML = `
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
                     <tbody>
                         ${users.map(u => `
                             <tr>
                                 <td>${u.name}</td>
                                 <td>${u.business_name}</td>
                                 <td>${u.email}</td>
+                                <td>${u.phone ? `<a href="tel:${u.phone}" style="color:#1e293b;text-decoration:none;">${u.phone}</a>` : '—'}</td>
                                 <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
                                 <td><span class="badge ${u.approved ? 'badge-active' : 'badge-pending'}">${u.approved ? 'Approved' : 'Pending'}</span></td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
@@ -227,6 +241,44 @@
             const stateEl = document.querySelector(`[onclick*="${selectedStateId}"]`);
             if (stateEl) stateEl.click();
         }
+    }
+
+    async function loadSeeded() {
+        const res = await fetch('/api/admin/seeded-listings', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        const count = data.count || 0;
+        document.getElementById('seededContent').innerHTML = count === 0
+            ? `<div class="empty-state">
+                <h3>No seeded listings</h3>
+                <p>Run <code>node seed-listings.js</code> on the server to create 50 placeholder listings.</p>
+               </div>`
+            : `<div style="background:white;border-radius:12px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,0.07);max-width:480px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                    <div style="background:#f3e8ff;border-radius:10px;padding:12px 18px;">
+                        <div style="font-size:2rem;font-weight:800;color:#7c3aed;">${count}</div>
+                        <div style="font-size:0.78rem;color:#6d28d9;font-weight:600;">Seeded Listings Active</div>
+                    </div>
+                    <div style="font-size:0.85rem;color:#64748b;line-height:1.6;">
+                        Visitors can see these listings and will be encouraged to register.
+                        Remove them when you have <strong>30+ real listings</strong>.
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="removeSeeded()" style="width:100%;">
+                    Remove All Seeded Listings
+                </button>
+               </div>`;
+    }
+
+    async function removeSeeded() {
+        if (!confirm('Remove all seeded (placeholder) listings? This cannot be undone.')) return;
+        const res = await fetch('/api/admin/seeded-listings', {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+        loadSeeded();
+        loadStats();
     }
 
     async function loadPlanSettings() {

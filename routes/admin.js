@@ -137,17 +137,39 @@ router.delete('/clear-fabricators', requireAdmin, async (req, res) => {
 });
 
 router.get('/stats', requireAdmin, async (req, res) => {
-    const totalFabricators = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND approved = 1`);
+    const totalFabricators = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND approved = 1 AND email != 'seed@remnantexchange.org'`);
     const pendingApproval = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND email_verified = 1 AND approved = 0`);
-    const activeListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'active'`);
-    const expiredListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'expired'`);
+    const activeListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'active' AND is_seeded = 0`);
+    const expiredListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'expired' AND is_seeded = 0`);
+    const seededListings = await get(`SELECT count(*) as cnt FROM listings WHERE is_seeded = 1 AND status = 'active'`);
 
     res.json({
         totalFabricators: Number(totalFabricators.cnt),
         pendingApproval: Number(pendingApproval.cnt),
         activeListings: Number(activeListings.cnt),
         expiredListings: Number(expiredListings.cnt),
+        seededListings: Number(seededListings.cnt),
     });
+});
+
+router.get('/seeded-listings', requireAdmin, async (req, res) => {
+    const count = await get(`SELECT count(*) as cnt FROM listings WHERE is_seeded = 1`);
+    res.json({ count: Number(count.cnt) });
+});
+
+router.delete('/seeded-listings', requireAdmin, async (req, res) => {
+    try {
+        const seeded = await query(`SELECT id FROM listings WHERE is_seeded = 1`);
+        for (const l of seeded) {
+            await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [l.id]);
+        }
+        await run(`DELETE FROM listings WHERE is_seeded = 1`);
+        await run(`DELETE FROM users WHERE email = 'seed@remnantexchange.org'`);
+        res.json({ message: `Removed ${seeded.length} seeded listing(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to remove seeded listings' });
+    }
 });
 
 module.exports = router;

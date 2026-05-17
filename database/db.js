@@ -112,6 +112,10 @@ async function initSchema() {
     await run(`INSERT OR REPLACE INTO plan_settings VALUES ('free', 20, 90)`);
     await run(`INSERT OR REPLACE INTO plan_settings VALUES ('paid', 50, 730)`);
 
+    try {
+        await run(`ALTER TABLE listings ADD COLUMN is_seeded INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

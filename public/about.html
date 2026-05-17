@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Story | Remnant Exchange</title>
+    <meta name="description" content="Why we built Remnant Exchange — a contractor's frustrating search for a 71-inch stone piece led to a marketplace connecting fabricators and buyers nationwide.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .about-hero {
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #162032 100%);
+            color: white;
+            padding: 80px 32px 72px;
+            text-align: center;
+        }
+        .about-hero .label {
+            display: inline-block;
+            background: rgba(96,165,250,0.15);
+            color: #93c5fd;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(96,165,250,0.25);
+            margin-bottom: 20px;
+        }
+        .about-hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.15;
+            max-width: 720px;
+            margin: 0 auto 16px;
+        }
+        .about-hero h1 span { color: #60a5fa; }
+        .about-hero p {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .content { max-width: 760px; margin: 0 auto; padding: 64px 24px; }
+
+        .story-block {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px 44px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 32px;
+        }
+        .story-block p {
+            font-size: 1.05rem;
+            color: #334155;
+            line-height: 1.85;
+            margin-bottom: 20px;
+        }
+        .story-block p:last-child { margin-bottom: 0; }
+        .story-block p strong { color: #1e293b; }
+
+        .pullquote {
+            border-left: 4px solid #3b82f6;
+            padding: 6px 0 6px 24px;
+            margin: 28px 0;
+        }
+        .pullquote p {
+            font-size: 1.15rem !important;
+            font-style: italic;
+            color: #1e293b !important;
+            font-weight: 600;
+            line-height: 1.6 !important;
+            margin: 0 !important;
+        }
+
+        .founder-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px 28px;
+            margin-top: 36px;
+        }
+        .founder-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #dbeafe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #1d4ed8;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .founder-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+        .founder-card p { font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.5; }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .stat-box .num {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: #1e293b;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .stat-box .num span { color: #3b82f6; }
+        .stat-box .label { font-size: 0.8rem; color: #64748b; font-weight: 500; }
+
+        .mission-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 16px;
+            padding: 36px 40px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        .mission-box h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .mission-box p {
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.75;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .cta-block {
+            text-align: center;
+            padding: 16px 0 8px;
+        }
+        .cta-block h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+        }
+        .cta-block p { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
+        .cta-block a {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 14px 36px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+        .cta-block a:hover { background: #2563eb; }
+        .cta-block .sub { color: #94a3b8; font-size: 0.78rem; margin-top: 10px; }
+
+        @media (max-width: 640px) {
+            .story-block { padding: 28px 24px; }
+            .about-hero h1 { font-size: 1.8rem; }
+            .stat-row { grid-template-columns: 1fr; }
+            .founder-card { flex-direction: column; text-align: center; }
+            .mission-box { padding: 28px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
+    <div class="nav-links">
+        <a href="/">Browse</a>
+        <a href="/about.html" style="color:#f1f5f9;">About</a>
+        <a href="/login.html">Login</a>
+        <a href="/register.html" class="btn btn-primary">List Your Remnants</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="about-hero">
+    <div class="label">Our Story</div>
+    <h1>Built by someone who <span>couldn't find the stone</span></h1>
+    <p>A contractor's frustrating one-month search led to a simple idea: the piece you need is already out there — it's just invisible.</p>
+</div>
+
+<div class="content">
+
+    <!-- THE STORY -->
+    <div class="story-block">
+        <p>A customer came to me with a straightforward request: a stone piece, 71 inches by 10 inches. Simple enough — except it wasn't.</p>
+
+        <p>I spent <strong>over a month looking</strong>. I called six different fabricators across Massachusetts. Nobody had it, or nobody knew they had it. The piece I needed was sitting in someone's yard — I just had no way to know that.</p>
+
+        <div class="pullquote">
+            <p>"When I finally found it, the fabricator walked me out to the yard and pointed at it. It had been sitting there for months. He had no idea anyone was looking."</p>
+        </div>
+
+        <p>That moment stuck with me. Here was a fabricator with exactly what I needed, and a buyer — me — who had spent weeks searching. We were five miles apart. The only thing missing was a way to connect.</p>
+
+        <p>That's why I built Remnant Exchange. Stone fabricators across the country have leftover slab pieces — remnants from finished jobs — sitting in their shops and yards. Perfectly good stone, taking up space, slowly becoming waste. Meanwhile, homeowners and contractors are searching everywhere and coming up empty.</p>
+
+        <p>The solution isn't complicated. <strong>Fabricators list what they have. Buyers find what they need.</strong> Free for fabricators. No middlemen. No monthly fees.</p>
+
+        <div class="founder-card">
+            <div class="founder-avatar">JY</div>
+            <div>
+                <h3>Jianming Yan</h3>
+                <p>Founder, Remnant Exchange<br>Owner, Boston Building Materials &mdash; Massachusetts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+        <div class="stat-box">
+            <div class="num">1<span>mo+</span></div>
+            <div class="label">Time wasted searching before RemnantExchange existed</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">6<span>+</span></div>
+            <div class="label">Fabricators called with no result</div>
+        </div>
+        <div class="stat-box">
+            <div class="num"><span>&lt;</span>5<span>min</span></div>
+            <div class="label">Time to find 2 matching pieces once listed</div>
+        </div>
+    </div>
+
+    <!-- MISSION -->
+    <div class="mission-box">
+        <h2>Our mission</h2>
+        <p>Stone remnants are valuable material. They shouldn't sit in a yard until they're thrown away, and buyers shouldn't spend months making phone calls. Remnant Exchange closes that gap — connecting the people who have stone with the people who need it, for free.</p>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-block">
+        <h2>Have remnants sitting in your shop?</h2>
+        <p>List them free. Takes 2 minutes. Buyers come to you.</p>
+        <a href="/register.html">List Your Remnants Free &rarr;</a>
+        <p class="sub">No credit card. No monthly fee.</p>
+    </div>
+
+</div>
+
+<footer style="text-align:center;padding:32px 24px;color:#94a3b8;font-size:0.85rem;border-top:1px solid #e2e8f0;">
+    &copy; 2026 Remnant Exchange &mdash; <a href="/privacy.html" style="color:#64748b;">Privacy Policy</a> &mdash; <a href="/about.html" style="color:#64748b;">About</a>
+</footer>
+
+</body>
+</html>

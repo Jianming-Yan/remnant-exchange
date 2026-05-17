@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Leads — Print | Remnant Exchange</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 32px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .page { max-width: 1100px; margin: 0 auto; }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; }
+        .header p { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+
+        .controls { display: flex; gap: 10px; align-items: center; }
+        .btn {
+            padding: 10px 20px; border-radius: 8px; font-size: 0.85rem;
+            font-weight: 700; cursor: pointer; border: none; font-family: 'Inter', sans-serif;
+        }
+        .btn-blue { background: #3b82f6; color: white; }
+        .btn-blue:hover { background: #2563eb; }
+        .btn-outline { background: white; color: #374151; border: 1.5px solid #d1d5db; }
+        .btn-outline:hover { background: #f9fafb; }
+
+        .filter-bar {
+            display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-btn {
+            padding: 6px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; border: 1.5px solid #e2e8f0; background: white; color: #64748b;
+            font-family: 'Inter', sans-serif;
+        }
+        .filter-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
+        .filter-label { font-size: 0.8rem; color: #64748b; font-weight: 600; }
+
+        .stats { display: flex; gap: 16px; margin-bottom: 20px; }
+        .stat {
+            background: white; border: 1.5px solid #e2e8f0; border-radius: 10px;
+            padding: 12px 18px; font-size: 0.82rem;
+        }
+        .stat strong { font-size: 1.2rem; font-weight: 800; display: block; }
+        .stat.green strong { color: #16a34a; }
+        .stat.blue strong { color: #2563eb; }
+        .stat.gray strong { color: #64748b; }
+
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: #64748b; padding: 8px 0 6px;
+        }
+
+        table { width: 100%; border-collapse: collapse; background: white;
+            border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;
+        }
+        th {
+            background: #f8fafc; padding: 9px 12px; text-align: left;
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
+            color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0;
+        }
+        td { padding: 9px 12px; font-size: 0.82rem; border-top: 1px solid #f1f5f9; vertical-align: top; }
+        tr:hover td { background: #fafbfc; }
+
+        td.name { font-weight: 600; color: #0f172a; }
+        td.phone { font-family: monospace; font-size: 0.8rem; white-space: nowrap; }
+        td.phone a { color: #1e293b; text-decoration: none; }
+        td.phone a:hover { color: #2563eb; }
+        td.notes { color: #475569; font-size: 0.78rem; max-width: 280px; }
+        td.city { color: #374151; white-space: nowrap; }
+
+        .badge {
+            display: inline-block; padding: 2px 9px; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 600; white-space: nowrap;
+        }
+        .badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .badge-blue  { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .badge-gray  { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+        .row-count { font-size: 0.78rem; color: #94a3b8; padding: 8px 12px; text-align: right; }
+
+        @media print {
+            body { background: white; padding: 12px 8px; font-size: 11px; }
+            .controls, .filter-bar, .stats { display: none !important; }
+            .page { max-width: 100%; }
+            table { box-shadow: none; border: 1px solid #ccc; border-radius: 0; page-break-inside: auto; }
+            tr { page-break-inside: avoid; }
+            td, th { padding: 5px 8px; }
+            .section-label { padding: 14px 0 4px; }
+            a { color: inherit !important; text-decoration: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <div>
+            <h1>Phone Leads — MA Fabricators</h1>
+            <p id="subtitle">Remnant Exchange outreach list</p>
+        </div>
+        <div class="controls">
+            <button class="btn btn-outline" onclick="window.print()">Print / Save PDF</button>
+        </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="filter-bar">
+        <span class="filter-label">Show:</span>
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+        <button class="filter-btn" data-filter="Follow Up" onclick="setFilter('Follow Up', this)">Follow Up only</button>
+        <button class="filter-btn" data-filter="Not Called" onclick="setFilter('Not Called', this)">Not Called only</button>
+        <span class="filter-label" style="margin-left:8px;">Region:</span>
+        <select id="regionFilter" onchange="renderTable()" style="padding:5px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:0.8rem;font-family:Inter,sans-serif;">
+            <option value="all">All Regions</option>
+        </select>
+    </div>
+
+    <div id="output"></div>
+
+</div>
+
+<script>
+let allLeads = [];
+let currentFilter = 'all';
+
+function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',');
+    return lines.slice(1).map(line => {
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let c of line) {
+            if (c === '"') { inQ = !inQ; }
+            else if (c === ',' && !inQ) { cols.push(cur); cur = ''; }
+            else cur += c;
+        }
+        cols.push(cur);
+        const obj = {};
+        headers.forEach((h, i) => obj[h.trim()] = (cols[i] || '').trim());
+        return obj;
+    }).filter(r => r['Business Name']);
+}
+
+function formatPhone(p) {
+    if (!p) return '—';
+    const d = p.replace(/\D/g, '');
+    if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+    return p;
+}
+
+function renderTable() {
+    const regionSel = document.getElementById('regionFilter').value;
+    let leads = allLeads;
+
+    if (currentFilter !== 'all') leads = leads.filter(r => r['Status'] === currentFilter);
+    if (regionSel !== 'all') leads = leads.filter(r => r['Region'] === regionSel);
+
+    const followUp = leads.filter(r => r['Status'] === 'Follow Up');
+    const notCalled = leads.filter(r => r['Status'] === 'Not Called');
+
+    let html = '';
+
+    if (followUp.length) {
+        html += `<div class="section-label">Follow Up — ${followUp.length} warm leads</div>`;
+        html += buildTable(followUp, 'green');
+    }
+    if (notCalled.length) {
+        html += `<div class="section-label">Not Called — ${notCalled.length} leads</div>`;
+        html += buildTable(notCalled, 'blue');
+    }
+    if (!leads.length) html = '<p style="color:#94a3b8;padding:20px 0;">No leads match this filter.</p>';
+
+    document.getElementById('output').innerHTML = html;
+}
+
+function buildTable(rows, color) {
+    const badge = color === 'green'
+        ? '<span class="badge badge-green">Follow Up</span>'
+        : '<span class="badge badge-blue">Not Called</span>';
+
+    let html = `<table>
+        <thead><tr>
+            <th>#</th>
+            <th>Business Name</th>
+            <th>City</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Website</th>
+            <th>Region</th>
+            <th>Status</th>
+            <th>Notes</th>
+        </tr></thead><tbody>`;
+
+    rows.forEach((r, i) => {
+        const phone = r['Phone'];
+        const phoneDisplay = phone
+            ? `<a href="tel:${phone}">${formatPhone(phone)}</a>`
+            : '—';
+        const website = r['Website']
+            ? `<a href="https://${r['Website']}" target="_blank" style="color:#2563eb;font-size:0.75rem;">${r['Website'].replace(/^www\./,'')}</a>`
+            : '—';
+        const email = r['Email']
+            ? `<a href="mailto:${r['Email']}" style="color:#2563eb;font-size:0.75rem;">${r['Email']}</a>`
+            : '—';
+
+        html += `<tr>
+            <td style="color:#94a3b8;font-size:0.75rem;">${i + 1}</td>
+            <td class="name">${r['Business Name']}</td>
+            <td class="city">${r['City'] || '—'}</td>
+            <td class="phone">${phoneDisplay}</td>
+            <td style="font-size:0.75rem;">${email}</td>
+            <td style="font-size:0.75rem;">${website}</td>
+            <td style="font-size:0.78rem;color:#475569;">${r['Region'] || '—'}</td>
+            <td>${badge}</td>
+            <td class="notes">${r['Notes'] || ''}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    return html;
+}
+
+fetch('/fabricator-leads-MA.csv')
+    .then(r => r.text())
+    .then(text => {
+        allLeads = parseCSV(text);
+
+        // Populate region filter
+        const regions = [...new Set(allLeads.map(r => r['Region']).filter(Boolean))].sort();
+        const sel = document.getElementById('regionFilter');
+        regions.forEach(reg => {
+            const opt = document.createElement('option');
+            opt.value = reg; opt.textContent = reg;
+            sel.appendChild(opt);
+        });
+
+        // Stats
+        const followUp = allLeads.filter(r => r['Status'] === 'Follow Up').length;
+        const notCalled = allLeads.filter(r => r['Status'] === 'Not Called').length;
+        document.getElementById('stats').innerHTML = `
+            <div class="stat green"><strong>${followUp}</strong>Follow Up</div>
+            <div class="stat blue"><strong>${notCalled}</strong>Not Called</div>
+            <div class="stat gray"><strong>${allLeads.length}</strong>Total Leads</div>
+        `;
+        document.getElementById('subtitle').textContent =
+            `${allLeads.length} MA fabricators · as of ${new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}`;
+
+        renderTable();
+    })
+    .catch(() => {
+        document.getElementById('output').innerHTML =
+            '<p style="color:#dc2626;padding:20px 0;">Could not load phone-leads.csv. Make sure the server is running.</p>';
+    });
+</script>
+</body>
+</html>

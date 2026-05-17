@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Script | Remnant Exchange</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .page { max-width: 740px; margin: 0 auto; }
+        h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+        .subtitle { color: #64748b; font-size: 0.875rem; margin-bottom: 32px; }
+
+        .card {
+            background: white; border: 1.5px solid #e2e8f0;
+            border-radius: 14px; margin-bottom: 20px;
+            overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .card-header {
+            padding: 14px 24px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .card-header.blue { background: #eff6ff; border-bottom-color: #bfdbfe; }
+        .card-header.green { background: #f0fdf4; border-bottom-color: #bbf7d0; }
+        .card-header.yellow { background: #fefce8; border-bottom-color: #fef08a; }
+        .card-header.red { background: #fef2f2; border-bottom-color: #fecaca; }
+        .card-header.gray { background: #f8fafc; border-bottom-color: #e2e8f0; }
+
+        .tag {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 3px 10px; border-radius: 999px;
+        }
+        .tag-blue { background: #dbeafe; color: #1d4ed8; }
+        .tag-green { background: #dcfce7; color: #15803d; }
+        .tag-yellow { background: #fef9c3; color: #92400e; }
+        .tag-red { background: #fee2e2; color: #dc2626; }
+        .tag-gray { background: #f1f5f9; color: #475569; }
+
+        .card-header h2 { font-size: 0.95rem; font-weight: 700; }
+        .card-body { padding: 20px 24px; }
+
+        .script-line {
+            background: #f8fafc; border-left: 4px solid #3b82f6;
+            padding: 14px 18px; border-radius: 0 10px 10px 0;
+            font-size: 0.9rem; color: #0f172a; line-height: 1.7;
+            margin-bottom: 12px; font-style: italic;
+        }
+        .script-line.green { border-left-color: #22c55e; }
+        .script-line.yellow { border-left-color: #f59e0b; }
+        .script-line.red { border-left-color: #ef4444; }
+
+        .note {
+            font-size: 0.8rem; color: #64748b; line-height: 1.6;
+            margin-bottom: 12px; padding-left: 4px;
+        }
+        .note strong { color: #0f172a; }
+
+        .objection { margin-bottom: 20px; }
+        .objection-q {
+            font-size: 0.875rem; font-weight: 700; color: #dc2626;
+            margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+        }
+        .objection-q::before { content: '❓'; font-style: normal; }
+        .objection-a {
+            font-size: 0.875rem; color: #166534; line-height: 1.65;
+            background: #f0fdf4; padding: 12px 16px; border-radius: 8px;
+            border-left: 3px solid #22c55e;
+        }
+        .objection-a::before { content: '✅  '; font-weight: 700; }
+
+        .tips { display: flex; flex-direction: column; gap: 10px; }
+        .tip {
+            display: flex; gap: 10px; align-items: flex-start;
+            font-size: 0.875rem; color: #475569; line-height: 1.6;
+        }
+        .tip-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+        .print-btn {
+            background: #3b82f6; color: white; border: none; padding: 12px 28px;
+            border-radius: 8px; font-size: 0.875rem; font-weight: 700;
+            cursor: pointer; font-family: 'Inter', sans-serif;
+            display: block; margin: 28px auto 0;
+        }
+        .print-btn:hover { background: #2563eb; }
+
+        @media print {
+            body { background: white; padding: 16px; }
+            .print-btn { display: none; }
+            .card { break-inside: avoid; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <h1>Phone Outreach Script</h1>
+    <p class="subtitle">Remnant Exchange — use this for cold calls to stone fabricators</p>
+
+    <!-- OPENING -->
+    <div class="card">
+        <div class="card-header blue">
+            <span class="tag tag-blue">Step 1</span>
+            <h2>Opening — First 10 Seconds</h2>
+        </div>
+        <div class="card-body">
+            <p class="note">Be warm, direct, and respectful of their time. Don't ask "How are you?" — fabricators are busy.</p>
+            <div class="script-line">
+                "Hi, my name is Jianming, I'm calling from Remnant Exchange. Is the owner available for just 30 seconds?"
+            </div>
+            <p class="note"><strong>If owner is not available:</strong></p>
+            <div class="script-line yellow">
+                "No problem — can I get their name and best time to reach them? I'll call back then."
+            </div>
+        </div>
+    </div>
+
+    <!-- PITCH -->
+    <div class="card">
+        <div class="card-header green">
+            <span class="tag tag-green">Step 2</span>
+            <h2>The 30-Second Pitch</h2>
+        </div>
+        <div class="card-body">
+            <p class="note">Once you have the owner, keep it short. One problem, one solution, one ask.</p>
+            <div class="script-line green">
+                "I run a free website called Remnant Exchange — remnantexchange.org — where stone fabricators list their leftover slab remnants for sale. Buyers find you, you clear your shop floor, and it costs nothing. Takes about 5 minutes to sign up. Would you be open to taking a quick look?"
+            </div>
+        </div>
+    </div>
+
+    <!-- IF INTERESTED -->
+    <div class="card">
+        <div class="card-header green">
+            <span class="tag tag-green">Step 3A</span>
+            <h2>If They're Interested</h2>
+        </div>
+        <div class="card-body">
+            <div class="script-line green">
+                "Great — go to remnantexchange.org — that's dot ORG, not dot com. Click Register, it's free. Once you're in, post a photo of one remnant and you're live. Any questions, call me at 617-606-5840."
+            </div>
+            <p class="note" style="margin-top:8px;"><strong>Then follow up by text immediately:</strong> "Hi [Name], it's Jianming from Remnant Exchange. Here's the link: remnantexchange.org — free signup, takes 5 min."</p>
+        </div>
+    </div>
+
+    <!-- IF HESITANT -->
+    <div class="card">
+        <div class="card-header yellow">
+            <span class="tag tag-yellow">Step 3B</span>
+            <h2>If They Need to Think</h2>
+        </div>
+        <div class="card-body">
+            <div class="script-line yellow">
+                "Totally understand — there's no rush. It's completely free, no contract, so there's really nothing to lose. Can I text you the link? You can look whenever you have a minute."
+            </div>
+            <p class="note"><strong>Log the follow-up date and call back in 3–5 days.</strong></p>
+        </div>
+    </div>
+
+    <!-- OBJECTIONS -->
+    <div class="card">
+        <div class="card-header red">
+            <span class="tag tag-red">Step 4</span>
+            <h2>Handling Objections</h2>
+        </div>
+        <div class="card-body">
+
+            <div class="objection">
+                <div class="objection-q">"I don't have time for this."</div>
+                <div class="objection-a">"I understand — signing up takes 5 minutes and you never have to touch it again unless a buyer contacts you. Can I text you the link for when you have a slow moment?"</div>
+            </div>
+
+            <div class="objection">
+                <div class="objection-q">"How much does it cost?"</div>
+                <div class="objection-a">"It's completely free to list. No monthly fee, no commission, no credit card. We're building the network right now and we want fabricators on board."</div>
+            </div>
+
+            <div class="objection">
+                <div class="objection-q">"I need to ask my boss / owner."</div>
+                <div class="objection-a">"Of course — it's free and there's no contract, so there's nothing to approve. You can sign up and show them — it takes 5 minutes. But if you'd like, I can call back when the owner is available."</div>
+            </div>
+
+            <div class="objection">
+                <div class="objection-q">"We already sell our remnants."</div>
+                <div class="objection-a">"That's great — this just gives you another channel to reach more buyers. More buyers means faster sales and less stone sitting in your shop. And it's free, so there's no downside to listing."</div>
+            </div>
+
+            <div class="objection">
+                <div class="objection-q">"I'm not interested."</div>
+                <div class="objection-a">"No problem at all. If anything changes, the site is remnantexchange.org — free anytime. Thank you for your time!"</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VOICEMAIL -->
+    <div class="card">
+        <div class="card-header gray">
+            <span class="tag tag-gray">Voicemail</span>
+            <h2>If You Get Voicemail</h2>
+        </div>
+        <div class="card-body">
+            <div class="script-line">
+                "Hi, this is Jianming calling from Remnant Exchange — a free website where stone fabricators sell their leftover remnants. I'd love to tell you about it. Please call me back at 617-606-5840, or visit remnantexchange.org — that's dot ORG. Thank you!"
+            </div>
+            <p class="note" style="margin-top:8px;"><strong>Call back in 2 days if no response.</strong></p>
+        </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="card">
+        <div class="card-header gray">
+            <span class="tag tag-gray">Tips</span>
+            <h2>Calling Tips</h2>
+        </div>
+        <div class="card-body">
+            <div class="tips">
+                <div class="tip"><div class="tip-icon">⏰</div><div><strong>Best time to call:</strong> 9–11am and 2–4pm. Avoid Mondays before 10am and Fridays after 3pm.</div></div>
+                <div class="tip"><div class="tip-icon">📱</div><div><strong>Text after every call:</strong> Send the link immediately after a positive call — while they still remember you.</div></div>
+                <div class="tip"><div class="tip-icon">📋</div><div><strong>Log every call:</strong> Even no-answers. It keeps you organized and shows your activity.</div></div>
+                <div class="tip"><div class="tip-icon">🔄</div><div><strong>Call back 3 times</strong> before marking as not interested. Most people need 2–3 touches.</div></div>
+                <div class="tip"><div class="tip-icon">🎯</div><div><strong>Goal: 20–30 calls per day.</strong> Expect 3–5 interested per 20 calls.</div></div>
+                <div class="tip"><div class="tip-icon">🌐</div><div><strong>Always say "dot ORG"</strong> — not dot com. Repeat it twice if needed.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+</div>
+</body>
+</html>

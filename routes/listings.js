@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireApprovedFabricator, requireAuth } = require('../middleware/auth');
@@ -9,28 +9,48 @@ const { sendContactMessage } = require('../utils/email');
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
-    filename: (req, file, cb) => cb(null, uuidv4() + path.extname(file.originalname)),
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
+
+function photoFilter(req, file, cb) {
+    if (ALLOWED_EXTS.includes(path.extname(file.originalname).toLowerCase())) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only JPG, PNG, WebP, and HEIC photos are accepted'));
+    }
+}
 
 const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
-        cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
-    },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: photoFilter,
 });
 
-const uploadMemory = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
-        cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
-    },
-});
+function uploadToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            { folder: 'remnant-exchange', resource_type: 'image' },
+            (error, result) => error ? reject(error) : resolve(result.secure_url)
+        ).end(buffer);
+    });
+}
+
+function cloudinaryPublicId(url) {
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+    return match ? match[1] : null;
+}
+
+async function deleteFromCloudinary(url) {
+    try {
+        const publicId = cloudinaryPublicId(url);
+        if (publicId) await cloudinary.uploader.destroy(publicId);
+    } catch {}
+}
 
 router.get('/', async (req, res) => {
     const { state, metro, material, search, page = 1 } = req.query;
@@ -96,7 +116,12 @@ router.get('/my', requireApprovedFabricator, async (req, res) => {
     res.json(listings);
 });
 
-router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (req, res) => {
+router.post('/', requireApprovedFabricator, (req, res, next) => {
+    upload.array('photos', 5)(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be under 10MB' : err.message });
+        next();
+    });
+}, async (req, res) => {
     try {
         const { material_type, stone_name, length, width, thickness, state_id, metro_id, description,
                 shape, length2, width2, vendor_name, bundle_number } = req.body;
@@ -129,8 +154,9 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (re
 
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
+                const url = await uploadToCloudinary(req.files[i].buffer);
                 await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
-                    [uuidv4(), id, req.files[i].filename, i]);
+                    [uuidv4(), id, url, i]);
             }
         }
 
@@ -141,7 +167,7 @@ router.post('/', requireApprovedFabricator, upload.array('photos', 5), async (re
     }
 });
 
-router.post('/identify-stone', uploadMemory.single('photo'), async (req, res) => {
+router.post('/identify-stone', upload.single('photo'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No photo provided' });
 
@@ -180,7 +206,12 @@ router.post('/identify-stone', uploadMemory.single('photo'), async (req, res) =>
     }
 });
 
-router.put('/:id', requireApprovedFabricator, upload.array('photos', 5), async (req, res) => {
+router.put('/:id', requireApprovedFabricator, (req, res, next) => {
+    upload.array('photos', 5)(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be under 10MB' : err.message });
+        next();
+    });
+}, async (req, res) => {
     try {
         const listing = await get(`SELECT * FROM listings WHERE id = ? AND user_id = ?`, [req.params.id, req.user.id]);
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
@@ -210,15 +241,13 @@ router.put('/:id', requireApprovedFabricator, upload.array('photos', 5), async (
 
         if (req.files && req.files.length > 0) {
             const oldPhotos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ?`, [req.params.id]);
-            oldPhotos.forEach(p => {
-                const filePath = path.join(__dirname, '../uploads', p.filename);
-                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            });
+            for (const p of oldPhotos) await deleteFromCloudinary(p.filename);
             await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [req.params.id]);
 
             for (let i = 0; i < req.files.length; i++) {
+                const url = await uploadToCloudinary(req.files[i].buffer);
                 await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
-                    [uuidv4(), req.params.id, req.files[i].filename, i]);
+                    [uuidv4(), req.params.id, url, i]);
             }
         }
 
@@ -234,10 +263,7 @@ router.delete('/:id', requireApprovedFabricator, async (req, res) => {
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
     const photos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ?`, [listing.id]);
-    photos.forEach(p => {
-        const filePath = path.join(__dirname, '../uploads', p.filename);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    });
+    for (const p of photos) await deleteFromCloudinary(p.filename);
 
     await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [listing.id]);
     await run(`DELETE FROM listings WHERE id = ?`, [listing.id]);

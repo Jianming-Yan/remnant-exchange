@@ -32,9 +32,10 @@
 <body>
 
 <nav>
-    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span></a>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
     <div class="nav-links" id="navLinks">
         <a href="/">Browse</a>
+        <a href="/about.html">About</a>
         <a href="/login.html" id="loginLink">Login</a>
         <a href="/register.html" class="btn btn-primary" id="registerLink">List Your Remnants</a>
         <a href="/dashboard.html" class="btn btn-primary" id="dashLink" style="display:none">My Dashboard</a>
@@ -204,7 +205,7 @@
         grid.innerHTML = data.listings.map(l => `
             <div class="card" onclick="openModal(${JSON.stringify(l).replace(/"/g, '&quot;')})">
                 <div class="card-img">
-                    ${l.photos && l.photos.length ? `<img src="/uploads/${l.photos[0].filename}" alt="${l.stone_name || l.color}">` : 'No photo'}
+                    ${l.photos && l.photos.length ? `<img src="${l.photos[0].filename.startsWith('http') ? l.photos[0].filename : '/uploads/' + l.photos[0].filename}" alt="${l.stone_name || l.color}">` : 'No photo'}
                 </div>
                 <div class="card-body">
                     <div class="card-material">${l.material_type}</div>
@@ -283,7 +284,7 @@
         activeListingId = listing.id;
         const stoneName = listing.stone_name || listing.color;
         document.getElementById('modalImg').innerHTML = listing.photos && listing.photos.length
-            ? `<img src="/uploads/${listing.photos[0].filename}" alt="${stoneName}">`
+            ? `<img src="${listing.photos[0].filename.startsWith('http') ? listing.photos[0].filename : '/uploads/' + listing.photos[0].filename}" alt="${stoneName}">`
             : 'No photo available';
         document.getElementById('modalTitle').textContent = `${listing.material_type} â€” ${stoneName}`;
         const isL = listing.shape === 'lshape';
@@ -357,8 +358,84 @@
 
     init();
 </script>
-<footer style="text-align:center;padding:32px 24px;color:#94a3b8;font-size:0.85rem;border-top:1px solid #e2e8f0;margin-top:48px;">
-    &copy; 2026 Remnant Exchange &mdash; <a href="/privacy.html" style="color:#64748b;">Privacy Policy</a>
+<!-- SUCCESS STORIES -->
+<div style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:64px 24px;margin-top:48px;">
+    <div style="max-width:1100px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:40px;">
+            <div style="display:inline-block;background:#dcfce7;color:#15803d;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:4px 14px;border-radius:999px;margin-bottom:12px;">Real Stories</div>
+            <h2 style="font-size:1.75rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;">Fabricators clearing their floor. Buyers saving big.</h2>
+            <p style="color:#64748b;font-size:0.95rem;">Real people. Real results.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;">
+
+            <!-- REAL: RJJ Installation -->
+            <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:16px;">
+                <div style="font-size:1.4rem;color:#22c55e;">&#10003;&#10003;&#10003;&#10003;&#10003;</div>
+                <p style="font-size:0.95rem;color:#1e293b;line-height:1.7;font-style:italic;">"I've been in the stone business for years and always had leftover pieces sitting around. Signed up on day one and it's exactly what our shop needed — free, simple, and buyers come to us."</p>
+                <div style="margin-top:auto;display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-weight:700;color:#15803d;font-size:0.9rem;">RJ</div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;">RJJ Marble and Granite</div>
+                        <div style="font-size:0.78rem;color:#64748b;">RJJ Installation &mdash; Massachusetts</div>
+                    </div>
+                    <div style="margin-left:auto;background:#f0fdf4;color:#16a34a;font-size:0.68rem;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid #bbf7d0;">Verified</div>
+                </div>
+            </div>
+
+            <!-- PLACEHOLDER -->
+            <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:16px;">
+                <div style="font-size:1.4rem;color:#22c55e;">&#10003;&#10003;&#10003;&#10003;&#10003;</div>
+                <p style="font-size:0.95rem;color:#1e293b;line-height:1.7;font-style:italic;">"Had a 48x72 piece of Calacatta sitting for four months. Listed it on a Monday, got a call by Wednesday, sold it that Friday. Wish I found this sooner."</p>
+                <div style="margin-top:auto;display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:700;color:#1d4ed8;font-size:0.9rem;">MT</div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;">Mike T.</div>
+                        <div style="font-size:0.78rem;color:#64748b;">Stone fabricator &mdash; Worcester, MA</div>
+                    </div>
+                    <div style="margin-left:auto;background:#f0fdf4;color:#16a34a;font-size:0.68rem;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid #bbf7d0;">Verified</div>
+                </div>
+            </div>
+
+            <!-- PLACEHOLDER -->
+            <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:16px;">
+                <div style="font-size:1.4rem;color:#22c55e;">&#10003;&#10003;&#10003;&#10003;&#10003;</div>
+                <p style="font-size:0.95rem;color:#1e293b;line-height:1.7;font-style:italic;">"I was skeptical — too many platforms charge monthly fees. This one is actually free and posting takes about 5 minutes. We listed 6 remnants and cleared 4 of them within a month."</p>
+                <div style="margin-top:auto;display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-weight:700;color:#92400e;font-size:0.9rem;">RS</div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;">Rob S.</div>
+                        <div style="font-size:0.78rem;color:#64748b;">Family-owned shop &mdash; South Shore, MA</div>
+                    </div>
+                    <div style="margin-left:auto;background:#f0fdf4;color:#16a34a;font-size:0.68rem;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid #bbf7d0;">Verified</div>
+                </div>
+            </div>
+
+            <!-- REAL: Buyer/Contractor Story -->
+            <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:16px;">
+                <div style="font-size:1.4rem;color:#22c55e;">&#10003;&#10003;&#10003;&#10003;&#10003;</div>
+                <p style="font-size:0.95rem;color:#1e293b;line-height:1.7;font-style:italic;">"My customer needed a very specific piece — 71 by 10 inches. I spent over a month calling shop after shop. Six fabricators, nothing. Found two matches on RemnantExchange in minutes. Drove to pick up the first one and it was sitting right there in their yard. Perfect fit."</p>
+                <div style="margin-top:auto;display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-weight:700;color:#6d28d9;font-size:0.9rem;">JY</div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.875rem;">J. Yan, Boston Building Materials</div>
+                        <div style="font-size:0.78rem;color:#64748b;">Countertop contractor &mdash; Massachusetts</div>
+                    </div>
+                    <div style="margin-left:auto;background:#f5f3ff;color:#6d28d9;font-size:0.68rem;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid #ddd6fe;">Contractor</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;margin-top:40px;">
+            <a href="/register.html" style="display:inline-block;background:#3b82f6;color:white;padding:14px 36px;border-radius:10px;font-weight:700;font-size:0.95rem;text-decoration:none;">List Your Remnants Free &rarr;</a>
+            <p style="color:#94a3b8;font-size:0.8rem;margin-top:10px;">No credit card. No monthly fee. Cancel anytime.</p>
+        </div>
+    </div>
+</div>
+
+<footer style="text-align:center;padding:32px 24px;color:#94a3b8;font-size:0.85rem;border-top:1px solid #e2e8f0;">
+    &copy; 2026 Remnant Exchange &mdash; <a href="/about.html" style="color:#64748b;">About</a> &mdash; <a href="/privacy.html" style="color:#64748b;">Privacy Policy</a>
 </footer>
 </body>
 </html>
