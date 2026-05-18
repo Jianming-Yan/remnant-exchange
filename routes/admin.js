@@ -70,7 +70,7 @@ router.post('/post-listing/:fabricatorId', requireAdmin, (req, res, next) => {
         if (!fabricator) return res.status(404).json({ error: 'Fabricator not found' });
 
         const { material_type, stone_name, length, width, thickness, state_id, metro_id, description,
-                shape, length2, width2, vendor_name, bundle_number } = req.body;
+                shape, length2, width2, vendor_name, bundle_number, visibility, remnant_owner } = req.body;
 
         if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
             return res.status(400).json({ error: 'All required fields must be filled' });
@@ -85,14 +85,15 @@ router.post('/post-listing/:fabricatorId', requireAdmin, (req, res, next) => {
         const id = uuidv4();
         const expiresAt = new Date(Date.now() + Number(planSettings.duration_days) * 24 * 60 * 60 * 1000).toISOString();
         const slabShape = shape || 'rectangular';
+        const vis = visibility === 'private' ? 'private' : 'public';
 
-        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at, visibility, remnant_owner)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, fabricator.id, material_type, stone_name, stone_name, slabShape,
              parseFloat(length), parseFloat(width), thickness,
              length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
              vendor_name || null, bundle_number || null,
-             state_id, metro_id, description || null, expiresAt]);
+             state_id, metro_id, description || null, expiresAt, vis, remnant_owner || null]);
 
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {

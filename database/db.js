@@ -120,6 +120,14 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE listings ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE listings ADD COLUMN remnant_owner TEXT`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

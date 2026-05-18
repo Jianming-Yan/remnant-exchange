@@ -141,6 +141,24 @@
                     <textarea id="description" placeholder="Any additional details about the slab..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Remnant Owner</label>
+                    <select id="remnant_owner_type" onchange="toggleOwnerName(this)">
+                        <option value="shop">Shop Stock (we own it)</option>
+                        <option value="customer">Customer Owned</option>
+                    </select>
+                </div>
+                <div class="form-group" id="ownerNameGroup" style="display:none;">
+                    <label>Customer Name</label>
+                    <input type="text" id="remnant_owner" placeholder="e.g. John Smith">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+                    <input type="checkbox" id="visibility_public" checked style="width:18px;height:18px;cursor:pointer;">
+                    <div>
+                        <label for="visibility_public" style="font-weight:600;cursor:pointer;">List publicly for buyers</label>
+                        <p style="font-size:0.8rem;color:#64748b;margin:0;">Uncheck to save as private inventory only — not visible to the public</p>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Photos (up to 5)</label>
                     <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
                         <div style="font-size:2rem;">&#128247;</div>
@@ -274,8 +292,10 @@
                             <div class="card-title">${l.stone_name || l.color || 'â€”'}</div>
                             <div class="card-dims">${l.length}" x ${l.width}" &bull; ${l.thickness}${l.shape === 'lshape' ? ' (L)' : ''}</div>
                             <div class="card-location">&#128205; ${l.metro_name}, ${l.state_abbr}</div>
-                            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+                            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                                 <span class="badge badge-${l.status}">${l.status}</span>
+                                ${l.visibility === 'private' ? `<span class="badge" style="background:#f1f5f9;color:#475569;">Private</span>` : ''}
+                                ${l.remnant_owner ? `<span style="font-size:0.75rem;color:#7c3aed;">&#128100; ${l.remnant_owner}</span>` : ''}
                                 <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">Exp: ${new Date(l.expires_at).toLocaleDateString()}</span>
                             </div>
                             <div style="margin-top:10px;display:flex;gap:6px;" onclick="event.stopPropagation()">
@@ -366,6 +386,18 @@
             metroSel.appendChild(opt);
         });
         metroSel.value = l.metro_id;
+
+        document.getElementById('visibility_public').checked = l.visibility !== 'private';
+        const ownerType = document.getElementById('remnant_owner_type');
+        if (l.remnant_owner) {
+            ownerType.value = 'customer';
+            document.getElementById('remnant_owner').value = l.remnant_owner;
+            document.getElementById('ownerNameGroup').style.display = 'block';
+        } else {
+            ownerType.value = 'shop';
+            document.getElementById('remnant_owner').value = '';
+            document.getElementById('ownerNameGroup').style.display = 'none';
+        }
 
         document.getElementById('photoPreviews').innerHTML = '';
         document.getElementById('identifyResult').style.display = 'none';
@@ -466,6 +498,11 @@
         formData.append('state_id', document.getElementById('state_id').value);
         formData.append('metro_id', document.getElementById('metro_id').value);
         formData.append('description', document.getElementById('description').value);
+        formData.append('visibility', document.getElementById('visibility_public').checked ? 'public' : 'private');
+        const ownerType = document.getElementById('remnant_owner_type').value;
+        if (ownerType === 'customer') {
+            formData.append('remnant_owner', document.getElementById('remnant_owner').value);
+        }
 
         const photos = document.getElementById('photoInput').files;
         Array.from(photos).forEach(f => formData.append('photos', f));
@@ -530,6 +567,10 @@
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login.html';
+    }
+
+    function toggleOwnerName(sel) {
+        document.getElementById('ownerNameGroup').style.display = sel.value === 'customer' ? 'block' : 'none';
     }
 
     function toggleShape(sel) {
