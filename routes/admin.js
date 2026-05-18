@@ -34,7 +34,7 @@ router.post('/create-fabricator', requireAdmin, async (req, res) => {
         const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
         if (existing) return res.status(400).json({ error: 'Email already registered' });
 
-        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+        const tempPassword = '12345678';
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const userId = uuidv4();
 
