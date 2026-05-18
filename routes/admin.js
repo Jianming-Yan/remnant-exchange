@@ -163,20 +163,25 @@ router.get('/fabricators', requireAdmin, async (req, res) => {
 });
 
 router.get('/fabricators/:id', requireAdmin, async (req, res) => {
-    const user = await get(`SELECT id, name, business_name, email, phone, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
-    if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+    try {
+        const user = await get(`SELECT id, name, business_name, email, phone, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
-    const listings = await query(`
-        SELECT l.id, l.material_type, l.stone_name, l.length, l.width, l.thickness, l.shape,
-               l.status, l.created_at, l.expires_at, s.name as state_name, m.name as metro_name
-        FROM listings l
-        JOIN states s ON l.state_id = s.id
-        JOIN metros m ON l.metro_id = m.id
-        WHERE l.user_id = ?
-        ORDER BY l.created_at DESC
-    `, [req.params.id]);
+        const listings = await query(`
+            SELECT l.id, l.material_type, l.stone_name, l.length, l.width, l.thickness, l.shape,
+                   l.status, l.created_at, l.expires_at, s.name as state_name, m.name as metro_name
+            FROM listings l
+            JOIN states s ON l.state_id = s.id
+            JOIN metros m ON l.metro_id = m.id
+            WHERE l.user_id = ?
+            ORDER BY l.created_at DESC
+        `, [req.params.id]);
 
-    res.json({ ...user, listings });
+        res.json({ ...user, listings });
+    } catch (err) {
+        console.error('fabricators/:id error:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.delete('/fabricators/:id', requireAdmin, async (req, res) => {
