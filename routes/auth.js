@@ -110,6 +110,41 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.get('/magic-login', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ error: 'Missing token' });
+
+        const record = await get(`SELECT * FROM email_tokens WHERE token = ? AND type = 'magic-login'`, [token]);
+        if (!record) return res.status(400).json({ error: 'Invalid or expired login link' });
+
+        if (new Date(record.expires_at) < new Date()) {
+            await run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
+            return res.status(400).json({ error: 'Login link has expired' });
+        }
+
+        await run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
+
+        const user = await get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const jwtToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role, approved: user.approved, plan: user.plan },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            token: jwtToken,
+            must_change_password: user.must_change_password === 1,
+            user: { id: user.id, name: user.name, business_name: user.business_name, email: user.email, role: user.role, plan: user.plan }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Magic login failed' });
+    }
+});
+
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -126,9 +161,10 @@ router.post('/forgot-password', async (req, res) => {
             await sendResetPasswordEmail(user.email, user.name, tempPassword);
         } catch (emailErr) {
             console.error('Reset email failed:', emailErr.message);
+            return res.status(500).json({ error: 'Failed to send reset email: ' + emailErr.message });
         }
 
-        res.json({ message: 'If that email exists, a temporary password has been sent.' });
+        res.json({ message: 'A temporary password has been sent to your email.' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to reset password' });

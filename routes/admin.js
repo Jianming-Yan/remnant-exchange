@@ -41,8 +41,13 @@ router.post('/create-fabricator', requireAdmin, async (req, res) => {
         await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)`,
             [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
 
+        const magicToken = uuidv4();
+        const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), userId, magicToken, 'magic-login', magicExpires]);
+
         try {
-            await sendTempPasswordEmail(email, name, tempPassword);
+            await sendTempPasswordEmail(email, name, tempPassword, magicToken);
         } catch (emailErr) {
             console.error('Temp password email failed:', emailErr.message);
         }
