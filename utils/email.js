@@ -114,6 +114,7 @@ async function sendTempPasswordEmail(email, name, tempPassword) {
             <p><strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:1.1em;">${tempPassword}</code></p>
             <p>You will be asked to set a new password after your first login.</p>
             <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In Now</a></p>
+            <p style="color:#94a3b8;font-size:0.85rem;">If you'd rather not be listed, simply ignore this email and no action is needed.</p>
         `,
     });
 }
