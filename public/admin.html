@@ -350,7 +350,10 @@
         const statusColor = { active: '#22c55e', expired: '#ef4444', removed: '#94a3b8' };
 
         document.getElementById('fabModalContent').innerHTML = `
-            <h2 style="margin-bottom:4px;">${f.business_name}</h2>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                <h2 style="margin-bottom:0;">${f.business_name}</h2>
+                <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete Account</button>
+            </div>
             <p style="color:#64748b;margin-bottom:20px;">${f.name}</p>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
@@ -395,6 +398,22 @@
 
     function closeFabModal(event) {
         document.getElementById('fabModal').style.display = 'none';
+    }
+
+    async function deleteFabricator(id, name) {
+        if (!confirm(`Delete account for "${name}"? This will also remove all their listings.`)) return;
+        const res = await fetch(`/api/admin/fabricators/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+            document.getElementById('fabModal').style.display = 'none';
+            loadFabricators();
+            loadStats();
+        } else {
+            alert(data.error || 'Failed to delete fabricator');
+        }
     }
 
     async function loadStates() {

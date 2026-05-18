@@ -179,6 +179,26 @@ router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     res.json({ ...user, listings });
 });
 
+router.delete('/fabricators/:id', requireAdmin, async (req, res) => {
+    try {
+        const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+        const listings = await query(`SELECT id FROM listings WHERE user_id = ?`, [user.id]);
+        for (const l of listings) {
+            await run(`DELETE FROM listing_photos WHERE listing_id = ?`, [l.id]);
+        }
+        await run(`DELETE FROM listings WHERE user_id = ?`, [user.id]);
+        await run(`DELETE FROM email_tokens WHERE user_id = ?`, [user.id]);
+        await run(`DELETE FROM users WHERE id = ?`, [user.id]);
+
+        res.json({ message: 'Fabricator deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to delete fabricator' });
+    }
+});
+
 router.delete('/listings/:id', requireAdmin, async (req, res) => {
     const listing = await get(`SELECT id FROM listings WHERE id = ?`, [req.params.id]);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
