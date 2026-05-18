@@ -105,15 +105,24 @@ async function sendTempPasswordEmail(email, name, tempPassword) {
 
     await resend.emails.send({
         from: FROM,
+        replyTo: 'info@remnantexchange.org',
         to: email,
-        subject: 'Your Remnant Exchange account credentials',
+        subject: 'Your Remnant Exchange account is ready',
         html: `
             <h2>Welcome to Remnant Exchange, ${name}!</h2>
-            <p>An account has been created for you. Use the credentials below to log in:</p>
+            <p>We've created a free account for you on <a href="${process.env.BASE_URL}">Remnant Exchange</a> — the marketplace for stone fabricators to list leftover slab remnants.</p>
+
+            <p>Use the credentials below to log in and start posting your remnants:</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:1.1em;">${tempPassword}</code></p>
             <p>You will be asked to set a new password after your first login.</p>
-            <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In Now</a></p>
+
+            <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In &amp; Post Your Listings</a></p>
+
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+
+            <p><strong>Need help posting?</strong> No problem — simply reply to this email with your remnant details (material type, stone name, dimensions, thickness, and a photo if you have one) and we'll post the listings for you.</p>
+
             <p style="color:#94a3b8;font-size:0.85rem;">If you'd rather not be listed, simply ignore this email and no action is needed.</p>
         `,
     });
