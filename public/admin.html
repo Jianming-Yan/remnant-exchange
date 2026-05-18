@@ -47,6 +47,14 @@
             <div id="fabricatorsContent">Loading...</div>
         </div>
 
+        <!-- FABRICATOR DETAIL MODAL -->
+        <div id="fabModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;" onclick="closeFabModal(event)">
+            <div style="background:white;border-radius:16px;max-width:700px;margin:40px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+                <button onclick="document.getElementById('fabModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+                <div id="fabModalContent">Loading...</div>
+            </div>
+        </div>
+
         <!-- SEEDED LISTINGS -->
         <div id="section-seeded" style="display:none">
             <h2 style="margin-bottom:8px;">Seeded Listings</h2>
@@ -312,7 +320,7 @@
         document.getElementById('fabricatorsContent').innerHTML = `
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Plan</th><th>Status</th><th>Joined</th><th></th></tr></thead>
                     <tbody>
                         ${users.map(u => `
                             <tr>
@@ -323,12 +331,70 @@
                                 <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
                                 <td><span class="badge ${u.approved ? 'badge-active' : 'badge-pending'}">${u.approved ? 'Approved' : 'Pending'}</span></td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
+                                <td><button class="btn btn-secondary btn-sm" onclick="viewFabricator('${u.id}')">View</button></td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         `;
+    }
+
+    async function viewFabricator(id) {
+        document.getElementById('fabModal').style.display = 'block';
+        document.getElementById('fabModalContent').innerHTML = 'Loading...';
+
+        const res = await fetch(`/api/admin/fabricators/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const f = await res.json();
+
+        const statusColor = { active: '#22c55e', expired: '#ef4444', removed: '#94a3b8' };
+
+        document.getElementById('fabModalContent').innerHTML = `
+            <h2 style="margin-bottom:4px;">${f.business_name}</h2>
+            <p style="color:#64748b;margin-bottom:20px;">${f.name}</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">EMAIL</div>
+                    <a href="mailto:${f.email}" style="color:#1e293b;font-weight:500;">${f.email}</a>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">PHONE</div>
+                    <span style="font-weight:500;">${f.phone ? `<a href="tel:${f.phone}" style="color:#1e293b;">${f.phone}</a>` : '—'}</span>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">PLAN</div>
+                    <span class="badge ${f.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${f.plan.toUpperCase()}</span>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">MEMBER SINCE</div>
+                    <span style="font-weight:500;">${new Date(f.created_at).toLocaleDateString()}</span>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom:12px;">Listings (${f.listings.length})</h3>
+            ${f.listings.length === 0 ? '<p style="color:#94a3b8;">No listings yet.</p>' : `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Stone</th><th>Size</th><th>Location</th><th>Status</th><th>Posted</th></tr></thead>
+                    <tbody>
+                        ${f.listings.map(l => `
+                            <tr>
+                                <td><strong>${l.stone_name}</strong><br><span style="font-size:0.8rem;color:#64748b;">${l.material_type}</span></td>
+                                <td style="font-size:0.85rem;">${l.length}" x ${l.width}" · ${l.thickness}</td>
+                                <td style="font-size:0.85rem;">${l.metro_name}, ${l.state_name}</td>
+                                <td><span style="font-size:0.78rem;font-weight:600;color:${statusColor[l.status] || '#64748b'};text-transform:uppercase;">${l.status}</span></td>
+                                <td style="font-size:0.8rem;color:#64748b;">${new Date(l.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`}
+        `;
+    }
+
+    function closeFabModal(event) {
+        document.getElementById('fabModal').style.display = 'none';
     }
 
     async function loadStates() {

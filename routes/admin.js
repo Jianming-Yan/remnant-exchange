@@ -162,6 +162,23 @@ router.get('/fabricators', requireAdmin, async (req, res) => {
     res.json(users);
 });
 
+router.get('/fabricators/:id', requireAdmin, async (req, res) => {
+    const user = await get(`SELECT id, name, business_name, email, phone, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+    if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+    const listings = await query(`
+        SELECT l.id, l.material_type, l.stone_name, l.length, l.width, l.thickness, l.shape,
+               l.status, l.created_at, l.expires_at, s.name as state_name, m.name as metro_name
+        FROM listings l
+        JOIN states s ON l.state_id = s.id
+        JOIN metros m ON l.metro_id = m.id
+        WHERE l.user_id = ?
+        ORDER BY l.created_at DESC
+    `, [req.params.id]);
+
+    res.json({ ...user, listings });
+});
+
 router.delete('/listings/:id', requireAdmin, async (req, res) => {
     const listing = await get(`SELECT id FROM listings WHERE id = ?`, [req.params.id]);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
