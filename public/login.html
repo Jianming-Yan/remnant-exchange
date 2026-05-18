@@ -36,7 +36,23 @@
             <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="submitBtn">Log In</button>
         </form>
 
+        <div class="form-link" style="margin-top:12px;"><a href="#" onclick="showForgot()" style="color:#64748b;">Forgot your password?</a></div>
         <div class="form-link">Don't have an account? <a href="/register.html">Register here</a></div>
+    </div>
+
+    <!-- FORGOT PASSWORD CARD -->
+    <div class="form-card" id="forgotCard" style="display:none;margin-top:16px;">
+        <h2 style="margin-bottom:8px;">Reset Password</h2>
+        <p class="subtitle">Enter your email and we'll send you a temporary password.</p>
+        <div id="forgotAlert" style="display:none"></div>
+        <form id="forgotForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="forgotEmail" placeholder="your@email.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="forgotBtn">Send Temporary Password</button>
+        </form>
+        <div class="form-link" style="margin-top:12px;"><a href="#" onclick="showLogin()" style="color:#64748b;">Back to login</a></div>
     </div>
 </div>
 
@@ -77,7 +93,9 @@
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            if (data.user.role === 'admin') {
+            if (data.must_change_password) {
+                window.location.href = '/change-password.html';
+            } else if (data.user.role === 'admin') {
                 window.location.href = '/admin.html';
             } else {
                 window.location.href = '/dashboard.html';
@@ -88,6 +106,43 @@
             alertBox.style.display = 'block';
             submitBtn.disabled = false;
             submitBtn.textContent = 'Log In';
+        }
+    });
+
+    function showForgot() {
+        document.querySelector('.form-card').style.display = 'none';
+        document.getElementById('forgotCard').style.display = 'block';
+    }
+
+    function showLogin() {
+        document.querySelector('.form-card').style.display = 'block';
+        document.getElementById('forgotCard').style.display = 'none';
+    }
+
+    document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const forgotAlert = document.getElementById('forgotAlert');
+        const forgotBtn = document.getElementById('forgotBtn');
+        forgotBtn.disabled = true;
+        forgotBtn.textContent = 'Sending...';
+
+        try {
+            const res = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: document.getElementById('forgotEmail').value }),
+            });
+            const data = await res.json();
+            forgotAlert.className = 'alert alert-success';
+            forgotAlert.textContent = data.message;
+            forgotAlert.style.display = 'block';
+            forgotBtn.textContent = 'Sent';
+        } catch {
+            forgotAlert.className = 'alert alert-error';
+            forgotAlert.textContent = 'Something went wrong. Please try again.';
+            forgotAlert.style.display = 'block';
+            forgotBtn.disabled = false;
+            forgotBtn.textContent = 'Send Temporary Password';
         }
     });
 </script>

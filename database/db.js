@@ -116,6 +116,10 @@ async function initSchema() {
         await run(`ALTER TABLE listings ADD COLUMN is_seeded INTEGER NOT NULL DEFAULT 0`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

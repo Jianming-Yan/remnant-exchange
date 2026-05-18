@@ -23,6 +23,8 @@
         <a href="#" onclick="showSection('seeded', this)">&#127807; Seeded Listings</a>
         <a href="#" onclick="showSection('locations', this)">&#128205; Manage Locations</a>
         <a href="#" onclick="showSection('plans', this)">&#9881; Plan Settings</a>
+        <a href="#" onclick="showSection('create-fabricator', this)">&#43; Create Fabricator</a>
+        <a href="#" onclick="showSection('post-for', this)">&#128247; Post For Fabricator</a>
     </div>
 
     <div class="main-panel">
@@ -85,6 +87,142 @@
             <div id="planSettings" style="max-width:500px;"></div>
         </div>
 
+        <!-- CREATE FABRICATOR -->
+        <div id="section-create-fabricator" style="display:none">
+            <h2 style="margin-bottom:8px;">Create Fabricator Account</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Account is pre-verified and pre-approved. A temporary password will be emailed to the fabricator.</p>
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                <div id="createFabAlert" style="display:none"></div>
+                <form id="createFabForm">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="fab_name" placeholder="John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Name *</label>
+                        <input type="text" id="fab_business" placeholder="Smith Countertops LLC" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" id="fab_email" placeholder="john@smithcountertops.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="fab_phone" placeholder="(617) 555-1234">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="createFabBtn">Create Account &amp; Send Password</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- POST LISTING FOR FABRICATOR -->
+        <div id="section-post-for" style="display:none">
+            <h2 style="margin-bottom:8px;">Post Listing on Behalf of Fabricator</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Select a fabricator, then fill in their listing details.</p>
+            <div style="background:white;border-radius:12px;padding:24px;max-width:600px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                <div id="postForAlert" style="display:none"></div>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label>Select Fabricator *</label>
+                    <select id="postFor_fabricator" required onchange="onFabricatorSelect()">
+                        <option value="">-- Select fabricator --</option>
+                    </select>
+                </div>
+                <form id="postForForm" style="display:none">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Material Type *</label>
+                            <select id="pf_material_type" required>
+                                <option value="">Select material</option>
+                                <option>Granite</option><option>Quartz</option><option>Marble</option>
+                                <option>Quartzite</option><option>Porcelain</option><option>Soapstone</option>
+                                <option>Travertine</option><option>Limestone</option><option>Onyx</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Stone Name *</label>
+                            <input type="text" id="pf_stone_name" placeholder="e.g. Black Galaxy" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Shape *</label>
+                        <select id="pf_shape" onchange="pfToggleShape(this)">
+                            <option value="rectangular">Rectangular</option>
+                            <option value="lshape">L-Shape</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Length (inches) *</label>
+                            <input type="number" id="pf_length" placeholder="e.g. 48" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Width (inches) *</label>
+                            <input type="number" id="pf_width" placeholder="e.g. 26" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row" id="pf_lshapeDims" style="display:none;">
+                        <div class="form-group">
+                            <label>Length 2 (inches)</label>
+                            <input type="number" id="pf_length2" placeholder="e.g. 24" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Width 2 (inches)</label>
+                            <input type="number" id="pf_width2" placeholder="e.g. 18" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Thickness *</label>
+                        <select id="pf_thickness" required>
+                            <option value="">Select thickness</option>
+                            <option value="3/4&quot;">3/4"</option>
+                            <option value="1-1/4&quot;">1-1/4"</option>
+                            <option value="1-1/2&quot;">1-1/2"</option>
+                            <option value="2cm">2cm</option>
+                            <option value="3cm">3cm</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Vendor Name</label>
+                            <input type="text" id="pf_vendor_name" placeholder="e.g. MSI Stone">
+                        </div>
+                        <div class="form-group">
+                            <label>Bundle Number</label>
+                            <input type="text" id="pf_bundle_number" placeholder="e.g. Bundle 42">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>State *</label>
+                            <select id="pf_state_id" required onchange="pfLoadMetros()">
+                                <option value="">Select state</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Metro Area *</label>
+                            <select id="pf_metro_id" required>
+                                <option value="">Select metro area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description (optional)</label>
+                        <textarea id="pf_description" placeholder="Any additional details..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Photos (up to 5)</label>
+                        <div class="photo-upload" onclick="document.getElementById('pf_photoInput').click()">
+                            <div style="font-size:2rem;">&#128247;</div>
+                            <p>Click to upload photos</p>
+                        </div>
+                        <input type="file" id="pf_photoInput" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/*" style="display:none" onchange="pfPreviewPhotos(this)">
+                        <div class="photo-previews" id="pf_photoPreviews"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="postForBtn">Post Listing</button>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -105,6 +243,7 @@
         if (name === 'seeded') loadSeeded();
         if (name === 'locations') loadStates();
         if (name === 'plans') loadPlanSettings();
+        if (name === 'post-for') loadPostForData();
     }
 
     async function loadStats() {
@@ -312,6 +451,157 @@
         });
         alert('Plan settings saved!');
     }
+
+    // Create Fabricator
+    document.getElementById('createFabForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alert = document.getElementById('createFabAlert');
+        const btn = document.getElementById('createFabBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        try {
+            const res = await fetch('/api/admin/create-fabricator', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('fab_name').value,
+                    business_name: document.getElementById('fab_business').value,
+                    email: document.getElementById('fab_email').value,
+                    phone: document.getElementById('fab_phone').value,
+                }),
+            });
+            const data = await res.json();
+            alert.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alert.textContent = data.message || data.error;
+            alert.style.display = 'block';
+            if (res.ok) { document.getElementById('createFabForm').reset(); loadStats(); }
+        } catch {
+            alert.className = 'alert alert-error';
+            alert.textContent = 'Something went wrong.';
+            alert.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Create Account & Send Password';
+    });
+
+    // Post For Fabricator
+    async function loadPostForData() {
+        const [fabRes, stateRes] = await Promise.all([
+            fetch('/api/admin/fabricators', { headers: { Authorization: `Bearer ${token}` } }),
+            fetch('/api/listings/states'),
+        ]);
+        const fabs = await fabRes.json();
+        const states = await stateRes.json();
+
+        const fabSel = document.getElementById('postFor_fabricator');
+        fabSel.innerHTML = '<option value="">-- Select fabricator --</option>';
+        fabs.filter(f => f.approved).forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = `${f.business_name} (${f.name})`;
+            fabSel.appendChild(opt);
+        });
+
+        const stateSel = document.getElementById('pf_state_id');
+        stateSel.innerHTML = '<option value="">Select state</option>';
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            stateSel.appendChild(opt);
+        });
+    }
+
+    function onFabricatorSelect() {
+        const val = document.getElementById('postFor_fabricator').value;
+        document.getElementById('postForForm').style.display = val ? 'block' : 'none';
+    }
+
+    async function pfLoadMetros() {
+        const stateId = document.getElementById('pf_state_id').value;
+        const metroSel = document.getElementById('pf_metro_id');
+        metroSel.innerHTML = '<option value="">Select metro area</option>';
+        if (!stateId) return;
+        const res = await fetch(`/api/listings/states/${stateId}/metros`);
+        const metros = await res.json();
+        metros.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            metroSel.appendChild(opt);
+        });
+    }
+
+    function pfToggleShape(sel) {
+        document.getElementById('pf_lshapeDims').style.display = sel.value === 'lshape' ? 'flex' : 'none';
+    }
+
+    function pfPreviewPhotos(input) {
+        const previews = document.getElementById('pf_photoPreviews');
+        previews.innerHTML = '';
+        Array.from(input.files).slice(0, 5).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                previews.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById('postForForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('postForAlert');
+        const btn = document.getElementById('postForBtn');
+        const fabricatorId = document.getElementById('postFor_fabricator').value;
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        const formData = new FormData();
+        formData.append('material_type', document.getElementById('pf_material_type').value);
+        formData.append('stone_name', document.getElementById('pf_stone_name').value);
+        formData.append('shape', document.getElementById('pf_shape').value);
+        formData.append('length', document.getElementById('pf_length').value);
+        formData.append('width', document.getElementById('pf_width').value);
+        const l2 = document.getElementById('pf_length2').value;
+        const w2 = document.getElementById('pf_width2').value;
+        if (l2) formData.append('length2', l2);
+        if (w2) formData.append('width2', w2);
+        formData.append('thickness', document.getElementById('pf_thickness').value);
+        formData.append('vendor_name', document.getElementById('pf_vendor_name').value);
+        formData.append('bundle_number', document.getElementById('pf_bundle_number').value);
+        formData.append('state_id', document.getElementById('pf_state_id').value);
+        formData.append('metro_id', document.getElementById('pf_metro_id').value);
+        formData.append('description', document.getElementById('pf_description').value);
+        Array.from(document.getElementById('pf_photoInput').files).forEach(f => formData.append('photos', f));
+
+        try {
+            const res = await fetch(`/api/admin/post-listing/${fabricatorId}`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = data.message || data.error;
+            alertBox.style.display = 'block';
+            if (res.ok) {
+                document.getElementById('postForForm').reset();
+                document.getElementById('pf_photoPreviews').innerHTML = '';
+                document.getElementById('postForForm').style.display = 'none';
+                document.getElementById('postFor_fabricator').value = '';
+                loadStats();
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Post Listing';
+    });
 
     function logout() {
         localStorage.removeItem('token');

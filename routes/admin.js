@@ -1,10 +1,108 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail } = require('../utils/email');
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+function uploadToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            { folder: 'remnant-exchange', resource_type: 'image' },
+            (error, result) => error ? reject(error) : resolve(result.secure_url)
+        ).end(buffer);
+    });
+}
 
 const router = express.Router();
+
+router.post('/create-fabricator', requireAdmin, async (req, res) => {
+    try {
+        const { name, business_name, email, phone } = req.body;
+        if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
+
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
+        if (existing) return res.status(400).json({ error: 'Email already registered' });
+
+        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        const userId = uuidv4();
+
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)`,
+            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
+
+        try {
+            await sendTempPasswordEmail(email, name, tempPassword);
+        } catch (emailErr) {
+            console.error('Temp password email failed:', emailErr.message);
+        }
+
+        res.json({ message: `Account created and credentials emailed to ${email}` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create account' });
+    }
+});
+
+router.post('/post-listing/:fabricatorId', requireAdmin, (req, res, next) => {
+    upload.array('photos', 5)(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be under 10MB' : err.message });
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const fabricator = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.fabricatorId]);
+        if (!fabricator) return res.status(404).json({ error: 'Fabricator not found' });
+
+        const { material_type, stone_name, length, width, thickness, state_id, metro_id, description,
+                shape, length2, width2, vendor_name, bundle_number } = req.body;
+
+        if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
+            return res.status(400).json({ error: 'All required fields must be filled' });
+        }
+
+        const planSettings = await get(`SELECT * FROM plan_settings WHERE plan = ?`, [fabricator.plan]);
+        const activeCount = await get(`SELECT count(*) as cnt FROM listings WHERE user_id = ? AND status = 'active'`, [fabricator.id]);
+        if (Number(activeCount.cnt) >= Number(planSettings.max_posts)) {
+            return res.status(403).json({ error: `This fabricator has reached their listing limit` });
+        }
+
+        const id = uuidv4();
+        const expiresAt = new Date(Date.now() + Number(planSettings.duration_days) * 24 * 60 * 60 * 1000).toISOString();
+        const slabShape = shape || 'rectangular';
+
+        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, fabricator.id, material_type, stone_name, stone_name, slabShape,
+             parseFloat(length), parseFloat(width), thickness,
+             length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
+             vendor_name || null, bundle_number || null,
+             state_id, metro_id, description || null, expiresAt]);
+
+        if (req.files && req.files.length > 0) {
+            for (let i = 0; i < req.files.length; i++) {
+                const url = await uploadToCloudinary(req.files[i].buffer);
+                await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
+                    [uuidv4(), id, url, i]);
+            }
+        }
+
+        res.json({ id, message: 'Listing posted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to post listing' });
+    }
+});
 
 router.get('/pending-fabricators', requireAdmin, async (req, res) => {
     const users = await query(`

@@ -25,6 +25,9 @@
     <a href="#" data-section="post" onclick="showSection('post');return false;">
         <span class="nav-icon">&#43;</span>Post
     </a>
+    <a href="/change-password.html">
+        <span class="nav-icon">&#128274;</span>Password
+    </a>
     <a href="#" data-section="account" onclick="showSection('account');return false;">
         <span class="nav-icon">&#9881;</span>Account
     </a>
@@ -37,6 +40,7 @@
     <div class="sidebar">
         <a href="#listings" data-section="listings" class="active" onclick="showSection('listings')">&#128247; My Listings</a>
         <a href="#post" data-section="post" onclick="showSection('post')">&#43; Post Remnant</a>
+        <a href="/change-password.html">&#128274; Change Password</a>
         <a href="#account" data-section="account" onclick="showSection('account')">&#9881; Account</a>
     </div>
 
@@ -157,8 +161,28 @@
         <!-- ACCOUNT -->
         <div id="section-account" style="display:none">
             <h2 style="margin-bottom:24px;">Account</h2>
-            <div style="background:white;border-radius:12px;padding:24px;max-width:400px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+            <div style="background:white;border-radius:12px;padding:24px;max-width:400px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:20px;">
                 <div id="accountInfo"></div>
+            </div>
+
+            <div style="background:white;border-radius:12px;padding:24px;max-width:400px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+                <h3 style="margin-bottom:16px;">Change Password</h3>
+                <div id="pwAlert" style="display:none"></div>
+                <form id="changePwForm">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="pw_current" placeholder="Your current password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="pw_new" placeholder="At least 8 characters" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="pw_confirm" placeholder="Repeat new password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="pwBtn">Update Password</button>
+                </form>
             </div>
         </div>
     </div>
@@ -566,6 +590,49 @@
         btn.disabled = false;
         btn.textContent = 'Identify Stone with AI';
     }
+
+    document.getElementById('changePwForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pwAlert = document.getElementById('pwAlert');
+        const pwBtn = document.getElementById('pwBtn');
+        const newPw = document.getElementById('pw_new').value;
+        const confirmPw = document.getElementById('pw_confirm').value;
+
+        if (newPw !== confirmPw) {
+            pwAlert.className = 'alert alert-error';
+            pwAlert.textContent = 'New passwords do not match.';
+            pwAlert.style.display = 'block';
+            return;
+        }
+
+        pwBtn.disabled = true;
+        pwBtn.textContent = 'Updating...';
+
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ current_password: document.getElementById('pw_current').value, new_password: newPw }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                pwAlert.className = 'alert alert-error';
+                pwAlert.textContent = data.error;
+            } else {
+                pwAlert.className = 'alert alert-success';
+                pwAlert.textContent = 'Password updated successfully.';
+                document.getElementById('changePwForm').reset();
+            }
+            pwAlert.style.display = 'block';
+        } catch {
+            pwAlert.className = 'alert alert-error';
+            pwAlert.textContent = 'Something went wrong. Please try again.';
+            pwAlert.style.display = 'block';
+        }
+
+        pwBtn.disabled = false;
+        pwBtn.textContent = 'Update Password';
+    });
 
     loadMyListings();
     loadFormData();
