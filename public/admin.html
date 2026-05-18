@@ -344,8 +344,15 @@
         document.getElementById('fabModal').style.display = 'block';
         document.getElementById('fabModalContent').innerHTML = 'Loading...';
 
-        const res = await fetch(`/api/admin/fabricators/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-        const f = await res.json();
+        let f;
+        try {
+            const res = await fetch(`/api/admin/fabricators/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            f = await res.json();
+            if (!res.ok) throw new Error(f.error || 'Failed to load');
+        } catch (err) {
+            document.getElementById('fabModalContent').innerHTML = `<p style="color:#ef4444;">Error: ${err.message}</p>`;
+            return;
+        }
 
         const statusColor = { active: '#22c55e', expired: '#ef4444', removed: '#94a3b8' };
 
