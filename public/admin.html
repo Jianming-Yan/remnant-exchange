@@ -488,7 +488,7 @@
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
                 <h2 style="margin-bottom:0;">${f.business_name}</h2>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn btn-secondary btn-sm" onclick="showEditFabricator(${JSON.stringify(f).replace(/"/g, '&quot;')})">Edit</button>
+                    <button class="btn btn-secondary btn-sm" onclick="showEditFabricator()">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete</button>
                 </div>
             </div>
@@ -564,7 +564,7 @@
         document.getElementById('fabModal').style.display = 'none';
     }
 
-    function showEditFabricator(f) {
+    function showEditFabricator() {
         document.getElementById('editFabForm').style.display = 'block';
         document.getElementById('editFabAlert').style.display = 'none';
     }
