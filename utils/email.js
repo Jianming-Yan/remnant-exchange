@@ -118,20 +118,13 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
 
                 <p>My name is Jianming, and I'm excited to welcome you to <strong>Remnant Exchange</strong>.</p>
 
-                <p>We built Remnant Exchange specifically for stone fabricators like you. Here is what Remnant Exchange does:</p>
+                <p>Here is what Remnant Exchange does for you:</p>
 
-                <p style="margin:16px 0 6px;"><strong>For Fabricators</strong></p>
-                <ul style="line-height:2;margin-bottom:16px;">
-                    <li><strong>Remnant Management</strong> — track every leftover slab in your shop, who owns it, and its dimensions</li>
-                    <li><strong>List for Sale</strong> — post remnants publicly so buyers across the country can find and contact you directly</li>
-                    <li><strong>Customer Remnants</strong> — track slabs that belong to your customers privately, without listing them publicly</li>
-                </ul>
-
-                <p style="margin:16px 0 6px;"><strong>For Buyers</strong></p>
-                <ul style="line-height:2;margin-bottom:16px;">
-                    <li><strong>Find Remnant Pieces</strong> — instead of buying a whole slab, buyers can search for the exact size they need at a fraction of the cost</li>
-                    <li><strong>Connect Directly</strong> — contact fabricators in their area and pick up remnants locally</li>
-                </ul>
+                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
+                    <li><strong>Post your remnants</strong> — list your leftover slabs so other shops and buyers can find and purchase them</li>
+                    <li><strong>Search posted remnants</strong> — find the exact size and material you need from other fabricators, instead of buying a whole slab</li>
+                    <li><strong>Track your inventory privately</strong> — manage your internal remnant inventory for your own records, invisible to others</li>
+                </ol>
 
                 <p>It's completely free — no software fees, no service charges.</p>
 
