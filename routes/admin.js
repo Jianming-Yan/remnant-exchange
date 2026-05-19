@@ -190,6 +190,27 @@ router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     }
 });
 
+router.patch('/fabricators/:id', requireAdmin, async (req, res) => {
+    try {
+        const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+        const { name, business_name, email, phone } = req.body;
+        if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
+
+        const existing = await get(`SELECT id FROM users WHERE email = ? AND id != ?`, [email.toLowerCase(), req.params.id]);
+        if (existing) return res.status(400).json({ error: 'Email already in use by another account' });
+
+        await run(`UPDATE users SET name = ?, business_name = ?, email = ?, phone = ? WHERE id = ?`,
+            [name, business_name, email.toLowerCase(), phone || null, req.params.id]);
+
+        res.json({ message: 'Fabricator updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update fabricator' });
+    }
+});
+
 router.delete('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
         const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);

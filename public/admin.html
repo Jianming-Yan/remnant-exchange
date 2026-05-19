@@ -359,9 +359,37 @@
         document.getElementById('fabModalContent').innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
                 <h2 style="margin-bottom:0;">${f.business_name}</h2>
-                <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete Account</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="showEditFabricator(${JSON.stringify(f).replace(/"/g, '&quot;')})">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete</button>
+                </div>
             </div>
             <p style="color:#64748b;margin-bottom:20px;">${f.name}</p>
+
+            <div id="editFabForm" style="display:none;background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:20px;border:1px solid #e2e8f0;">
+                <h3 style="margin-bottom:16px;">Edit Fabricator Info</h3>
+                <div id="editFabAlert" style="display:none;margin-bottom:12px;"></div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="edit_name" value="${f.name}" required>
+                </div>
+                <div class="form-group">
+                    <label>Business Name *</label>
+                    <input type="text" id="edit_business_name" value="${f.business_name}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="edit_email" value="${f.email}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="edit_phone" value="${f.phone || ''}">
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm" onclick="saveEditFabricator('${f.id}')">Save Changes</button>
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('editFabForm').style.display='none'">Cancel</button>
+                </div>
+            </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
                 <div style="background:#f8fafc;border-radius:10px;padding:14px;">
@@ -405,6 +433,51 @@
 
     function closeFabModal(event) {
         document.getElementById('fabModal').style.display = 'none';
+    }
+
+    function showEditFabricator(f) {
+        document.getElementById('editFabForm').style.display = 'block';
+        document.getElementById('editFabAlert').style.display = 'none';
+    }
+
+    async function saveEditFabricator(id) {
+        const alertBox = document.getElementById('editFabAlert');
+        const body = {
+            name: document.getElementById('edit_name').value.trim(),
+            business_name: document.getElementById('edit_business_name').value.trim(),
+            email: document.getElementById('edit_email').value.trim(),
+            phone: document.getElementById('edit_phone').value.trim(),
+        };
+
+        if (!body.name || !body.business_name || !body.email) {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Name, business name, and email are required.';
+            alertBox.style.display = 'block';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/admin/fabricators/${id}`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Saved successfully.';
+                alertBox.style.display = 'block';
+                loadFabricators();
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error;
+                alertBox.style.display = 'block';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
     }
 
     async function deleteFabricator(id, name) {
