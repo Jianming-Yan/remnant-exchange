@@ -118,7 +118,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
 
                 <p>My name is Jianming, and I'm excited to welcome you to <strong>Remnant Exchange</strong>.</p>
 
-                <p>Here is what Remnant Exchange does for you:</p>
+                <p>Remnant Exchange is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
 
                 <ol style="line-height:2.2;margin:16px 0 16px 20px;">
                     <li><strong>Post your remnants</strong> — list your leftover slabs so other shops and buyers can find and purchase them</li>
