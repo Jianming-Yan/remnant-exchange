@@ -102,6 +102,7 @@ async function sendContactMessage(sellerEmail, sellerName, listingTitle, senderN
 
 async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
     const resend = getResend();
+    const firstName = name.split(' ')[0];
     const loginUrl = magicToken
         ? `${process.env.BASE_URL}/login.html?magic=${magicToken}`
         : `${process.env.BASE_URL}/login.html`;
@@ -110,24 +111,42 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
         from: FROM,
         replyTo: 'info@remnantexchange.org',
         to: email,
-        subject: 'Your Remnant Exchange account is ready',
+        subject: `Welcome to Remnant Exchange, ${firstName}!`,
         html: `
-            <h2>Welcome to Remnant Exchange, ${name}!</h2>
-            <p>We've created a free account for you on <a href="${process.env.BASE_URL}">Remnant Exchange</a> — the marketplace for stone fabricators to list leftover slab remnants.</p>
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <h2 style="color:#2563eb;">Welcome, ${firstName}!</h2>
 
-            <p>Click the button below to log in automatically and set your password:</p>
+                <p>My name is Jianming, and I'm excited to welcome you to <strong>Remnant Exchange</strong>.</p>
 
-            <p><a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In to Your Account</a></p>
+                <p>We built Remnant Exchange specifically for stone fabricators like you. Here's what you can do with your free account:</p>
 
-            <p style="color:#64748b;font-size:0.9rem;">Or log in manually with these credentials:<br>
-            <strong>Email:</strong> ${email}<br>
-            <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;">${tempPassword}</code></p>
+                <ul style="line-height:2;">
+                    <li><strong>Manage your remnant inventory</strong> — track every leftover slab in your shop, who owns it, and where it is</li>
+                    <li><strong>List remnants for sale</strong> — post publicly so buyers across the country can find and contact you</li>
+                    <li><strong>Keep customer remnants private</strong> — track slabs that belong to your customers without listing them publicly</li>
+                </ul>
 
-            <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p>It's completely free — no software fees, no service charges.</p>
 
-            <p><strong>Need help posting?</strong> No problem — simply reply to this email with your remnant details (material type, stone name, dimensions, thickness, and a photo if you have one) and we'll post the listings for you.</p>
+                <p>Click below to log in and set your password:</p>
 
-            <p style="color:#94a3b8;font-size:0.85rem;">If you'd rather not be listed, simply ignore this email and no action is needed.</p>
+                <p><a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to Your Account</a></p>
+
+                <p style="color:#64748b;font-size:0.9rem;">Or log in manually:<br>
+                <strong>Email:</strong> ${email}<br>
+                <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;">${tempPassword}</code></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+
+                <p><strong>Need help getting started?</strong> Simply reply to this email with your remnant details — material type, stone name, dimensions, thickness, and a photo — and we'll post the listings for you.</p>
+
+                <p>Looking forward to having you on the platform!</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange</span></p>
+
+                <p style="color:#94a3b8;font-size:0.8rem;margin-top:24px;">If you'd rather not be listed, simply ignore this email and no action is needed.</p>
+            </div>
         `,
     });
 }
