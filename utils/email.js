@@ -8,18 +8,41 @@ const FROM = 'Remnant Exchange <info@remnantexchange.org>';
 
 async function sendVerificationEmail(email, name, token) {
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
+    const firstName = name.split(' ')[0];
     const resend = getResend();
 
     await resend.emails.send({
         from: FROM,
+        replyTo: 'info@remnantexchange.org',
         to: email,
-        subject: 'Verify your Remnant Exchange account',
+        subject: `Welcome to Remnant Exchange, ${firstName}!`,
         html: `
-            <h2>Welcome to Remnant Exchange, ${name}!</h2>
-            <p>Thank you for registering. Please verify your email address to continue.</p>
-            <p><a href="${verifyUrl}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Verify Email</a></p>
-            <p>This link expires in 24 hours.</p>
-            <p>If you did not register, please ignore this email.</p>
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <h2 style="color:#2563eb;">Welcome, ${firstName}!</h2>
+
+                <p>Thank you for registering with Remnant Exchange. Please verify your email address to activate your account.</p>
+
+                <p><a href="${verifyUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Verify My Email</a></p>
+
+                <p style="color:#64748b;font-size:0.85rem;">This link expires in 24 hours.</p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+
+                <p>Remnant Exchange is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
+
+                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
+                    <li><strong>Post your remnants</strong> — list your leftover slabs so other shops and buyers can find and purchase them</li>
+                    <li><strong>Search posted remnants</strong> — find the exact size and material you need from other fabricators, instead of buying a whole slab</li>
+                    <li><strong>Track your inventory privately</strong> — manage your internal remnant inventory for your own records, invisible to others</li>
+                </ol>
+
+                <p>It's completely free — no software fees, no service charges.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange</span></p>
+
+                <p style="color:#94a3b8;font-size:0.8rem;margin-top:24px;">If you did not register, please ignore this email.</p>
+            </div>
         `,
     });
 }
