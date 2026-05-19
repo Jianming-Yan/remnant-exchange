@@ -175,6 +175,8 @@ router.get('/fabricators/:id', requireAdmin, async (req, res) => {
 
         const listings = await query(`
             SELECT l.id, l.material_type, l.stone_name, l.length, l.width, l.thickness, l.shape,
+                   l.length2, l.width2, l.vendor_name, l.bundle_number, l.state_id, l.metro_id,
+                   l.description, l.visibility, l.remnant_owner,
                    l.status, l.created_at, l.expires_at, s.name as state_name, m.name as metro_name
             FROM listings l
             JOIN states s ON l.state_id = s.id
@@ -228,6 +230,39 @@ router.delete('/fabricators/:id', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to delete fabricator' });
+    }
+});
+
+router.patch('/listings/:id', requireAdmin, async (req, res) => {
+    try {
+        const listing = await get(`SELECT id FROM listings WHERE id = ?`, [req.params.id]);
+        if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+        const { material_type, stone_name, shape, length, width, thickness, length2, width2,
+                vendor_name, bundle_number, state_id, metro_id, description, visibility, remnant_owner, status } = req.body;
+
+        if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
+            return res.status(400).json({ error: 'All required fields must be filled' });
+        }
+
+        await run(`UPDATE listings SET
+            material_type = ?, color = ?, stone_name = ?, shape = ?, length = ?, width = ?, thickness = ?,
+            length2 = ?, width2 = ?, vendor_name = ?, bundle_number = ?, state_id = ?, metro_id = ?,
+            description = ?, visibility = ?, remnant_owner = ?, status = ?
+            WHERE id = ?`,
+            [material_type, stone_name, stone_name, shape || 'rectangular',
+             parseFloat(length), parseFloat(width), thickness,
+             length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
+             vendor_name || null, bundle_number || null,
+             state_id, metro_id, description || null,
+             visibility === 'private' ? 'private' : 'public',
+             remnant_owner || null, status || 'active',
+             req.params.id]);
+
+        res.json({ message: 'Listing updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update listing' });
     }
 });
 

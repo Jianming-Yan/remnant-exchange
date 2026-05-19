@@ -55,6 +55,130 @@
             </div>
         </div>
 
+        <!-- LISTING EDIT MODAL -->
+        <div id="listingEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;overflow-y:auto;" onclick="if(event.target===this)this.style.display='none'">
+            <div style="background:white;border-radius:16px;max-width:600px;margin:40px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+                <button onclick="document.getElementById('listingEditModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+                <h2 style="margin-bottom:20px;">Edit Listing</h2>
+                <div id="listingEditAlert" style="display:none;margin-bottom:16px;"></div>
+                <input type="hidden" id="el_id">
+                <input type="hidden" id="el_fabricator_id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Material Type *</label>
+                        <select id="el_material_type" required>
+                            <option value="">Select material</option>
+                            <option>Granite</option><option>Quartz</option><option>Marble</option>
+                            <option>Quartzite</option><option>Porcelain</option><option>Soapstone</option>
+                            <option>Travertine</option><option>Limestone</option><option>Onyx</option><option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stone Name *</label>
+                        <input type="text" id="el_stone_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Shape</label>
+                    <select id="el_shape" onchange="elToggleShape(this)">
+                        <option value="rectangular">Rectangular</option>
+                        <option value="lshape">L-Shape</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Length (inches) *</label>
+                        <input type="number" id="el_length" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Width (inches) *</label>
+                        <input type="number" id="el_width" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row" id="el_lshapeDims" style="display:none;">
+                    <div class="form-group">
+                        <label>Length 2 (inches)</label>
+                        <input type="number" id="el_length2" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Width 2 (inches)</label>
+                        <input type="number" id="el_width2" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Thickness *</label>
+                    <select id="el_thickness" required>
+                        <option value="">Select thickness</option>
+                        <option value="3/4&quot;">3/4"</option>
+                        <option value="1-1/4&quot;">1-1/4"</option>
+                        <option value="1-1/2&quot;">1-1/2"</option>
+                        <option value="2cm">2cm</option>
+                        <option value="3cm">3cm</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Vendor Name</label>
+                        <input type="text" id="el_vendor_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Bundle Number</label>
+                        <input type="text" id="el_bundle_number">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>State *</label>
+                        <select id="el_state_id" required onchange="elLoadMetros()">
+                            <option value="">Select state</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Metro Area *</label>
+                        <select id="el_metro_id" required>
+                            <option value="">Select metro area</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="el_description" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Visibility</label>
+                        <select id="el_visibility">
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="el_status">
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="removed">Removed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Remnant Owner</label>
+                    <select id="el_remnant_owner_type" onchange="elToggleOwner(this)">
+                        <option value="">Shop Stock (default)</option>
+                        <option value="customer">Customer Owned</option>
+                    </select>
+                </div>
+                <div class="form-group" id="el_ownerNameGroup" style="display:none;">
+                    <label>Customer Name</label>
+                    <input type="text" id="el_remnant_owner" placeholder="Customer name">
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn btn-primary" onclick="saveAdminListing()">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('listingEditModal').style.display='none'">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <!-- SEEDED LISTINGS -->
         <div id="section-seeded" style="display:none">
             <h2 style="margin-bottom:8px;">Seeded Listings</h2>
@@ -240,6 +364,8 @@
     if (!token || user.role !== 'admin') window.location.href = '/login.html';
 
     let selectedStateId = null;
+    let currentListings = [];
+    let currentFabricatorId = null;
 
     function showSection(name, el) {
         document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
@@ -355,6 +481,8 @@
         }
 
         const statusColor = { active: '#22c55e', expired: '#ef4444', removed: '#94a3b8' };
+        currentListings = f.listings;
+        currentFabricatorId = f.id;
 
         document.getElementById('fabModalContent').innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
@@ -414,7 +542,7 @@
             ${f.listings.length === 0 ? '<p style="color:#94a3b8;">No listings yet.</p>' : `
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Stone</th><th>Size</th><th>Location</th><th>Status</th><th>Posted</th></tr></thead>
+                    <thead><tr><th>Stone</th><th>Size</th><th>Location</th><th>Status</th><th>Posted</th><th></th></tr></thead>
                     <tbody>
                         ${f.listings.map(l => `
                             <tr>
@@ -423,6 +551,7 @@
                                 <td style="font-size:0.85rem;">${l.metro_name}, ${l.state_name}</td>
                                 <td><span style="font-size:0.78rem;font-weight:600;color:${statusColor[l.status] || '#64748b'};text-transform:uppercase;">${l.status}</span></td>
                                 <td style="font-size:0.8rem;color:#64748b;">${new Date(l.created_at).toLocaleDateString()}</td>
+                                <td><button class="btn btn-secondary btn-sm" onclick="editAdminListingById('${l.id}')">Edit</button></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -767,6 +896,121 @@
         btn.disabled = false;
         btn.textContent = 'Post Listing';
     });
+
+    // Edit listing from admin fabricator view
+    function editAdminListingById(id) {
+        const l = currentListings.find(x => x.id === id);
+        if (!l) return;
+        document.getElementById('el_id').value = l.id;
+        document.getElementById('el_fabricator_id').value = currentFabricatorId;
+        document.getElementById('el_material_type').value = l.material_type;
+        document.getElementById('el_stone_name').value = l.stone_name;
+        document.getElementById('el_shape').value = l.shape || 'rectangular';
+        document.getElementById('el_length').value = l.length;
+        document.getElementById('el_width').value = l.width;
+        document.getElementById('el_thickness').value = l.thickness;
+        document.getElementById('el_length2').value = l.length2 || '';
+        document.getElementById('el_width2').value = l.width2 || '';
+        document.getElementById('el_vendor_name').value = l.vendor_name || '';
+        document.getElementById('el_bundle_number').value = l.bundle_number || '';
+        document.getElementById('el_description').value = l.description || '';
+        document.getElementById('el_visibility').value = l.visibility || 'public';
+        document.getElementById('el_status').value = l.status || 'active';
+        elToggleShape(document.getElementById('el_shape'));
+        if (l.remnant_owner) {
+            document.getElementById('el_remnant_owner_type').value = 'customer';
+            document.getElementById('el_remnant_owner').value = l.remnant_owner;
+            document.getElementById('el_ownerNameGroup').style.display = 'block';
+        } else {
+            document.getElementById('el_remnant_owner_type').value = '';
+            document.getElementById('el_remnant_owner').value = '';
+            document.getElementById('el_ownerNameGroup').style.display = 'none';
+        }
+        document.getElementById('listingEditAlert').style.display = 'none';
+        elLoadStates(l.state_id, l.metro_id);
+        document.getElementById('listingEditModal').style.display = 'block';
+    }
+
+    function elToggleShape(sel) {
+        document.getElementById('el_lshapeDims').style.display = sel.value === 'lshape' ? 'flex' : 'none';
+    }
+
+    function elToggleOwner(sel) {
+        document.getElementById('el_ownerNameGroup').style.display = sel.value === 'customer' ? 'block' : 'none';
+    }
+
+    async function elLoadStates(selectedStateId, selectedMetroId) {
+        const res = await fetch('/api/admin/states', { headers: { Authorization: `Bearer ${token}` } });
+        const states = await res.json();
+        document.getElementById('el_state_id').innerHTML = '<option value="">Select state</option>' +
+            states.map(s => `<option value="${s.id}" ${s.id === selectedStateId ? 'selected' : ''}>${s.name}</option>`).join('');
+        if (selectedStateId) await elLoadMetros(selectedMetroId);
+    }
+
+    async function elLoadMetros(selectedMetroId) {
+        const stateId = document.getElementById('el_state_id').value;
+        if (!stateId) return;
+        const res = await fetch(`/api/admin/states/${stateId}/metros`, { headers: { Authorization: `Bearer ${token}` } });
+        const metros = await res.json();
+        document.getElementById('el_metro_id').innerHTML = '<option value="">Select metro area</option>' +
+            metros.map(m => `<option value="${m.id}" ${m.id === selectedMetroId ? 'selected' : ''}>${m.name}</option>`).join('');
+    }
+
+    async function saveAdminListing() {
+        const id = document.getElementById('el_id').value;
+        const fabricatorId = document.getElementById('el_fabricator_id').value;
+        const alertBox = document.getElementById('listingEditAlert');
+        const body = {
+            material_type: document.getElementById('el_material_type').value,
+            stone_name: document.getElementById('el_stone_name').value.trim(),
+            shape: document.getElementById('el_shape').value,
+            length: document.getElementById('el_length').value,
+            width: document.getElementById('el_width').value,
+            thickness: document.getElementById('el_thickness').value,
+            length2: document.getElementById('el_length2').value || null,
+            width2: document.getElementById('el_width2').value || null,
+            vendor_name: document.getElementById('el_vendor_name').value.trim() || null,
+            bundle_number: document.getElementById('el_bundle_number').value.trim() || null,
+            state_id: document.getElementById('el_state_id').value,
+            metro_id: document.getElementById('el_metro_id').value,
+            description: document.getElementById('el_description').value.trim() || null,
+            visibility: document.getElementById('el_visibility').value,
+            status: document.getElementById('el_status').value,
+            remnant_owner: document.getElementById('el_remnant_owner_type').value === 'customer'
+                ? (document.getElementById('el_remnant_owner').value.trim() || null) : null,
+        };
+        if (!body.material_type || !body.stone_name || !body.length || !body.width || !body.thickness || !body.state_id || !body.metro_id) {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'All required fields must be filled.';
+            alertBox.style.display = 'block';
+            return;
+        }
+        try {
+            const res = await fetch(`/api/admin/listings/${id}`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Listing updated successfully.';
+                alertBox.style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('listingEditModal').style.display = 'none';
+                    viewFabricator(fabricatorId);
+                }, 900);
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Failed to update listing.';
+                alertBox.style.display = 'block';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+    }
 
     function logout() {
         localStorage.removeItem('token');
