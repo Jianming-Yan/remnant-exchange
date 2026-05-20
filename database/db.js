@@ -128,6 +128,10 @@ async function initSchema() {
         await run(`ALTER TABLE listings ADD COLUMN remnant_owner TEXT`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE users ADD COLUMN city TEXT`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

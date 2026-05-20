@@ -242,6 +242,10 @@
                         <label>Phone</label>
                         <input type="tel" id="fab_phone" placeholder="(617) 555-1234">
                     </div>
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="fab_city" placeholder="e.g. Woburn">
+                    </div>
                     <button type="submit" class="btn btn-primary" id="createFabBtn">Create Account &amp; Send Password</button>
                 </form>
             </div>
@@ -513,6 +517,10 @@
                     <label>Phone</label>
                     <input type="tel" id="edit_phone" value="${f.phone || ''}">
                 </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="edit_city" value="${f.city || ''}">
+                </div>
                 <div style="display:flex;gap:8px;">
                     <button class="btn btn-primary btn-sm" onclick="saveEditFabricator('${f.id}')">Save Changes</button>
                     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('editFabForm').style.display='none'">Cancel</button>
@@ -523,6 +531,10 @@
                 <div style="background:#f8fafc;border-radius:10px;padding:14px;">
                     <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">EMAIL</div>
                     <a href="mailto:${f.email}" style="color:#1e293b;font-weight:500;">${f.email}</a>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">CITY</div>
+                    <span style="font-weight:500;">${f.city || '—'}</span>
                 </div>
                 <div style="background:#f8fafc;border-radius:10px;padding:14px;">
                     <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px;">PHONE</div>
@@ -576,6 +588,7 @@
             business_name: document.getElementById('edit_business_name').value.trim(),
             email: document.getElementById('edit_email').value.trim(),
             phone: document.getElementById('edit_phone').value.trim(),
+            city: document.getElementById('edit_city').value.trim(),
         };
 
         if (!body.name || !body.business_name || !body.email) {
@@ -763,6 +776,7 @@
                     business_name: document.getElementById('fab_business').value,
                     email: document.getElementById('fab_email').value,
                     phone: document.getElementById('fab_phone').value,
+                    city: document.getElementById('fab_city').value,
                 }),
             });
             const data = await res.json();

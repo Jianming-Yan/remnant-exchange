@@ -28,7 +28,7 @@ const router = express.Router();
 
 router.post('/create-fabricator', requireAdmin, async (req, res) => {
     try {
-        const { name, business_name, email, phone } = req.body;
+        const { name, business_name, email, phone, city } = req.body;
         if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
 
         const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
@@ -38,8 +38,8 @@ router.post('/create-fabricator', requireAdmin, async (req, res) => {
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const userId = uuidv4();
 
-        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1)`,
-            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)`,
+            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null]);
 
         const magicToken = uuidv4();
         const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -161,7 +161,7 @@ router.post('/reject/:userId', requireAdmin, async (req, res) => {
 
 router.get('/fabricators', requireAdmin, async (req, res) => {
     const users = await query(`
-        SELECT id, name, business_name, email, phone, plan, approved, created_at
+        SELECT id, name, business_name, email, phone, city, plan, approved, created_at
         FROM users WHERE role = 'fabricator'
         ORDER BY created_at DESC
     `);
@@ -170,7 +170,7 @@ router.get('/fabricators', requireAdmin, async (req, res) => {
 
 router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await get(`SELECT id, name, business_name, email, phone, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const listings = await query(`
@@ -197,14 +197,14 @@ router.patch('/fabricators/:id', requireAdmin, async (req, res) => {
         const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
-        const { name, business_name, email, phone } = req.body;
+        const { name, business_name, email, phone, city } = req.body;
         if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
 
         const existing = await get(`SELECT id FROM users WHERE email = ? AND id != ?`, [email.toLowerCase(), req.params.id]);
         if (existing) return res.status(400).json({ error: 'Email already in use by another account' });
 
-        await run(`UPDATE users SET name = ?, business_name = ?, email = ?, phone = ? WHERE id = ?`,
-            [name, business_name, email.toLowerCase(), phone || null, req.params.id]);
+        await run(`UPDATE users SET name = ?, business_name = ?, email = ?, phone = ?, city = ? WHERE id = ?`,
+            [name, business_name, email.toLowerCase(), phone || null, city || null, req.params.id]);
 
         res.json({ message: 'Fabricator updated' });
     } catch (err) {
