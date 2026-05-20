@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private — Remnant Exchange Partnership</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .page {
+            max-width: 680px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+        }
+
+        .topbar {
+            background: #0f172a;
+            padding: 12px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar-logo { font-size: 0.95rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+        .topbar-logo span { color: #3b82f6; }
+        .confidential {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .hero {
+            padding: 36px 36px 28px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .hero h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+        .hero h1 span { color: #3b82f6; }
+        .hero p {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.65;
+            max-width: 520px;
+        }
+
+        .section {
+            padding: 24px 36px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .section-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 14px;
+        }
+
+        .problem-box {
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+        .problem-box p {
+            font-size: 0.875rem;
+            color: #7f1d1d;
+            line-height: 1.6;
+        }
+        .problem-box strong { color: #dc2626; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .stat {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat .big {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.04em;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat .label { font-size: 0.72rem; color: #64748b; font-weight: 500; line-height: 1.4; }
+
+        .offer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .offer-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .offer-card.highlight {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .offer-icon { font-size: 1.4rem; margin-bottom: 8px; }
+        .offer-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
+        .offer-card p { font-size: 0.8rem; color: #64748b; line-height: 1.5; }
+        .offer-card.highlight p { color: #1d4ed8; }
+
+        .how-it-works {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .step-num {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 800;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .step p { font-size: 0.85rem; color: #475569; line-height: 1.5; }
+        .step p strong { color: #0f172a; }
+
+        .cta {
+            background: #0f172a;
+            padding: 28px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .cta p { color: #94a3b8; font-size: 0.8rem; line-height: 1.6; }
+        .cta p strong { color: white; display: block; font-size: 0.95rem; margin-bottom: 4px; }
+        .cta-contact { text-align: right; flex-shrink: 0; }
+        .cta-contact .name { color: white; font-weight: 700; font-size: 0.9rem; }
+        .cta-contact .phone { color: #60a5fa; font-size: 0.82rem; margin-top: 2px; }
+        .cta-contact .email { color: #60a5fa; font-size: 0.82rem; }
+
+        .print-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            display: block;
+            margin: 24px auto 0;
+        }
+        .print-btn:hover { background: #2563eb; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .page { box-shadow: none; border-radius: 0; margin: 0; max-width: 100%; }
+            .print-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="topbar">
+        <div class="topbar-logo">Remnant<span>Exchange</span></div>
+        <div class="confidential">Private & Confidential</div>
+    </div>
+
+    <div class="hero">
+        <h1>A personal opportunity —<br><span>just between us.</span></h1>
+        <p>I'm building a marketplace where stone fabricators sell their leftover slabs. The platform is live. Fabricators are signing up. I'd like you to be part of this — quietly, on your own time, in a way that puts real money in your pocket.</p>
+    </div>
+
+    <!-- THE PROBLEM -->
+    <div class="section">
+        <div class="section-title">The Problem I'm Solving</div>
+        <div class="problem-box">
+            <p>Every fabricator you visit has a back corner full of remnant slabs they can't sell. <strong>Billions of dollars in stone sit unused every year.</strong> Fabricators can't find buyers. Buyers can't find the stone. Remnant Exchange fixes that — an online marketplace connecting both sides.</p>
+        </div>
+    </div>
+
+    <!-- TRACTION -->
+    <div class="section">
+        <div class="section-title">Where We Are Today</div>
+        <div class="stats">
+            <div class="stat">
+                <div class="big">9</div>
+                <div class="label">Fabricators registered in 2 days</div>
+            </div>
+            <div class="stat">
+                <div class="big">Free</div>
+                <div class="label">No cost for fabricators to list</div>
+            </div>
+            <div class="stat">
+                <div class="big">Live</div>
+                <div class="label">Platform running at remnantexchange.org</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THE OFFER -->
+    <div class="section">
+        <div class="section-title">What I'm Offering You</div>
+        <div class="offer-grid">
+            <div class="offer-card highlight">
+                <div class="offer-icon">💰</div>
+                <h3>Cash Commission</h3>
+                <p><strong>$20 per fabricator</strong> who registers and posts a listing. Quick, direct reward every time.</p>
+            </div>
+            <div class="offer-card">
+                <div class="offer-icon">📈</div>
+                <h3>IPO Shares</h3>
+                <p><strong>10 shares per active fabricator</strong> you bring in, awarded at IPO. The more active fabricators you sign, the more shares you earn.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="section">
+        <div class="section-title">How It Works</div>
+        <div class="how-it-works">
+            <div class="step">
+                <div class="step-num">1</div>
+                <p>You visit fabricators every day already. <strong>One sentence is enough</strong> — "There's a free site where you can sell your remnants. Check out remnantexchange.org."</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <p>They sign up free. No cost to them. <strong>You get credit</strong> for every referral that registers and posts.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <p><strong>You get paid.</strong> Commission per signup, plus your equity stake grows as the platform grows.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <div>
+            <p><strong>Let's talk details over lunch.</strong>
+            This stays between us. I just need someone who knows fabricators and wants to build something on the side.</p>
+        </div>
+        <div class="cta-contact">
+            <div class="name">Jianming Yan</div>
+            <div class="phone">(617) 606-5840</div>
+            <div class="email">jianming@remnantexchange.org</div>
+        </div>
+    </div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+</body>
+</html>
