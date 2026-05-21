@@ -80,10 +80,10 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         const user = await get(`SELECT * FROM users WHERE email = ?`, [email.toLowerCase()]);
-        if (!user) return res.status(401).json({ error: 'Invalid email or password' });
+        if (!user) return res.status(401).json({ error: 'No account found with that email address. Check your welcome email for the correct login email.' });
 
         const valid = await bcrypt.compare(password, user.password_hash);
-        if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
+        if (!valid) return res.status(401).json({ error: 'Incorrect password. Use "Forgot your password?" below to reset it.' });
 
         if (!user.email_verified) {
             return res.status(403).json({ error: 'Please verify your email address first' });

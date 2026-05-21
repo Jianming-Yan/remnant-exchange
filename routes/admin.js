@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
+const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
 const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail } = require('../utils/email');
@@ -192,6 +193,29 @@ router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     }
 });
 
+router.post('/fabricators/:id/send-credentials', requireAdmin, async (req, res) => {
+    try {
+        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        await run(`UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?`, [passwordHash, user.id]);
+
+        const magicToken = uuidv4();
+        const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'magic-login'`, [user.id]);
+        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), user.id, magicToken, 'magic-login', magicExpires]);
+
+        await sendTempPasswordEmail(user.email, user.name, tempPassword, magicToken);
+        res.json({ message: `Credentials sent to ${user.email}` });
+    } catch (err) {
+        console.error('send-credentials error:', err);
+        res.status(500).json({ error: 'Failed to send credentials: ' + err.message });
+    }
+});
+
 router.patch('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
         const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
@@ -336,6 +360,96 @@ router.delete('/clear-fabricators', requireAdmin, async (req, res) => {
         await run(`DELETE FROM users WHERE id = ?`, [u.id]);
     }
     res.json({ message: `Deleted ${users.length} user(s)` });
+});
+
+router.post('/bulk-import', requireAdmin, (req, res, next) => {
+    upload.single('file')(req, res, err => {
+        if (err) return res.status(400).json({ error: err.message });
+        next();
+    });
+}, async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        const sendEmail = false; // always off — admin sends credentials manually after calling
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        const imported = [];
+        const skipped = [];
+        const errors = [];
+
+        for (const row of rows) {
+            const businessName = (row['Business Name'] || '').trim();
+            const contactName = (row['Contact Name'] || '').trim();
+            const email = (row['Email'] || '').trim().toLowerCase();
+            const phone = (row['Phone'] || row['Cell'] || '').toString().trim();
+            const city = (row['City'] || '').trim();
+            const website = (row['Website'] || '').trim();
+
+            if (!email) {
+                skipped.push({ business: businessName || '(no name)', reason: 'No email address' });
+                continue;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                skipped.push({ business: businessName, reason: `Invalid email: ${email}` });
+                continue;
+            }
+
+            const existing = await get(`SELECT id FROM users WHERE email = ?`, [email]);
+            if (existing) {
+                skipped.push({ business: businessName, reason: `Already registered: ${email}` });
+                continue;
+            }
+
+            const name = contactName || businessName;
+            if (!name || !businessName) {
+                skipped.push({ business: email, reason: 'Missing business name' });
+                continue;
+            }
+
+            try {
+                const userId = uuidv4();
+                await run(
+                    `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)`,
+                    [userId, name, businessName, email, passwordHash, phone || null, city || null]
+                );
+
+                if (sendEmail) {
+                    const magicToken = uuidv4();
+                    const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                    await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+                        [uuidv4(), userId, magicToken, 'magic-login', magicExpires]);
+                    try {
+                        await sendTempPasswordEmail(email, name, tempPassword, magicToken);
+                    } catch (emailErr) {
+                        console.error('Bulk import email failed for', email, emailErr.message);
+                    }
+                }
+
+                imported.push({ business: businessName, email });
+            } catch (rowErr) {
+                errors.push({ business: businessName, email, reason: rowErr.message });
+            }
+        }
+
+        res.json({
+            total: rows.length,
+            imported: imported.length,
+            skipped: skipped.length,
+            failed: errors.length,
+            importedList: imported,
+            skippedList: skipped,
+            errorList: errors,
+        });
+    } catch (err) {
+        console.error('bulk-import error:', err);
+        res.status(500).json({ error: 'Failed to process file: ' + err.message });
+    }
 });
 
 router.get('/stats', requireAdmin, async (req, res) => {

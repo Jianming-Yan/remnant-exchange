@@ -24,6 +24,7 @@
         <a href="#" onclick="showSection('locations', this)">&#128205; Manage Locations</a>
         <a href="#" onclick="showSection('plans', this)">&#9881; Plan Settings</a>
         <a href="#" onclick="showSection('create-fabricator', this)">&#43; Create Fabricator</a>
+        <a href="#" onclick="showSection('bulk-import', this)">&#128229; Bulk Import</a>
         <a href="#" onclick="showSection('post-for', this)">&#128247; Post For Fabricator</a>
     </div>
 
@@ -248,6 +249,64 @@
                     </div>
                     <button type="submit" class="btn btn-primary" id="createFabBtn">Create Account &amp; Send Password</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- BULK IMPORT -->
+        <div id="section-bulk-import" style="display:none">
+            <h2 style="margin-bottom:8px;">Bulk Import Fabricators</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Upload your CSV or Excel leads file. Rows without an email address are skipped. Duplicate emails are skipped.</p>
+            <div style="background:white;border-radius:12px;padding:24px;max-width:560px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <div id="bulkAlert" style="display:none;margin-bottom:16px;"></div>
+                <div class="form-group">
+                    <label>CSV or Excel File (.csv, .xlsx)</label>
+                    <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls" style="margin-top:6px;">
+                </div>
+                <p style="font-size:0.8rem;color:#64748b;margin-bottom:16px;">&#9432; Accounts are created silently — no email is sent. After calling a fabricator, open their account and click <strong>Send Credentials</strong> to email their login details.</p>
+                <button class="btn btn-primary" id="bulkImportBtn" onclick="runBulkImport()">Import Fabricators</button>
+            </div>
+
+            <div id="bulkResults" style="display:none;">
+                <div id="bulkSummary" style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;"></div>
+
+                <div id="bulkImportedSection" style="display:none;margin-bottom:20px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:10px;color:#16a34a;">&#10003; Imported</h3>
+                    <div style="max-height:200px;overflow-y:auto;border:1px solid #dcfce7;border-radius:8px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                            <thead><tr style="background:#f0fdf4;">
+                                <th style="padding:8px 12px;text-align:left;color:#166534;">Business</th>
+                                <th style="padding:8px 12px;text-align:left;color:#166534;">Email</th>
+                            </tr></thead>
+                            <tbody id="bulkImportedBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="bulkSkippedSection" style="display:none;margin-bottom:20px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:10px;color:#d97706;">&#9888; Skipped</h3>
+                    <div style="max-height:200px;overflow-y:auto;border:1px solid #fef3c7;border-radius:8px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                            <thead><tr style="background:#fffbeb;">
+                                <th style="padding:8px 12px;text-align:left;color:#92400e;">Business</th>
+                                <th style="padding:8px 12px;text-align:left;color:#92400e;">Reason</th>
+                            </tr></thead>
+                            <tbody id="bulkSkippedBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="bulkErrorSection" style="display:none;">
+                    <h3 style="font-size:0.95rem;margin-bottom:10px;color:#dc2626;">&#10007; Errors</h3>
+                    <div style="max-height:160px;overflow-y:auto;border:1px solid #fee2e2;border-radius:8px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                            <thead><tr style="background:#fef2f2;">
+                                <th style="padding:8px 12px;text-align:left;color:#991b1b;">Business</th>
+                                <th style="padding:8px 12px;text-align:left;color:#991b1b;">Error</th>
+                            </tr></thead>
+                            <tbody id="bulkErrorBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -491,8 +550,9 @@
         document.getElementById('fabModalContent').innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
                 <h2 style="margin-bottom:0;">${f.business_name}</h2>
-                <div style="display:flex;gap:8px;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="btn btn-secondary btn-sm" onclick="showEditFabricator()">Edit</button>
+                    <button class="btn btn-secondary btn-sm" id="sendCredBtn_${f.id}" onclick="sendCredentials('${f.id}', '${f.email}')">Send Credentials</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete</button>
                 </div>
             </div>
@@ -1024,6 +1084,114 @@
             alertBox.textContent = 'Something went wrong.';
             alertBox.style.display = 'block';
         }
+    }
+
+    async function sendCredentials(id, email) {
+        const btn = document.getElementById(`sendCredBtn_${id}`);
+        if (!confirm(`Send login credentials to ${email}?`)) return;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+            const res = await fetch(`/api/admin/fabricators/${id}/send-credentials`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (res.ok) {
+                btn.textContent = 'Sent ✓';
+                btn.style.color = '#16a34a';
+            } else {
+                alert(data.error || 'Failed to send credentials');
+                btn.disabled = false;
+                btn.textContent = 'Send Credentials';
+            }
+        } catch {
+            alert('Something went wrong.');
+            btn.disabled = false;
+            btn.textContent = 'Send Credentials';
+        }
+    }
+
+    async function runBulkImport() {
+        const fileInput = document.getElementById('bulkFile');
+        const alertBox = document.getElementById('bulkAlert');
+        const btn = document.getElementById('bulkImportBtn');
+        if (!fileInput.files[0]) {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Please select a file first.';
+            alertBox.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Importing...';
+        alertBox.style.display = 'none';
+        document.getElementById('bulkResults').style.display = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const res = await fetch('/api/admin/bulk-import', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Import failed.';
+                alertBox.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('bulkSummary').innerHTML = `
+                <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:12px 20px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;color:#16a34a;">${data.imported}</div>
+                    <div style="font-size:0.75rem;color:#166534;">Imported</div>
+                </div>
+                <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:8px;padding:12px 20px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;color:#d97706;">${data.skipped}</div>
+                    <div style="font-size:0.75rem;color:#92400e;">Skipped</div>
+                </div>
+                <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:12px 20px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;color:#dc2626;">${data.failed}</div>
+                    <div style="font-size:0.75rem;color:#991b1b;">Errors</div>
+                </div>
+                <div style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:12px 20px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;color:#475569;">${data.total}</div>
+                    <div style="font-size:0.75rem;color:#64748b;">Total Rows</div>
+                </div>`;
+
+            if (data.importedList && data.importedList.length) {
+                document.getElementById('bulkImportedBody').innerHTML = data.importedList.map(r =>
+                    `<tr><td style="padding:6px 12px;border-bottom:1px solid #dcfce7;">${r.business}</td><td style="padding:6px 12px;border-bottom:1px solid #dcfce7;color:#15803d;">${r.email}</td></tr>`
+                ).join('');
+                document.getElementById('bulkImportedSection').style.display = 'block';
+            }
+            if (data.skippedList && data.skippedList.length) {
+                document.getElementById('bulkSkippedBody').innerHTML = data.skippedList.map(r =>
+                    `<tr><td style="padding:6px 12px;border-bottom:1px solid #fef3c7;">${r.business}</td><td style="padding:6px 12px;border-bottom:1px solid #fef3c7;color:#92400e;">${r.reason}</td></tr>`
+                ).join('');
+                document.getElementById('bulkSkippedSection').style.display = 'block';
+            }
+            if (data.errorList && data.errorList.length) {
+                document.getElementById('bulkErrorBody').innerHTML = data.errorList.map(r =>
+                    `<tr><td style="padding:6px 12px;border-bottom:1px solid #fee2e2;">${r.business}</td><td style="padding:6px 12px;border-bottom:1px solid #fee2e2;color:#dc2626;">${r.reason}</td></tr>`
+                ).join('');
+                document.getElementById('bulkErrorSection').style.display = 'block';
+            }
+
+            document.getElementById('bulkResults').style.display = 'block';
+            if (data.imported > 0) loadStats();
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Import Fabricators';
     }
 
     function logout() {

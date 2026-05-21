@@ -183,8 +183,9 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
         subject: 'Your Remnant Exchange password has been reset',
         html: `
             <h2>Password Reset — Remnant Exchange</h2>
-            <p>Hi ${name}, here is your temporary password:</p>
-            <p><strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:1.1em;">${tempPassword}</code></p>
+            <p>Hi ${name}, here are your login credentials:</p>
+            <p><strong>Login Email:</strong> ${email}<br>
+            <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:1.1em;">${tempPassword}</code></p>
             <p>You will be asked to set a new password after logging in.</p>
             <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In Now</a></p>
             <p style="color:#94a3b8;font-size:0.85rem;">If you did not request this, please contact us immediately.</p>
