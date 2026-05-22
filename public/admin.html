@@ -517,10 +517,11 @@
                 <td style="text-align:center;">${Number(u.active_listings) > 0 ? `<span style="background:#dcfce7;color:#16a34a;font-weight:700;padding:2px 10px;border-radius:999px;">${u.active_listings}</span>` : '<span style="color:#cbd5e1;">—</span>'}</td>
                 <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
                 <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
+                <td style="font-size:0.8rem;color:#64748b;max-width:180px;">${u.admin_notes ? `<span title="${u.admin_notes.replace(/"/g,'&quot;')}">${u.admin_notes.length > 40 ? u.admin_notes.substring(0,40)+'…' : u.admin_notes}</span>` : ''}</td>
                 <td><button class="btn btn-secondary btn-sm" onclick="viewFabricator('${u.id}')">View</button></td>
             </tr>
         `).join('');
-        tbody.innerHTML = rows || '<tr><td colspan="8" style="color:#94a3b8;text-align:center;">No results</td></tr>';
+        tbody.innerHTML = rows || '<tr><td colspan="9" style="color:#94a3b8;text-align:center;">No results</td></tr>';
     }
 
     function filterFabricators() {
@@ -543,7 +544,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Active Listings</th><th>Plan</th><th>Joined</th><th></th></tr></thead>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Active Listings</th><th>Plan</th><th>Joined</th><th>Notes</th><th></th></tr></thead>
                     <tbody id="fabTableBody"></tbody>
                 </table>
             </div>
@@ -632,6 +633,13 @@
                 </div>
             </div>
 
+            <div style="margin-bottom:24px;">
+                <h3 style="margin-bottom:8px;">Notes</h3>
+                <textarea id="fabNotesField" rows="3" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;resize:vertical;font-family:inherit;">${f.admin_notes || ''}</textarea>
+                <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveNotes('${f.id}')">Save Notes</button>
+                <span id="notesSavedMsg" style="margin-left:10px;color:#16a34a;font-size:0.85rem;display:none;">Saved ✓</span>
+            </div>
+
             <h3 style="margin-bottom:12px;">Listings (${f.listings.length})</h3>
             ${f.listings.length === 0 ? '<p style="color:#94a3b8;">No listings yet.</p>' : `
             <div class="table-wrap">
@@ -663,6 +671,23 @@
         document.getElementById('editFabAlert').style.display = 'none';
     }
 
+    async function saveNotes(id) {
+        const notes = document.getElementById('fabNotesField').value.trim();
+        const msg = document.getElementById('notesSavedMsg');
+        try {
+            const fab = await (await fetch(`/api/admin/fabricators/${id}`, { headers: { Authorization: `Bearer ${token}` } })).json();
+            await fetch(`/api/admin/fabricators/${id}`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: fab.name, business_name: fab.business_name, email: fab.email, phone: fab.phone, city: fab.city, admin_notes: notes }),
+            });
+            msg.style.display = 'inline';
+            setTimeout(() => msg.style.display = 'none', 2000);
+            const u = allFabricators.find(x => x.id === id);
+            if (u) u.admin_notes = notes;
+        } catch (err) { alert('Failed to save notes'); }
+    }
+
     async function saveEditFabricator(id) {
         const alertBox = document.getElementById('editFabAlert');
         const body = {
@@ -671,6 +696,7 @@
             email: document.getElementById('edit_email').value.trim(),
             phone: document.getElementById('edit_phone').value.trim(),
             city: document.getElementById('edit_city').value.trim(),
+            admin_notes: document.getElementById('fabNotesField') ? document.getElementById('fabNotesField').value.trim() : '',
         };
 
         if (!body.name || !body.business_name || !body.email) {

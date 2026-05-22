@@ -162,16 +162,20 @@ router.post('/reject/:userId', requireAdmin, async (req, res) => {
 
 router.get('/fabricators', requireAdmin, async (req, res) => {
     const users = await query(`
-        SELECT id, name, business_name, email, phone, city, plan, approved, created_at
-        FROM users WHERE role = 'fabricator'
-        ORDER BY created_at DESC
+        SELECT u.id, u.name, u.business_name, u.email, u.phone, u.city, u.plan, u.approved, u.created_at, u.admin_notes,
+               COUNT(l.id) as active_listings
+        FROM users u
+        LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
+        WHERE u.role = 'fabricator'
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
     `);
     res.json(users);
 });
 
 router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at, admin_notes FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const listings = await query(`
@@ -221,14 +225,14 @@ router.patch('/fabricators/:id', requireAdmin, async (req, res) => {
         const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
-        const { name, business_name, email, phone, city } = req.body;
+        const { name, business_name, email, phone, city, admin_notes } = req.body;
         if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
 
         const existing = await get(`SELECT id FROM users WHERE email = ? AND id != ?`, [email.toLowerCase(), req.params.id]);
         if (existing) return res.status(400).json({ error: 'Email already in use by another account' });
 
-        await run(`UPDATE users SET name = ?, business_name = ?, email = ?, phone = ?, city = ? WHERE id = ?`,
-            [name, business_name, email.toLowerCase(), phone || null, city || null, req.params.id]);
+        await run(`UPDATE users SET name = ?, business_name = ?, email = ?, phone = ?, city = ?, admin_notes = ? WHERE id = ?`,
+            [name, business_name, email.toLowerCase(), phone || null, city || null, admin_notes || null, req.params.id]);
 
         res.json({ message: 'Fabricator updated' });
     } catch (err) {
