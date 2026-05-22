@@ -174,8 +174,11 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
     });
 }
 
-async function sendIntroductionEmail(email, businessName) {
+async function sendIntroductionEmail(email, businessName, tempPassword, magicToken) {
     const resend = getResend();
+    const loginUrl = magicToken
+        ? `${process.env.BASE_URL}/login.html?magic=${magicToken}`
+        : `${process.env.BASE_URL}/login.html`;
 
     await resend.emails.send({
         from: FROM,
@@ -198,7 +201,15 @@ async function sendIntroductionEmail(email, businessName) {
 
                 <p>It is completely free — no software fees, no commissions.</p>
 
-                <p>I would love to set up a free account for ${businessName} and walk you through it. Feel free to call or text me anytime at <strong>(617) 606-5840</strong>, or simply reply to this email.</p>
+                <p>I have already created a free account for <strong>${businessName}</strong>. Click below to log in and take a look:</p>
+
+                <p><a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to Your Account</a></p>
+
+                <p style="color:#64748b;font-size:0.9rem;">Or log in manually at <a href="https://remnantexchange.org/login.html" style="color:#2563eb;">remnantexchange.org</a>:<br>
+                <strong>Email:</strong> ${email}<br>
+                <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;">${tempPassword}</code></p>
+
+                <p>Feel free to call or text me anytime at <strong>(617) 606-5840</strong>, or simply reply to this email — I am happy to walk you through it.</p>
 
                 <p>— Jianming Yan<br>
                 <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
