@@ -686,7 +686,7 @@
             msg.style.display = 'inline';
             setTimeout(() => msg.style.display = 'none', 2000);
             const u = allFabricators.find(x => x.id === id);
-            if (u) u.admin_notes = notes;
+            if (u) { u.admin_notes = notes; filterFabricators(); }
         } catch (err) { alert('Failed to save notes'); }
     }
 
