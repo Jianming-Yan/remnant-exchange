@@ -202,17 +202,8 @@ router.post('/fabricators/:id/send-introduction', requireAdmin, async (req, res)
         const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
-        const tempPassword = '12345678';
-        const passwordHash = await bcrypt.hash(tempPassword, 10);
-        await run(`UPDATE users SET password_hash = ?, must_change_password = 1, outreach_status = 'introduction' WHERE id = ?`, [passwordHash, user.id]);
-
-        const magicToken = uuidv4();
-        const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'magic-login'`, [user.id]);
-        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
-            [uuidv4(), user.id, magicToken, 'magic-login', magicExpires]);
-
-        await sendIntroductionEmail(user.email, user.business_name, tempPassword, magicToken);
+        await sendIntroductionEmail(user.email, user.business_name);
+        await run(`UPDATE users SET outreach_status = 'introduction' WHERE id = ?`, [user.id]);
         res.json({ message: `Introduction sent to ${user.email}` });
     } catch (err) {
         console.error('send-introduction error:', err);
