@@ -139,7 +139,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <h2 style="color:#2563eb;">Welcome, ${firstName}!</h2>
 
-                <p>My name is Jianming, and I'm excited to welcome you to <strong>Remnant Exchange</strong>.</p>
+                <p>My name is Jianming Yan — I am the founder of <strong>Remnant Exchange</strong>, and I'm excited to welcome you to the platform.</p>
 
                 <p>Remnant Exchange is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
 
@@ -155,9 +155,11 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
 
                 <p><a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to Your Account</a></p>
 
-                <p style="color:#64748b;font-size:0.9rem;">Or log in manually:<br>
-                <strong>Email:</strong> ${email}<br>
-                <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;">${tempPassword}</code></p>
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:16px 0;">
+                    <p style="margin:0 0 10px 0;color:#64748b;font-size:0.85rem;">Or log in manually at <a href="https://remnantexchange.org/login.html" style="color:#2563eb;">remnantexchange.org</a>:</p>
+                    <p style="margin:0 0 8px 0;font-size:1.1rem;"><strong>Email:</strong> <span style="color:#1e293b;font-size:1.2rem;font-weight:700;">${email}</span></p>
+                    <p style="margin:0;font-size:1.1rem;"><strong>Temporary Password:</strong> <span style="color:#1e293b;font-size:1.4rem;font-weight:700;letter-spacing:2px;">${tempPassword}</span></p>
+                </div>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
 
@@ -186,7 +188,7 @@ async function sendIntroductionEmail(email, businessName) {
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <p>Hi,</p>
 
-                <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am a stone fabricator based in Canton, MA, and I recently built <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>.</p>
+                <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am the founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free platform built for stone fabricators.</p>
 
                 <p>It is a free platform for stone fabricators to buy, sell, and track stone remnants. Here is what it does:</p>
 
