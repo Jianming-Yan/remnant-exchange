@@ -503,30 +503,52 @@
         loadStats();
     }
 
+    let allFabricators = [];
+
+    function renderFabricatorsTable(users) {
+        const tbody = document.getElementById('fabTableBody');
+        if (!tbody) return;
+        const rows = users.map(u => `
+            <tr>
+                <td>${u.name}</td>
+                <td>${u.business_name}</td>
+                <td>${u.email}</td>
+                <td>${u.phone ? `<a href="tel:${u.phone}" style="color:#1e293b;text-decoration:none;">${u.phone}</a>` : '—'}</td>
+                <td style="text-align:center;">${Number(u.active_listings) > 0 ? `<span style="background:#dcfce7;color:#16a34a;font-weight:700;padding:2px 10px;border-radius:999px;">${u.active_listings}</span>` : '<span style="color:#cbd5e1;">—</span>'}</td>
+                <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
+                <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="viewFabricator('${u.id}')">View</button></td>
+            </tr>
+        `).join('');
+        tbody.innerHTML = rows || '<tr><td colspan="8" style="color:#94a3b8;text-align:center;">No results</td></tr>';
+    }
+
+    function filterFabricators() {
+        const q = document.getElementById('fabSearch').value.toLowerCase();
+        const filtered = allFabricators.filter(u =>
+            (u.business_name || '').toLowerCase().includes(q) ||
+            (u.name || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q)
+        );
+        renderFabricatorsTable(filtered);
+    }
+
     async function loadFabricators() {
         const res = await fetch('/api/admin/fabricators', { headers: { Authorization: `Bearer ${token}` } });
-        const users = await res.json();
+        allFabricators = await res.json();
         document.getElementById('fabricatorsContent').innerHTML = `
+            <div style="margin-bottom:14px;">
+                <input id="fabSearch" type="text" placeholder="Search by business, name, or email..." oninput="filterFabricators()"
+                    style="width:100%;max-width:400px;padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;outline:none;">
+            </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Plan</th><th>Status</th><th>Joined</th><th></th></tr></thead>
-                    <tbody>
-                        ${users.map(u => `
-                            <tr>
-                                <td>${u.name}</td>
-                                <td>${u.business_name}</td>
-                                <td>${u.email}</td>
-                                <td>${u.phone ? `<a href="tel:${u.phone}" style="color:#1e293b;text-decoration:none;">${u.phone}</a>` : '—'}</td>
-                                <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
-                                <td><span class="badge ${u.approved ? 'badge-active' : 'badge-pending'}">${u.approved ? 'Approved' : 'Pending'}</span></td>
-                                <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
-                                <td><button class="btn btn-secondary btn-sm" onclick="viewFabricator('${u.id}')">View</button></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Active Listings</th><th>Plan</th><th>Joined</th><th></th></tr></thead>
+                    <tbody id="fabTableBody"></tbody>
                 </table>
             </div>
         `;
+        renderFabricatorsTable(allFabricators);
     }
 
     async function viewFabricator(id) {
