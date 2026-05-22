@@ -174,6 +174,40 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
     });
 }
 
+async function sendIntroductionEmail(email, businessName) {
+    const resend = getResend();
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Hello from Jianming — Remnant Exchange',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <p>Hi,</p>
+
+                <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am a stone fabricator based in Canton, MA, and I recently built <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>.</p>
+
+                <p>It is a free platform for stone fabricators to buy, sell, and track stone remnants. Here is what it does:</p>
+
+                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
+                    <li><strong>List your remnants</strong> — post leftover slabs so other fabricators can find and buy them</li>
+                    <li><strong>Search for remnants</strong> — find the exact size and material you need from other shops instead of buying a full slab</li>
+                    <li><strong>Track your inventory</strong> — manage your internal remnant inventory privately for your own records</li>
+                </ol>
+
+                <p>It is completely free — no software fees, no commissions.</p>
+
+                <p>I would love to set up a free account for ${businessName} and walk you through it. Feel free to call or text me anytime at <strong>(617) 606-5840</strong>, or simply reply to this email.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+            </div>
+        `,
+    });
+}
+
 async function sendResetPasswordEmail(email, name, tempPassword) {
     const resend = getResend();
 
@@ -193,4 +227,4 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail };
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail };

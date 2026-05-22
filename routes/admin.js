@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail } = require('../utils/email');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -162,7 +162,7 @@ router.post('/reject/:userId', requireAdmin, async (req, res) => {
 
 router.get('/fabricators', requireAdmin, async (req, res) => {
     const users = await query(`
-        SELECT u.id, u.name, u.business_name, u.email, u.phone, u.city, u.plan, u.approved, u.created_at, u.admin_notes,
+        SELECT u.id, u.name, u.business_name, u.email, u.phone, u.city, u.plan, u.approved, u.created_at, u.admin_notes, u.outreach_status,
                COUNT(l.id) as active_listings
         FROM users u
         LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
@@ -175,7 +175,7 @@ router.get('/fabricators', requireAdmin, async (req, res) => {
 
 router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at, admin_notes FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at, admin_notes, outreach_status FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const listings = await query(`
@@ -197,6 +197,20 @@ router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     }
 });
 
+router.post('/fabricators/:id/send-introduction', requireAdmin, async (req, res) => {
+    try {
+        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+        await sendIntroductionEmail(user.email, user.business_name);
+        await run(`UPDATE users SET outreach_status = 'introduction' WHERE id = ?`, [user.id]);
+        res.json({ message: `Introduction sent to ${user.email}` });
+    } catch (err) {
+        console.error('send-introduction error:', err);
+        res.status(500).json({ error: 'Failed to send introduction: ' + err.message });
+    }
+});
+
 router.post('/fabricators/:id/send-credentials', requireAdmin, async (req, res) => {
     try {
         const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
@@ -204,7 +218,7 @@ router.post('/fabricators/:id/send-credentials', requireAdmin, async (req, res) 
 
         const tempPassword = '12345678';
         const passwordHash = await bcrypt.hash(tempPassword, 10);
-        await run(`UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?`, [passwordHash, user.id]);
+        await run(`UPDATE users SET password_hash = ?, must_change_password = 1, outreach_status = 'credentials' WHERE id = ?`, [passwordHash, user.id]);
 
         const magicToken = uuidv4();
         const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();

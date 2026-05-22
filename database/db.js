@@ -136,6 +136,10 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN admin_notes TEXT`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE users ADD COLUMN outreach_status TEXT NOT NULL DEFAULT 'new'`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

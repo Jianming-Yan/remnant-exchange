@@ -518,6 +518,7 @@
                 <td><span class="badge ${u.plan === 'paid' ? 'badge-active' : 'badge-pending'}">${u.plan}</span></td>
                 <td style="font-size:0.8rem;color:#64748b;">${new Date(u.created_at).toLocaleDateString()}</td>
                 <td style="font-size:0.8rem;color:#64748b;max-width:180px;">${u.admin_notes ? `<span title="${u.admin_notes.replace(/"/g,'&quot;')}">${u.admin_notes.length > 40 ? u.admin_notes.substring(0,40)+'…' : u.admin_notes}</span>` : ''}</td>
+                <td>${{new:'<span style="background:#f1f5f9;color:#64748b;font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;">New</span>',introduction:'<span style="background:#fef9c3;color:#854d0e;font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;">Intro Sent</span>',credentials:'<span style="background:#dcfce7;color:#15803d;font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;">Credentials</span>'}[u.outreach_status] || ''}</td>
                 <td><button class="btn btn-secondary btn-sm" onclick="viewFabricator('${u.id}')">View</button></td>
             </tr>
         `).join('');
@@ -544,7 +545,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Active Listings</th><th>Plan</th><th>Joined</th><th>Notes</th><th></th></tr></thead>
+                    <thead><tr><th>Name</th><th>Business</th><th>Email</th><th>Phone</th><th>Active Listings</th><th>Plan</th><th>Joined</th><th>Notes</th><th>Outreach</th><th></th></tr></thead>
                     <tbody id="fabTableBody"></tbody>
                 </table>
             </div>
@@ -575,6 +576,7 @@
                 <h2 style="margin-bottom:0;">${f.business_name}</h2>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="btn btn-secondary btn-sm" onclick="showEditFabricator()">Edit</button>
+                    <button class="btn btn-secondary btn-sm" id="sendIntroBtn_${f.id}" onclick="sendIntroduction('${f.id}')">Send Introduction</button>
                     <button class="btn btn-secondary btn-sm" id="sendCredBtn_${f.id}" onclick="sendCredentials('${f.id}', '${f.email}')">Send Credentials</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteFabricator('${f.id}', '${f.business_name.replace(/'/g, "\\'")}')">Delete</button>
                 </div>
@@ -1134,6 +1136,34 @@
         }
     }
 
+    async function sendIntroduction(id) {
+        const btn = document.getElementById(`sendIntroBtn_${id}`);
+        if (!confirm('Send introduction email to this fabricator?')) return;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+            const res = await fetch(`/api/admin/fabricators/${id}/send-introduction`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (res.ok) {
+                btn.textContent = 'Sent ✓';
+                btn.style.color = '#16a34a';
+                const u = allFabricators.find(x => x.id === id);
+                if (u) u.outreach_status = 'introduction';
+            } else {
+                alert(data.error || 'Failed to send introduction');
+                btn.disabled = false;
+                btn.textContent = 'Send Introduction';
+            }
+        } catch {
+            alert('Network error');
+            btn.disabled = false;
+            btn.textContent = 'Send Introduction';
+        }
+    }
+
     async function sendCredentials(id, email) {
         const btn = document.getElementById(`sendCredBtn_${id}`);
         if (!confirm(`Send login credentials to ${email}?`)) return;
@@ -1148,6 +1178,8 @@
             if (res.ok) {
                 btn.textContent = 'Sent ✓';
                 btn.style.color = '#16a34a';
+                const u = allFabricators.find(x => x.id === id);
+                if (u) u.outreach_status = 'credentials';
             } else {
                 alert(data.error || 'Failed to send credentials');
                 btn.disabled = false;
