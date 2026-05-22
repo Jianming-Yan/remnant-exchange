@@ -1179,7 +1179,7 @@
                 btn.textContent = 'Sent ✓';
                 btn.style.color = '#16a34a';
                 const u = allFabricators.find(x => x.id === id);
-                if (u) u.outreach_status = 'credentials';
+                if (u) { u.outreach_status = 'credentials'; filterFabricators(); }
             } else {
                 alert(data.error || 'Failed to send credentials');
                 btn.disabled = false;
