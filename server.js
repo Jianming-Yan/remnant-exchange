@@ -20,6 +20,21 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
 
+const { sendBuyerRequestEmail } = require('./utils/email');
+app.post('/api/request', async (req, res) => {
+    try {
+        const { name, email, material, length, width, location } = req.body;
+        if (!name || !email || !material || !length || !width || !location) {
+            return res.status(400).json({ error: 'Please fill in all required fields.' });
+        }
+        await sendBuyerRequestEmail(req.body);
+        res.json({ message: 'Request submitted successfully.' });
+    } catch (err) {
+        console.error('Buyer request error:', err);
+        res.status(500).json({ error: 'Failed to submit request. Please try again.' });
+    }
+});
+
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
     res.status(err.status || 500).json({ error: err.message || 'Server error' });

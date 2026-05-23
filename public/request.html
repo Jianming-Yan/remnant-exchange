@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit a Remnant Request — Remnant Exchange</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;">.org</span></a>
+    <div class="nav-links">
+        <a href="/">Browse</a>
+        <a href="/about.html">About</a>
+        <a href="/login.html">Login</a>
+    </div>
+</nav>
+
+<div class="container" style="max-width:560px;padding:48px 20px;">
+    <a href="/" style="color:#64748b;font-size:0.9rem;text-decoration:none;">← Back to Browse</a>
+
+    <h1 style="margin:20px 0 8px;">Submit a Remnant Request</h1>
+    <p style="color:#64748b;margin-bottom:32px;">Tell us what you're looking for and we'll search our fabricator network for you. Free service, no commitment.</p>
+
+    <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
+
+    <form id="requestForm">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Your Name *</label>
+                <input type="text" id="req_name" placeholder="John Smith" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="req_email" placeholder="john@email.com" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="req_phone" placeholder="(555) 000-0000">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Material Type *</label>
+                <select id="req_material" required>
+                    <option value="">Select...</option>
+                    <option>Granite</option>
+                    <option>Marble</option>
+                    <option>Quartz</option>
+                    <option>Quartzite</option>
+                    <option>Soapstone</option>
+                    <option>Porcelain</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Color / Stone Name</label>
+                <input type="text" id="req_color" placeholder="e.g. Calacatta, White">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Length (inches) *</label>
+                <input type="number" id="req_length" placeholder="e.g. 120" required min="1">
+            </div>
+            <div class="form-group">
+                <label>Width (inches) *</label>
+                <input type="number" id="req_width" placeholder="e.g. 36" required min="1">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Your Location (City, State) *</label>
+            <input type="text" id="req_location" placeholder="e.g. Boston, MA" required>
+        </div>
+        <div class="form-group">
+            <label>Additional Notes</label>
+            <textarea id="req_notes" rows="3" placeholder="Thickness, budget, timeline, or anything else helpful..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="submitBtn">Submit Request</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('alertBox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        try {
+            const res = await fetch('/api/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById('req_name').value,
+                    email: document.getElementById('req_email').value,
+                    phone: document.getElementById('req_phone').value,
+                    material: document.getElementById('req_material').value,
+                    color: document.getElementById('req_color').value,
+                    length: document.getElementById('req_length').value,
+                    width: document.getElementById('req_width').value,
+                    location: document.getElementById('req_location').value,
+                    notes: document.getElementById('req_notes').value,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Your request has been submitted! We will be in touch within 1 business day.';
+                alertBox.style.display = 'block';
+                document.getElementById('requestForm').style.display = 'none';
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Something went wrong. Please try again.';
+                alertBox.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong. Please try again.';
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
+        }
+    });
+</script>
+</body>
+</html>

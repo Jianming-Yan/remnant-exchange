@@ -272,6 +272,33 @@ async function sendReactivationWelcomeEmail(email, name) {
     });
 }
 
+async function sendBuyerRequestEmail(req) {
+    const resend = getResend();
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: req.email,
+        to: process.env.ADMIN_EMAIL,
+        subject: `New Remnant Request — ${req.material} ${req.length}"x${req.width}" — ${req.location}`,
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <h2 style="color:#2563eb;">New Remnant Request</h2>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;width:140px;">Name</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.name}</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Email</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;"><a href="mailto:${req.email}">${req.email}</a></td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Phone</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.phone || '—'}</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Material</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.material}</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Color / Stone</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.color || '—'}</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Size</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:1.1rem;font-weight:700;">${req.length}" x ${req.width}"</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Location</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.location}</td></tr>
+                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Notes</td><td style="padding:8px;">${req.notes || '—'}</td></tr>
+                </table>
+                <p style="color:#64748b;font-size:0.85rem;">Reply directly to this email to contact ${req.name}.</p>
+            </div>
+        `,
+    });
+}
+
 async function sendResetPasswordEmail(email, name, tempPassword) {
     const resend = getResend();
 
@@ -291,4 +318,4 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail };
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail };
