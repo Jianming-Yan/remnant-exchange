@@ -38,6 +38,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/intern', require('./routes/intern'));
 
 const { sendBuyerRequestEmail } = require('./utils/email');
 app.post('/api/request', upload.array('photos', 5), async (req, res) => {

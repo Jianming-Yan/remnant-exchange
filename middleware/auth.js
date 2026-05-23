@@ -26,4 +26,11 @@ function requireApprovedFabricator(req, res, next) {
     });
 }
 
-module.exports = { requireAuth, requireAdmin, requireApprovedFabricator };
+function requireIntern(req, res, next) {
+    requireAuth(req, res, () => {
+        if (req.user.role !== 'intern') return res.status(403).json({ error: 'Intern access required' });
+        next();
+    });
+}
+
+module.exports = { requireAuth, requireAdmin, requireApprovedFabricator, requireIntern };

@@ -439,8 +439,8 @@ router.post('/bulk-import', requireAdmin, (req, res, next) => {
             try {
                 const userId = uuidv4();
                 await run(
-                    `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)`,
-                    [userId, name, businessName, email, passwordHash, phone || null, city || null]
+                    `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, territory_state_id) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?)`,
+                    [userId, name, businessName, email, passwordHash, phone || null, city || null, req.body.territory_state_id || null]
                 );
 
                 if (sendEmail) {
@@ -573,6 +573,55 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error('broadcast error:', err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/interns', requireAdmin, async (req, res) => {
+    try {
+        const interns = await query(`
+            SELECT u.id, u.name, u.email, u.territory_state_id, s.name as territory_state_name, u.created_at
+            FROM users u
+            LEFT JOIN states s ON s.id = u.territory_state_id
+            WHERE u.role = 'intern'
+            ORDER BY u.created_at ASC
+        `);
+        res.json(interns);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to load interns' });
+    }
+});
+
+router.post('/interns', requireAdmin, async (req, res) => {
+    try {
+        const { name, email, password, territory_state_id } = req.body;
+        if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required' });
+        if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
+        if (existing) return res.status(400).json({ error: 'Email already registered' });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const userId = uuidv4();
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, role, email_verified, approved, territory_state_id) VALUES (?, ?, ?, ?, ?, 'intern', 1, 1, ?)`,
+            [userId, name, name, email.toLowerCase(), passwordHash, territory_state_id || null]);
+
+        res.json({ message: `Intern account created for ${email}` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create intern' });
+    }
+});
+
+router.delete('/interns/:id', requireAdmin, async (req, res) => {
+    try {
+        const intern = await get(`SELECT id FROM users WHERE id = ? AND role = 'intern'`, [req.params.id]);
+        if (!intern) return res.status(404).json({ error: 'Intern not found' });
+        await run(`DELETE FROM users WHERE id = ?`, [req.params.id]);
+        res.json({ message: 'Intern deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to delete intern' });
     }
 });
 

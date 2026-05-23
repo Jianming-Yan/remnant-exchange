@@ -171,6 +171,10 @@ async function initSchema() {
         await run(`ALTER TABLE buyer_requests ADD COLUMN photos TEXT`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE users ADD COLUMN territory_state_id TEXT`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

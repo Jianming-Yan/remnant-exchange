@@ -103,7 +103,7 @@ router.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role, approved: user.approved, plan: user.plan },
+            { id: user.id, email: user.email, role: user.role, approved: user.approved, plan: user.plan, territory_state_id: user.territory_state_id || null },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -138,7 +138,7 @@ router.get('/magic-login', async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const jwtToken = jwt.sign(
-            { id: user.id, email: user.email, role: user.role, approved: user.approved, plan: user.plan },
+            { id: user.id, email: user.email, role: user.role, approved: user.approved, plan: user.plan, territory_state_id: user.territory_state_id || null },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
