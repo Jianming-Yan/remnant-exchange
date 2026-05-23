@@ -26,6 +26,29 @@ router.get('/fabricators', requireIntern, async (req, res) => {
     }
 });
 
+router.post('/fabricators', requireIntern, async (req, res) => {
+    try {
+        const { name, business_name, email, phone, city, notes } = req.body;
+        if (!name || !business_name || !email) return res.status(400).json({ error: 'Business name, contact name, and email are required' });
+
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
+        if (existing) return res.status(400).json({ error: 'A fabricator with that email already exists' });
+
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        const userId = uuidv4();
+        const stateId = req.user.territory_state_id;
+
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, admin_notes, email_verified, approved, must_change_password, territory_state_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?)`,
+            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null, notes || null, stateId]);
+
+        res.json({ message: `${business_name} added to your list` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to add fabricator' });
+    }
+});
+
 router.patch('/fabricators/:id/notes', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;

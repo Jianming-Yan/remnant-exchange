@@ -32,7 +32,10 @@
             <h1 style="margin-bottom:4px;">Outreach Dashboard</h1>
             <p id="territoryLabel" style="color:#64748b;font-size:0.9rem;margin:0;"></p>
         </div>
-        <div id="statBadges" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div id="statBadges" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Fabricator</button>
+        </div>
     </div>
 
     <!-- Alert box -->
@@ -68,6 +71,43 @@
                 <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">Loading...</td></tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Add Fabricator Modal -->
+<div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto;" onclick="if(event.target===this)closeAddModal()">
+    <div style="background:white;border-radius:16px;max-width:480px;margin:60px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+        <button onclick="closeAddModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+        <h2 style="margin-bottom:4px;">Add New Fabricator</h2>
+        <p style="color:#64748b;font-size:0.875rem;margin-bottom:20px;">No email is sent — just adds them to your list so you can call first, then send intro or credentials when ready.</p>
+        <div id="addModalAlert" style="display:none;margin-bottom:16px;"></div>
+        <form id="addFabForm">
+            <div class="form-group">
+                <label>Business Name *</label>
+                <input type="text" id="add_business" placeholder="Smith Countertops LLC" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Name *</label>
+                <input type="text" id="add_name" placeholder="John Smith" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="add_email" placeholder="john@smithcountertops.com" required>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" id="add_phone" placeholder="(860) 555-1234">
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="add_city" placeholder="Hartford">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="add_notes" rows="2" placeholder="Source, first impression, anything useful..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="addFabBtn">Add to My List</button>
+        </form>
     </div>
 </div>
 
@@ -315,6 +355,54 @@
             else alert(data.error || 'Failed to send');
         } catch { alert('Network error'); }
     }
+
+    function openAddModal() {
+        document.getElementById('addFabForm').reset();
+        document.getElementById('addModalAlert').style.display = 'none';
+        document.getElementById('addFabBtn').disabled = false;
+        document.getElementById('addFabBtn').textContent = 'Add to My List';
+        document.getElementById('addModal').style.display = 'block';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    document.getElementById('addFabForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('addModalAlert');
+        const btn = document.getElementById('addFabBtn');
+        btn.disabled = true; btn.textContent = 'Adding...';
+        try {
+            const res = await fetch('/api/intern/fabricators', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    business_name: document.getElementById('add_business').value.trim(),
+                    name: document.getElementById('add_name').value.trim(),
+                    email: document.getElementById('add_email').value.trim(),
+                    phone: document.getElementById('add_phone').value.trim(),
+                    city: document.getElementById('add_city').value.trim(),
+                    notes: document.getElementById('add_notes').value.trim(),
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeAddModal();
+                await loadFabs();
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Failed to add fabricator';
+                alertBox.style.display = 'block';
+                btn.disabled = false; btn.textContent = 'Add to My List';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Network error. Please try again.';
+            alertBox.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Add to My List';
+        }
+    });
 
     function logout() {
         localStorage.removeItem('token');
