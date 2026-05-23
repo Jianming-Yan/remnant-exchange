@@ -135,6 +135,20 @@
         </form>
 
         <div class="form-link">Already have an account? <a href="/login.html">Log in</a></div>
+
+        <form id="reactivateForm" style="display:none;">
+            <h3 style="margin-bottom:16px;">Reactivate Your Account</h3>
+            <input type="hidden" id="reactivate_email">
+            <div class="form-group">
+                <label>New Password *</label>
+                <input type="password" id="reactivate_password" placeholder="Min. 8 characters" required minlength="8">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password *</label>
+                <input type="password" id="reactivate_confirm" placeholder="Repeat password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="reactivateBtn">Reactivate Account</button>
+        </form>
     </div>
 </div>
 
@@ -142,6 +156,55 @@
 </div><!-- end container -->
 
 <script>
+    function showReactivateForm(email) {
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('alertBox').style.display = 'none';
+        document.getElementById('reactivateForm').style.display = 'block';
+        document.getElementById('reactivate_email').value = email;
+    }
+
+    document.getElementById('reactivateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('alertBox');
+        const btn = document.getElementById('reactivateBtn');
+        const password = document.getElementById('reactivate_password').value;
+        const confirm = document.getElementById('reactivate_confirm').value;
+        if (password !== confirm) {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Passwords do not match';
+            alertBox.style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Reactivating...';
+        try {
+            const res = await fetch('/api/auth/reactivate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: document.getElementById('reactivate_email').value, password }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = data.message;
+                alertBox.style.display = 'block';
+                document.getElementById('reactivateForm').style.display = 'none';
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error;
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Reactivate Account';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong. Please try again.';
+            alertBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Reactivate Account';
+        }
+    });
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertBox = document.getElementById('alertBox');
@@ -176,9 +239,16 @@
             const data = await res.json();
 
             if (!res.ok) {
-                alertBox.className = 'alert alert-error';
-                alertBox.textContent = data.error;
-                alertBox.style.display = 'block';
+                if (data.code === 'ACCOUNT_UNSUBSCRIBED') {
+                    const emailVal = document.getElementById('email').value;
+                    alertBox.className = 'alert alert-error';
+                    alertBox.innerHTML = `${data.error} <button onclick="showReactivateForm('${emailVal}')" class="btn btn-primary btn-sm" style="margin-left:12px;">Reactivate Account</button>`;
+                    alertBox.style.display = 'block';
+                } else {
+                    alertBox.className = 'alert alert-error';
+                    alertBox.textContent = data.error;
+                    alertBox.style.display = 'block';
+                }
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
                 return;

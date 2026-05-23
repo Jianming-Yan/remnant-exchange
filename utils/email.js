@@ -176,8 +176,9 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
     });
 }
 
-async function sendIntroductionEmail(email, businessName) {
+async function sendIntroductionEmail(email, businessName, unsubscribeToken) {
     const resend = getResend();
+    const unsubscribeUrl = `${process.env.BASE_URL}/unsubscribe.html?token=${unsubscribeToken}`;
 
     await resend.emails.send({
         from: FROM,
@@ -190,7 +191,7 @@ async function sendIntroductionEmail(email, businessName) {
 
                 <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am the founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free platform built for stone fabricators.</p>
 
-                <p>It is a free platform for stone fabricators to buy, sell, and track stone remnants. Here is what it does:</p>
+                <p>Here is what it does:</p>
 
                 <ol style="line-height:2.2;margin:16px 0 16px 20px;">
                     <li><strong>List your remnants</strong> — post leftover slabs so other fabricators can find and buy them</li>
@@ -201,6 +202,67 @@ async function sendIntroductionEmail(email, businessName) {
                 <p>It is completely free — no software fees, no commissions.</p>
 
                 <p>I would love to set up a free account for <strong>${businessName}</strong> and walk you through it. Feel free to call or text me anytime at <strong>(617) 606-5840</strong>, or simply reply to this email.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                You received this because we thought you might benefit from our platform.<br>
+                <a href="${unsubscribeUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+            </div>
+        `,
+    });
+}
+
+async function sendUnsubscribeConfirmationEmail(email, businessName) {
+    const resend = getResend();
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'You have been unsubscribed — Remnant Exchange',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <p>Hi,</p>
+
+                <p>You have been successfully unsubscribed from Remnant Exchange. Your account for <strong>${businessName}</strong> has been disabled and you will not receive any further emails from us.</p>
+
+                <p>If you change your mind in the future, you can always create a new account for free at <a href="https://remnantexchange.org/register.html" style="color:#2563eb;">remnantexchange.org</a>.</p>
+
+                <p>Thank you for your time, and we wish you all the best.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+            </div>
+        `,
+    });
+}
+
+async function sendReactivationWelcomeEmail(email, name) {
+    const resend = getResend();
+    const firstName = name.split(' ')[0];
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: `Welcome back to Remnant Exchange, ${firstName}!`,
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <h2 style="color:#2563eb;">Welcome back, ${firstName}!</h2>
+
+                <p>Your Remnant Exchange account has been reactivated. You can now log in and start listing your stone remnants.</p>
+
+                <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In Now</a></p>
+
+                <p>Feel free to call or text me anytime at <strong>(617) 606-5840</strong> if you need help getting started.</p>
 
                 <p>— Jianming Yan<br>
                 <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
@@ -229,4 +291,4 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail };
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail };

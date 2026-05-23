@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail } = require('../utils/email');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -202,7 +202,13 @@ router.post('/fabricators/:id/send-introduction', requireAdmin, async (req, res)
         const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
-        await sendIntroductionEmail(user.email, user.business_name);
+        const unsubToken = uuidv4();
+        const unsubExpires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'unsubscribe'`, [user.id]);
+        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), user.id, unsubToken, 'unsubscribe', unsubExpires]);
+
+        await sendIntroductionEmail(user.email, user.business_name, unsubToken);
         await run(`UPDATE users SET outreach_status = 'introduction' WHERE id = ?`, [user.id]);
         res.json({ message: `Introduction sent to ${user.email}` });
     } catch (err) {
@@ -476,6 +482,8 @@ router.get('/stats', requireAdmin, async (req, res) => {
     const activeListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'active' AND is_seeded = 0`);
     const expiredListings = await get(`SELECT count(*) as cnt FROM listings WHERE status = 'expired' AND is_seeded = 0`);
     const seededListings = await get(`SELECT count(*) as cnt FROM listings WHERE is_seeded = 1 AND status = 'active'`);
+    const unsubscribed = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND outreach_status = 'unsubscribed'`);
+    const reactivated = await get(`SELECT count(*) as cnt FROM users WHERE role = 'fabricator' AND reactivated_at IS NOT NULL`);
 
     res.json({
         totalFabricators: Number(totalFabricators.cnt),
@@ -483,6 +491,8 @@ router.get('/stats', requireAdmin, async (req, res) => {
         activeListings: Number(activeListings.cnt),
         expiredListings: Number(expiredListings.cnt),
         seededListings: Number(seededListings.cnt),
+        unsubscribed: Number(unsubscribed.cnt),
+        reactivated: Number(reactivated.cnt),
     });
 });
 

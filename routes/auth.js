@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
-const { sendVerificationEmail, sendAdminNotification, sendResetPasswordEmail } = require('../utils/email');
+const { sendVerificationEmail, sendAdminNotification, sendResetPasswordEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -19,8 +19,13 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 8 characters' });
         }
 
-        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
-        if (existing) return res.status(400).json({ error: 'Email already registered' });
+        const existing = await get(`SELECT id, outreach_status FROM users WHERE email = ?`, [email.toLowerCase()]);
+        if (existing) {
+            if (existing.outreach_status === 'unsubscribed') {
+                return res.status(400).json({ code: 'ACCOUNT_UNSUBSCRIBED', error: 'This email was previously unsubscribed. Would you like to reactivate your account?' });
+            }
+            return res.status(400).json({ error: 'Email already registered' });
+        }
 
         const userId = uuidv4();
         const passwordHash = await bcrypt.hash(password, 10);
@@ -84,6 +89,10 @@ router.post('/login', async (req, res) => {
 
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: 'Incorrect password. Use "Forgot your password?" below to reset it.' });
+
+        if (user.outreach_status === 'unsubscribed') {
+            return res.status(403).json({ error: 'Your account has been deactivated. Please register again at remnantexchange.org to rejoin.' });
+        }
 
         if (!user.email_verified) {
             return res.status(403).json({ error: 'Please verify your email address first' });
@@ -214,6 +223,56 @@ router.get('/me', async (req, res) => {
         res.json(user);
     } catch {
         res.status(401).json({ error: 'Invalid token' });
+    }
+});
+
+router.get('/unsubscribe', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ error: 'Invalid link' });
+
+        const record = await get(`SELECT * FROM email_tokens WHERE token = ? AND type = 'unsubscribe'`, [token]);
+        if (!record) return res.status(400).json({ error: 'Invalid or expired unsubscribe link' });
+
+        const user = await get(`SELECT * FROM users WHERE id = ?`, [record.user_id]);
+        if (!user) return res.status(404).json({ error: 'Account not found' });
+
+        await run(`UPDATE users SET approved = 0, outreach_status = 'unsubscribed', unsubscribed_at = ? WHERE id = ?`,
+            [new Date().toISOString(), user.id]);
+        await run(`DELETE FROM email_tokens WHERE id = ?`, [record.id]);
+
+        try {
+            await sendUnsubscribeConfirmationEmail(user.email, user.business_name);
+        } catch (e) { console.error('Unsubscribe confirm email failed:', e.message); }
+
+        res.json({ message: 'You have been successfully unsubscribed.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Unsubscribe failed' });
+    }
+});
+
+router.post('/reactivate', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+        if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+        const user = await get(`SELECT * FROM users WHERE email = ? AND outreach_status = 'unsubscribed'`, [email.toLowerCase()]);
+        if (!user) return res.status(404).json({ error: 'No unsubscribed account found with that email' });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        await run(`UPDATE users SET password_hash = ?, approved = 1, email_verified = 1, must_change_password = 0, outreach_status = 'credentials', reactivated_at = ? WHERE id = ?`,
+            [passwordHash, new Date().toISOString(), user.id]);
+
+        try {
+            await sendReactivationWelcomeEmail(user.email, user.name);
+        } catch (e) { console.error('Reactivation email failed:', e.message); }
+
+        res.json({ message: 'Your account has been reactivated. You can now log in.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Reactivation failed' });
     }
 });
 

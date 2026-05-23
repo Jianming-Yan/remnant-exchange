@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsubscribe — Remnant Exchange</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav>
+    <a href="/" class="nav-logo">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;">.org</span></a>
+</nav>
+
+<div class="container" style="max-width:480px;padding:80px 20px;text-align:center;">
+    <div id="loadingMsg">
+        <p style="color:#64748b;">Processing your request...</p>
+    </div>
+
+    <div id="successMsg" style="display:none;">
+        <div style="font-size:3rem;margin-bottom:16px;">✓</div>
+        <h2 style="margin-bottom:12px;">You have been removed</h2>
+        <p style="color:#64748b;margin-bottom:24px;">Your account has been disabled and you will not receive further emails from us. A confirmation has been sent to your email.</p>
+        <p style="color:#64748b;font-size:0.9rem;">If you change your mind, you can always register again for free at any time.</p>
+        <a href="/register.html" class="btn btn-primary" style="display:inline-block;margin-top:24px;">Register Again</a>
+    </div>
+
+    <div id="errorMsg" style="display:none;">
+        <div style="font-size:3rem;margin-bottom:16px;">✗</div>
+        <h2 style="margin-bottom:12px;">Link expired or invalid</h2>
+        <p style="color:#64748b;">This unsubscribe link has already been used or has expired. If you need help, contact us at <a href="mailto:jianming@remnantexchange.org">jianming@remnantexchange.org</a>.</p>
+    </div>
+</div>
+
+<script>
+    async function processUnsubscribe() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        if (!token) {
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'block';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/auth/unsubscribe?token=${token}`);
+            document.getElementById('loadingMsg').style.display = 'none';
+            if (res.ok) {
+                document.getElementById('successMsg').style.display = 'block';
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        } catch {
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+    }
+
+    processUnsubscribe();
+</script>
+</body>
+</html>
