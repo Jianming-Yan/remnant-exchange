@@ -465,6 +465,12 @@
                 </div>
             </label>
         </div>
+        <div style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="broadcastTestMode" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+            <label for="broadcastTestMode" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;">
+                <strong>Test mode</strong> — send only to me first, don't notify fabricators
+            </label>
+        </div>
         <div id="broadcastModalAlert" style="display:none;margin-bottom:16px;"></div>
         <button class="btn btn-primary" style="width:100%;" id="sendBroadcastBtn" onclick="sendBroadcast()">Send Broadcast</button>
     </div>
@@ -1370,6 +1376,7 @@
         document.getElementById('scopeStateLabel').textContent = `All of ${r.state_name}`;
         document.getElementById('radioMetros').checked = true;
         highlightScope();
+        document.getElementById('broadcastTestMode').checked = false;
         document.getElementById('broadcastModalAlert').style.display = 'none';
         document.getElementById('sendBroadcastBtn').disabled = false;
         document.getElementById('sendBroadcastBtn').textContent = 'Send Broadcast';
@@ -1419,13 +1426,14 @@
             }
         }
 
+        const testMode = document.getElementById('broadcastTestMode').checked;
         btn.disabled = true;
-        btn.textContent = 'Sending...';
+        btn.textContent = testMode ? 'Sending test...' : 'Sending...';
         try {
             const res = await fetch(`/api/admin/requests/${broadcastRequestId}/broadcast`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ scope, metro_ids }),
+                body: JSON.stringify({ scope, metro_ids, test: testMode }),
             });
             const data = await res.json();
             if (res.ok) {

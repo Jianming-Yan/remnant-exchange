@@ -524,9 +524,11 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
         `, [req.params.id]);
         if (!request) return res.status(404).json({ error: 'Request not found' });
 
-        const { metro_ids } = req.body;
+        const { metro_ids, test } = req.body;
         let fabricators;
-        if (scope === 'all') {
+        if (test) {
+            fabricators = [{ id: 'test', name: 'Admin', business_name: 'Admin', email: process.env.ADMIN_EMAIL }];
+        } else if (scope === 'all') {
             fabricators = await query(`
                 SELECT DISTINCT u.id, u.name, u.business_name, u.email
                 FROM users u
@@ -564,8 +566,10 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
             }
         }
 
-        await run(`UPDATE buyer_requests SET status = 'broadcasted', broadcasted_at = datetime('now') WHERE id = ?`, [req.params.id]);
-        res.json({ message: `Broadcast sent to ${sent} fabricator(s)`, sent });
+        if (!test) {
+            await run(`UPDATE buyer_requests SET status = 'broadcasted', broadcasted_at = datetime('now') WHERE id = ?`, [req.params.id]);
+        }
+        res.json({ message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Broadcast sent to ${sent} fabricator(s)`, sent });
     } catch (err) {
         console.error('broadcast error:', err);
         res.status(500).json({ error: err.message });
