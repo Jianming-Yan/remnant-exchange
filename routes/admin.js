@@ -530,7 +530,8 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
             fabricators = await query(`
                 SELECT DISTINCT u.id, u.name, u.business_name, u.email
                 FROM users u
-                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+                WHERE u.role = 'fabricator' AND u.approved = 1
+                AND u.outreach_status IN ('introduction', 'credentials')
             `);
         } else if (scope === 'metros' && metro_ids && metro_ids.length > 0) {
             const placeholders = metro_ids.map(() => '?').join(',');
@@ -538,7 +539,8 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
                 SELECT DISTINCT u.id, u.name, u.business_name, u.email
                 FROM users u
                 JOIN listings l ON l.user_id = u.id
-                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+                WHERE u.role = 'fabricator' AND u.approved = 1
+                AND u.outreach_status IN ('introduction', 'credentials')
                 AND l.state_id = ? AND l.metro_id IN (${placeholders}) AND l.status = 'active'
             `, [request.state_id, ...metro_ids]);
         } else {
@@ -546,7 +548,8 @@ router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
                 SELECT DISTINCT u.id, u.name, u.business_name, u.email
                 FROM users u
                 JOIN listings l ON l.user_id = u.id
-                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+                WHERE u.role = 'fabricator' AND u.approved = 1
+                AND u.outreach_status IN ('introduction', 'credentials')
                 AND l.state_id = ? AND l.status = 'active'
             `, [request.state_id]);
         }
