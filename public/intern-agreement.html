@@ -105,9 +105,9 @@
 
 <div class="parties">
     <p><strong>Company:</strong> Remnant Exchange &nbsp;|&nbsp; Jianming Yan, Founder</p>
-    <p><strong>Intern:</strong> _______________________________________________</p>
-    <p><strong>Start Date:</strong> _______________________________________________</p>
-    <p><strong>Duration:</strong> _______________________________________________ (or until terminated by either party)</p>
+    <p style="display:flex;align-items:center;gap:8px;margin-top:6px;"><strong>Intern:</strong> <input type="text" id="internName" placeholder="Full Name" style="border:none;border-bottom:1px solid #333;font-family:Georgia,serif;font-size:13px;padding:2px 6px;width:260px;outline:none;background:transparent;"></p>
+    <p style="display:flex;align-items:center;gap:8px;margin-top:4px;"><strong>Start Date:</strong> <input type="text" id="startDate" placeholder="e.g. June 2, 2026" style="border:none;border-bottom:1px solid #333;font-family:Georgia,serif;font-size:13px;padding:2px 6px;width:220px;outline:none;background:transparent;"></p>
+    <p style="margin-top:4px;"><strong>Duration:</strong> Ongoing, part-time (or until terminated by either party)</p>
 </div>
 
 <h2>1. Role & Responsibilities</h2>
@@ -169,18 +169,42 @@
 
 <div class="signature-section">
     <div class="sig-block">
-        <div class="sig-line"></div>
+        <div class="sig-line" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+            <span style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#1a1a1a;">Jianming Yan</span>
+        </div>
         <div class="sig-label">Jianming Yan &nbsp;&mdash;&nbsp; Founder, Remnant Exchange</div>
-        <div class="sig-label" style="margin-top:8px;">Date: ___________________</div>
+        <div class="sig-label" style="margin-top:8px;">Date: <span id="todayDate"></span></div>
     </div>
     <div class="sig-block">
-        <div class="sig-line"></div>
-        <div class="sig-label">Intern Signature</div>
-        <div class="sig-label" style="margin-top:8px;">Date: ___________________</div>
+        <div class="sig-line" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+            <input type="text" id="internSig" placeholder="Type full name to sign" style="border:none;font-family:Georgia,serif;font-style:italic;font-size:18px;color:#1a1a1a;width:100%;outline:none;background:transparent;">
+        </div>
+        <div class="sig-label" id="internSigLabel">Intern Signature</div>
+        <div class="sig-label" style="margin-top:8px;">Date: <span id="signDate"></span></div>
     </div>
 </div>
 
-<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+<button class="print-btn" onclick="signAndPrint()">Sign &amp; Print / Save PDF</button>
+
+<script>
+    const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('todayDate').textContent = today;
+    document.getElementById('signDate').textContent = today;
+
+    document.getElementById('internSig').addEventListener('input', function() {
+        const name = this.value.trim();
+        document.getElementById('internSigLabel').textContent = name ? name + ' — Intern' : 'Intern Signature';
+        if (document.getElementById('internName').value === '') {
+            document.getElementById('internName').value = name;
+        }
+    });
+
+    function signAndPrint() {
+        const sig = document.getElementById('internSig').value.trim();
+        if (!sig) { alert('Please type your full name to sign.'); return; }
+        window.print();
+    }
+</script>
 
 </body>
 </html>
