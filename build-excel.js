@@ -28,7 +28,8 @@ async function build() {
     const lines = fs.readFileSync('public/phone-leads.csv', 'utf8').split('\n').filter(l => l.trim());
     const rows = lines.slice(1).map(line => {
         const c = parseLine(line);
-        return [c[0]||'', c[1]||'', c[2]||'', '', c[3]||'', c[4]||'', c[5]||'', c[6]||''];
+        // CSV columns: Business Name, City, Phone, Cell, Contact Name, Email, Website, Region, Status, Notes
+        return [c[0]||'', c[1]||'', c[2]||'', c[3]||'', c[4]||'', c[5]||'', c[6]||'', c[7]||'', c[8]||'', c[9]||''];
     });
 
     const wb = new ExcelJS.Workbook();
@@ -37,14 +38,16 @@ async function build() {
 
     // Header row
     ws.columns = [
-        { header: 'Business Name', key: 'name',    width: 36 },
-        { header: 'City',          key: 'city',    width: 18 },
-        { header: 'Phone',         key: 'phone',   width: 16 },
-        { header: 'Email',         key: 'email',   width: 30 },
-        { header: 'Website',       key: 'website', width: 28 },
-        { header: 'Region',        key: 'region',  width: 18 },
-        { header: 'Status',        key: 'status',  width: 22 },
-        { header: 'Notes',         key: 'notes',   width: 52 },
+        { header: 'Business Name', key: 'name',         width: 36 },
+        { header: 'City',          key: 'city',         width: 18 },
+        { header: 'Phone',         key: 'phone',        width: 16 },
+        { header: 'Cell',          key: 'cell',         width: 16 },
+        { header: 'Contact Name',  key: 'contact',      width: 22 },
+        { header: 'Email',         key: 'email',        width: 30 },
+        { header: 'Website',       key: 'website',      width: 28 },
+        { header: 'Region',        key: 'region',       width: 18 },
+        { header: 'Status',        key: 'status',       width: 22 },
+        { header: 'Notes',         key: 'notes',        width: 52 },
     ];
 
     // Style header row
@@ -58,7 +61,7 @@ async function build() {
     // Add data rows
     rows.forEach((r, i) => {
         const row = ws.addRow(r);
-        const isFollowUp = r[6] === 'Follow Up';
+        const isFollowUp = r[8] === 'Follow Up';
 
         // Highlight Follow Up rows in light yellow
         if (isFollowUp) {
@@ -76,11 +79,12 @@ async function build() {
             });
         }
 
-        // Phone as text (prevent Excel from mangling leading zeros or treating as number)
+        // Phone and Cell as text
         row.getCell(3).numFmt = '@';
+        row.getCell(4).numFmt = '@';
 
         // Status dropdown for every data row
-        row.getCell(7).dataValidation = {
+        row.getCell(9).dataValidation = {
             type: 'list',
             allowBlank: true,
             formulae: [`"${STATUS_OPTIONS.join(',')}"`],

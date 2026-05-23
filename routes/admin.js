@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendFabricatorBroadcastEmail } = require('../utils/email');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -494,6 +494,79 @@ router.get('/stats', requireAdmin, async (req, res) => {
         unsubscribed: Number(unsubscribed.cnt),
         reactivated: Number(reactivated.cnt),
     });
+});
+
+router.get('/requests', requireAdmin, async (req, res) => {
+    try {
+        const requests = await query(`
+            SELECT r.*, s.name as state_name, m.name as metro_name
+            FROM buyer_requests r
+            JOIN states s ON r.state_id = s.id
+            JOIN metros m ON r.metro_id = m.id
+            ORDER BY r.created_at DESC
+        `);
+        res.json(requests);
+    } catch (err) {
+        console.error('requests error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/requests/:id/broadcast', requireAdmin, async (req, res) => {
+    try {
+        const { scope } = req.body; // 'metro' | 'state' | 'all'
+        const request = await get(`
+            SELECT r.*, s.name as state_name, m.name as metro_name
+            FROM buyer_requests r
+            JOIN states s ON r.state_id = s.id
+            JOIN metros m ON r.metro_id = m.id
+            WHERE r.id = ?
+        `, [req.params.id]);
+        if (!request) return res.status(404).json({ error: 'Request not found' });
+
+        const { metro_ids } = req.body;
+        let fabricators;
+        if (scope === 'all') {
+            fabricators = await query(`
+                SELECT DISTINCT u.id, u.name, u.business_name, u.email
+                FROM users u
+                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+            `);
+        } else if (scope === 'metros' && metro_ids && metro_ids.length > 0) {
+            const placeholders = metro_ids.map(() => '?').join(',');
+            fabricators = await query(`
+                SELECT DISTINCT u.id, u.name, u.business_name, u.email
+                FROM users u
+                JOIN listings l ON l.user_id = u.id
+                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+                AND l.state_id = ? AND l.metro_id IN (${placeholders}) AND l.status = 'active'
+            `, [request.state_id, ...metro_ids]);
+        } else {
+            fabricators = await query(`
+                SELECT DISTINCT u.id, u.name, u.business_name, u.email
+                FROM users u
+                JOIN listings l ON l.user_id = u.id
+                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.outreach_status != 'unsubscribed'
+                AND l.state_id = ? AND l.status = 'active'
+            `, [request.state_id]);
+        }
+
+        let sent = 0;
+        for (const fab of fabricators) {
+            try {
+                await sendFabricatorBroadcastEmail(fab.email, fab.business_name || fab.name, request, request.state_name, request.metro_name);
+                sent++;
+            } catch (e) {
+                console.error(`Broadcast email failed for ${fab.email}:`, e.message);
+            }
+        }
+
+        await run(`UPDATE buyer_requests SET status = 'broadcasted', broadcasted_at = datetime('now') WHERE id = ?`, [req.params.id]);
+        res.json({ message: `Broadcast sent to ${sent} fabricator(s)`, sent });
+    } catch (err) {
+        console.error('broadcast error:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.get('/seeded-listings', requireAdmin, async (req, res) => {

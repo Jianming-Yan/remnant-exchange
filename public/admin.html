@@ -26,6 +26,7 @@
         <a href="#" onclick="showSection('create-fabricator', this)">&#43; Create Fabricator</a>
         <a href="#" onclick="showSection('bulk-import', this)">&#128229; Bulk Import</a>
         <a href="#" onclick="showSection('post-for', this)">&#128247; Post For Fabricator</a>
+        <a href="#" onclick="showSection('requests', this)">&#128386; Buyer Requests</a>
     </div>
 
     <div class="main-panel">
@@ -310,6 +311,13 @@
             </div>
         </div>
 
+        <!-- BUYER REQUESTS -->
+        <div id="section-requests" style="display:none">
+            <h2 style="margin-bottom:8px;">Buyer Requests</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Buyers looking for remnants. Broadcast emails to fabricators with active listings in the same state.</p>
+            <div id="requestsContent">Loading...</div>
+        </div>
+
         <!-- POST LISTING FOR FABRICATOR -->
         <div id="section-post-for" style="display:none">
             <h2 style="margin-bottom:8px;">Post Listing on Behalf of Fabricator</h2>
@@ -421,6 +429,47 @@
     </div>
 </div>
 
+<!-- BROADCAST SCOPE MODAL -->
+<div id="broadcastModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;overflow-y:auto;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:white;border-radius:16px;max-width:440px;margin:80px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+        <button onclick="document.getElementById('broadcastModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+        <h2 style="margin-bottom:6px;">Broadcast Buyer Request</h2>
+        <p id="broadcastDesc" style="color:#64748b;font-size:0.875rem;margin-bottom:24px;"></p>
+        <p style="font-size:0.8rem;font-weight:600;color:#475569;margin-bottom:10px;">WHO TO SEND TO</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+            <div id="scopeOpt_metros" style="padding:14px;border:1.5px solid #3b82f6;border-radius:10px;background:#eff6ff;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <input type="radio" name="broadcastScope" value="metros" checked id="radioMetros" onchange="highlightScope()">
+                    <label for="radioMetros" style="font-weight:600;font-size:0.9rem;cursor:pointer;" id="scopeMetrosLabel">Select Metro Areas</label>
+                </div>
+                <div id="metroCheckboxList" style="display:flex;flex-direction:column;gap:6px;padding-left:22px;">
+                    <span style="font-size:0.8rem;color:#94a3b8;">Loading metros...</span>
+                </div>
+                <div style="padding-left:22px;margin-top:8px;">
+                    <a href="#" onclick="checkAllMetros(true);return false;" style="font-size:0.78rem;color:#3b82f6;margin-right:12px;">Check all</a>
+                    <a href="#" onclick="checkAllMetros(false);return false;" style="font-size:0.78rem;color:#3b82f6;">Uncheck all</a>
+                </div>
+            </div>
+            <label id="scopeOpt_state" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                <input type="radio" name="broadcastScope" value="state" id="radioState" style="margin-top:3px;" onchange="highlightScope()">
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem;" id="scopeStateLabel">Entire State</div>
+                    <div style="font-size:0.8rem;color:#64748b;">All fabricators with active listings in this state</div>
+                </div>
+            </label>
+            <label id="scopeOpt_all" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                <input type="radio" name="broadcastScope" value="all" id="radioAll" style="margin-top:3px;" onchange="highlightScope()">
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem;">All Fabricators</div>
+                    <div style="font-size:0.8rem;color:#64748b;">Everyone in the system, any state</div>
+                </div>
+            </label>
+        </div>
+        <div id="broadcastModalAlert" style="display:none;margin-bottom:16px;"></div>
+        <button class="btn btn-primary" style="width:100%;" id="sendBroadcastBtn" onclick="sendBroadcast()">Send Broadcast</button>
+    </div>
+</div>
+
 <script>
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -441,6 +490,7 @@
         if (name === 'locations') loadStates();
         if (name === 'plans') loadPlanSettings();
         if (name === 'post-for') loadPostForData();
+        if (name === 'requests') loadRequests();
     }
 
     async function loadStats() {
@@ -1274,6 +1324,128 @@
         }
         btn.disabled = false;
         btn.textContent = 'Import Fabricators';
+    }
+
+    let allRequests = [];
+    let broadcastRequestId = null;
+
+    async function loadRequests() {
+        const res = await fetch('/api/admin/requests', { headers: { Authorization: `Bearer ${token}` } });
+        allRequests = await res.json();
+        if (!allRequests.length) {
+            document.getElementById('requestsContent').innerHTML = '<div class="empty-state"><h3>No buyer requests yet</h3><p>When buyers submit requests from the website, they\'ll appear here.</p></div>';
+            return;
+        }
+        document.getElementById('requestsContent').innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Material</th><th>Size</th><th>Location</th><th>Notes</th><th>Photos</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        ${allRequests.map(r => `
+                            <tr>
+                                <td style="font-size:0.8rem;color:#64748b;">${new Date(r.created_at).toLocaleDateString()}</td>
+                                <td>${r.name}</td>
+                                <td><a href="mailto:${r.email}" style="color:#1e293b;">${r.email}</a></td>
+                                <td>${r.material}${r.color ? '<br><span style="font-size:0.78rem;color:#64748b;">' + r.color + '</span>' : ''}</td>
+                                <td style="font-size:0.85rem;white-space:nowrap;">${r.length}" &times; ${r.width}"</td>
+                                <td style="font-size:0.85rem;">${r.metro_name}, ${r.state_name}</td>
+                                <td style="font-size:0.8rem;color:#64748b;max-width:160px;">${r.notes ? `<span title="${r.notes.replace(/"/g,'&quot;')}">${r.notes.length > 40 ? r.notes.substring(0,40)+'…' : r.notes}</span>` : ''}</td>
+                                <td>${(() => { try { const p = r.photos ? JSON.parse(r.photos) : []; return p.length > 0 ? p.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width:48px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;margin-right:4px;" /></a>`).join('') : '<span style="color:#cbd5e1;font-size:0.8rem;">—</span>'; } catch(e){ return ''; } })()}</td>
+                                <td><span style="font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:999px;background:${r.status==='broadcasted'?'#dcfce7':'#f1f5f9'};color:${r.status==='broadcasted'?'#15803d':'#64748b'};">${r.status==='broadcasted'?'Broadcasted':'New'}</span></td>
+                                <td><button class="btn btn-primary btn-sm" onclick="openBroadcastModal('${r.id}')" style="white-space:nowrap;">Broadcast</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function openBroadcastModal(id) {
+        const r = allRequests.find(x => x.id === id);
+        if (!r) return;
+        broadcastRequestId = id;
+        document.getElementById('broadcastDesc').textContent = `${r.material}${r.color ? ' · ' + r.color : ''} · ${r.length}" × ${r.width}" · ${r.name} (${r.metro_name}, ${r.state_name})`;
+        document.getElementById('scopeMetrosLabel').textContent = `Select Metro Areas in ${r.state_name}`;
+        document.getElementById('scopeStateLabel').textContent = `All of ${r.state_name}`;
+        document.getElementById('radioMetros').checked = true;
+        highlightScope();
+        document.getElementById('broadcastModalAlert').style.display = 'none';
+        document.getElementById('sendBroadcastBtn').disabled = false;
+        document.getElementById('sendBroadcastBtn').textContent = 'Send Broadcast';
+        document.getElementById('broadcastModal').style.display = 'block';
+
+        document.getElementById('metroCheckboxList').innerHTML = '<span style="font-size:0.8rem;color:#94a3b8;">Loading...</span>';
+        const res = await fetch(`/api/listings/states/${r.state_id}/metros`);
+        const metros = await res.json();
+        document.getElementById('metroCheckboxList').innerHTML = metros.map(m => `
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.875rem;cursor:pointer;">
+                <input type="checkbox" class="metroCheck" value="${m.id}" ${m.id === r.metro_id ? 'checked' : ''}>
+                ${m.name}
+            </label>
+        `).join('');
+    }
+
+    function highlightScope() {
+        ['metros', 'state', 'all'].forEach(s => {
+            const el = document.getElementById(`scopeOpt_${s}`);
+            const checked = document.querySelector(`input[name="broadcastScope"][value="${s}"]`).checked;
+            el.style.border = checked ? '1.5px solid #3b82f6' : '1.5px solid #e2e8f0';
+            el.style.background = checked ? '#eff6ff' : '';
+        });
+        const metroChecks = document.getElementById('metroCheckboxList');
+        if (metroChecks) metroChecks.style.opacity = document.getElementById('radioMetros').checked ? '1' : '0.4';
+    }
+
+    function checkAllMetros(checked) {
+        document.querySelectorAll('.metroCheck').forEach(cb => cb.checked = checked);
+        document.getElementById('radioMetros').checked = true;
+        highlightScope();
+    }
+
+    async function sendBroadcast() {
+        const scope = document.querySelector('input[name="broadcastScope"]:checked').value;
+        const btn = document.getElementById('sendBroadcastBtn');
+        const alertBox = document.getElementById('broadcastModalAlert');
+
+        let metro_ids = [];
+        if (scope === 'metros') {
+            metro_ids = Array.from(document.querySelectorAll('.metroCheck:checked')).map(cb => cb.value);
+            if (metro_ids.length === 0) {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = 'Please select at least one metro area.';
+                alertBox.style.display = 'block';
+                return;
+            }
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+            const res = await fetch(`/api/admin/requests/${broadcastRequestId}/broadcast`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scope, metro_ids }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('broadcastModal').style.display = 'none';
+                alert(data.message);
+                loadRequests();
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Broadcast failed';
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Send Broadcast';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Send Broadcast';
+        }
     }
 
     function logout() {

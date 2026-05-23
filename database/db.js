@@ -140,12 +140,35 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN outreach_status TEXT NOT NULL DEFAULT 'new'`);
     } catch (e) { /* column already exists */ }
 
+    await run(`CREATE TABLE IF NOT EXISTS buyer_requests (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT,
+        material TEXT NOT NULL,
+        color TEXT,
+        length REAL NOT NULL,
+        width REAL NOT NULL,
+        state_id TEXT NOT NULL,
+        metro_id TEXT NOT NULL,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'new',
+        broadcasted_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (state_id) REFERENCES states(id),
+        FOREIGN KEY (metro_id) REFERENCES metros(id)
+    )`);
+
     try {
         await run(`ALTER TABLE users ADD COLUMN unsubscribed_at TEXT`);
     } catch (e) { /* column already exists */ }
 
     try {
         await run(`ALTER TABLE users ADD COLUMN reactivated_at TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE buyer_requests ADD COLUMN photos TEXT`);
     } catch (e) { /* column already exists */ }
 
     await seedStates();

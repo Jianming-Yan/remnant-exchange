@@ -134,43 +134,88 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
         from: FROM,
         replyTo: 'info@remnantexchange.org',
         to: email,
-        subject: `Welcome to Remnant Exchange, ${firstName}!`,
+        subject: `Welcome to Remnant Exchange — Your Login & Quick Start Guide`,
         html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
-                <h2 style="color:#2563eb;">Welcome, ${firstName}!</h2>
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
 
-                <p>My name is Jianming Yan — I am the founder of <strong>Remnant Exchange</strong>, and I'm excited to welcome you to the platform.</p>
+                <h2 style="color:#2563eb;margin-bottom:4px;">Welcome to Remnant Exchange, ${firstName}!</h2>
+                <p style="color:#64748b;margin-top:0;">Your free account is ready. Here is everything you need to get started.</p>
 
-                <p>Remnant Exchange is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
+                <!-- LOGIN BOX -->
+                <div style="background:#f0f7ff;border:2px solid #2563eb;border-radius:12px;padding:24px;margin:24px 0;">
+                    <p style="margin:0 0 4px 0;font-weight:700;font-size:1rem;color:#1e3a8a;">Step 1 — Log In</p>
+                    <p style="margin:0 0 16px 0;font-size:0.85rem;color:#64748b;">Click the button below — it will log you in automatically and prompt you to set your own password.</p>
+                    <p style="margin:0 0 16px 0;">
+                        <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:1rem;">Log In to Your Account →</a>
+                    </p>
+                    <p style="margin:0 0 6px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="https://remnantexchange.org/login.html" style="color:#2563eb;">remnantexchange.org</a>:</p>
+                    <p style="margin:0 0 4px 0;"><strong>Email:</strong> <span style="font-weight:700;">${email}</span></p>
+                    <p style="margin:0;"><strong>Temporary Password:</strong> <span style="font-size:1.3rem;font-weight:700;letter-spacing:3px;color:#1e293b;">${tempPassword}</span></p>
+                </div>
 
-                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
-                    <li><strong>Post your remnants</strong> — list your leftover slabs so other shops and buyers can find and purchase them</li>
-                    <li><strong>Search posted remnants</strong> — find the exact size and material you need from other fabricators, instead of buying a whole slab</li>
-                    <li><strong>Track your inventory privately</strong> — manage your internal remnant inventory for your own records, invisible to others</li>
-                </ol>
+                <!-- HOW TO USE -->
+                <h3 style="color:#1e293b;border-bottom:2px solid #e2e8f0;padding-bottom:8px;">How to Use Remnant Exchange</h3>
 
-                <p>It's completely free — no software fees, no service charges.</p>
+                <!-- POST LISTING -->
+                <div style="margin:20px 0;">
+                    <p style="margin:0 0 6px 0;font-size:1rem;font-weight:700;">📋 Post Your Remnants</p>
+                    <p style="margin:0 0 8px 0;color:#475569;font-size:0.9rem;">List your leftover stone slabs so other shops and buyers can find them.</p>
+                    <ol style="margin:0;padding-left:20px;color:#475569;font-size:0.9rem;line-height:2;">
+                        <li>Log in and go to your <strong>Dashboard</strong></li>
+                        <li>Click <strong>"Post a Remnant"</strong></li>
+                        <li>Fill in: material type, stone name, dimensions (length × width × thickness), and your location</li>
+                        <li>Upload photos — clear photos get more inquiries</li>
+                        <li>Click <strong>Post</strong> — your listing goes live immediately</li>
+                    </ol>
+                    <p style="margin:8px 0 0 0;font-size:0.85rem;color:#64748b;">💡 <em>Tip: You can also mark a listing as <strong>Private</strong> to track it in your own inventory without it showing publicly.</em></p>
+                </div>
 
-                <p>Click below to log in and set your password:</p>
+                <hr style="border:none;border-top:1px solid #f1f5f9;margin:16px 0;">
 
-                <p><a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to Your Account</a></p>
+                <!-- BROWSE -->
+                <div style="margin:20px 0;">
+                    <p style="margin:0 0 6px 0;font-size:1rem;font-weight:700;">🔍 Find Remnants From Other Shops</p>
+                    <p style="margin:0 0 8px 0;color:#475569;font-size:0.9rem;">Need a specific stone for a smaller job? Browse remnants near you instead of buying a full slab.</p>
+                    <ol style="margin:0;padding-left:20px;color:#475569;font-size:0.9rem;line-height:2;">
+                        <li>Go to <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a></li>
+                        <li>Filter by material, state, and metro area</li>
+                        <li>Click on a listing to see photos and details</li>
+                        <li>Contact the seller directly through the listing</li>
+                    </ol>
+                </div>
 
-                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:16px 0;">
-                    <p style="margin:0 0 10px 0;color:#64748b;font-size:0.85rem;">Or log in manually at <a href="https://remnantexchange.org/login.html" style="color:#2563eb;">remnantexchange.org</a>:</p>
-                    <p style="margin:0 0 8px 0;font-size:1.1rem;"><strong>Email:</strong> <span style="color:#1e293b;font-size:1.2rem;font-weight:700;">${email}</span></p>
-                    <p style="margin:0;font-size:1.1rem;"><strong>Temporary Password:</strong> <span style="color:#1e293b;font-size:1.4rem;font-weight:700;letter-spacing:2px;">${tempPassword}</span></p>
+                <hr style="border:none;border-top:1px solid #f1f5f9;margin:16px 0;">
+
+                <!-- BUYER REQUEST -->
+                <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:20px;margin:20px 0;">
+                    <p style="margin:0 0 6px 0;font-size:1rem;font-weight:700;color:#92400e;">🎯 Can't Find What You Need?</p>
+                    <p style="margin:0 0 10px 0;color:#78350f;font-size:0.9rem;">Submit a remnant request and we will search our fabricator network for you — for free.</p>
+                    <ol style="margin:0 0 12px 0;padding-left:20px;color:#78350f;font-size:0.9rem;line-height:2;">
+                        <li>Visit <a href="https://remnantexchange.org/request.html" style="color:#d97706;font-weight:600;">remnantexchange.org/request.html</a></li>
+                        <li>Describe what you need — material, size, and your location</li>
+                        <li>Submit the form — we will reach out to fabricators in your area</li>
+                        <li>We will contact you within 1 business day</li>
+                    </ol>
+                    <p style="margin:0;">
+                        <a href="https://remnantexchange.org/request.html" style="background:#d97706;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:0.9rem;">Submit a Remnant Request →</a>
+                    </p>
                 </div>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
 
-                <p><strong>Need help getting started?</strong> Simply reply to this email with your remnant details — material type, stone name, dimensions, thickness, and a photo — and we'll post the listings for you.</p>
+                <!-- HELP -->
+                <p style="margin:0 0 8px 0;font-weight:700;">Need Help Getting Started?</p>
+                <p style="margin:0 0 8px 0;color:#475569;font-size:0.9rem;">If posting feels like too many steps, just email me your remnant details — material, stone name, dimensions, thickness, and a photo — and <strong>I will post the listings for you</strong>.</p>
+                <p style="margin:0;color:#475569;font-size:0.9rem;">You can also call or text me directly at <strong>(617) 606-5840</strong> anytime.</p>
 
-                <p>Looking forward to having you on the platform!</p>
+                <br>
+                <p style="margin:0;">— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> · (617) 606-5840</span></p>
 
-                <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange</span></p>
-
-                <p style="color:#94a3b8;font-size:0.8rem;margin-top:24px;">If you'd rather not be listed, simply ignore this email and no action is needed.</p>
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                If you'd rather not be listed, simply ignore this email and no action is needed.</p>
             </div>
         `,
     });
@@ -272,14 +317,58 @@ async function sendReactivationWelcomeEmail(email, name) {
     });
 }
 
+async function sendFabricatorBroadcastEmail(fabricatorEmail, fabricatorName, request, stateName, metroName) {
+    const resend = getResend();
+    const firstName = fabricatorName.split(' ')[0];
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: fabricatorEmail,
+        subject: `Customer Looking for ${request.material} Remnant in ${metroName}`,
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+                <p>Hi ${firstName},</p>
+
+                <p>We have a customer in the <strong>${metroName}, ${stateName}</strong> area looking for a stone remnant. I thought you might be able to help.</p>
+
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:20px 0;">
+                    <p style="margin:0 0 8px 0;font-size:1.1rem;font-weight:700;">What They Need:</p>
+                    <p style="margin:0 0 6px 0;"><strong>Material:</strong> ${request.material}</p>
+                    ${request.color ? `<p style="margin:0 0 6px 0;"><strong>Color / Stone:</strong> ${request.color}</p>` : ''}
+                    <p style="margin:0 0 6px 0;"><strong>Size:</strong> <span style="font-size:1.2rem;font-weight:700;">${request.length}" x ${request.width}"</span></p>
+                    ${request.notes ? `<p style="margin:0;"><strong>Notes:</strong> ${request.notes}</p>` : ''}
+                </div>
+
+                <p>If you have something that matches or comes close, please reply to this email or call me at <strong>(617) 606-5840</strong> and I will connect you with the customer directly.</p>
+
+                <p>If you are not yet listed on <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a>, this is a great time to join — it is completely free and puts your remnants in front of buyers like this one.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+            </div>
+        `,
+    });
+}
+
 async function sendBuyerRequestEmail(req) {
     const resend = getResend();
+    const photosHtml = req.photos && req.photos.length > 0
+        ? `<div style="margin-top:16px;">
+               <p style="font-weight:600;margin:0 0 8px 0;">Photos (${req.photos.length}):</p>
+               <div>${req.photos.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width:160px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;margin:0 8px 8px 0;" /></a>`).join('')}</div>
+           </div>`
+        : '';
 
     await resend.emails.send({
         from: FROM,
         replyTo: req.email,
         to: process.env.ADMIN_EMAIL,
-        subject: `New Remnant Request — ${req.material} ${req.length}"x${req.width}" — ${req.location}`,
+        subject: `New Remnant Request — ${req.material} ${req.length}"x${req.width}"`,
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <h2 style="color:#2563eb;">New Remnant Request</h2>
@@ -290,10 +379,10 @@ async function sendBuyerRequestEmail(req) {
                     <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Material</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.material}</td></tr>
                     <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Color / Stone</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.color || '—'}</td></tr>
                     <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Size</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:1.1rem;font-weight:700;">${req.length}" x ${req.width}"</td></tr>
-                    <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Location</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${req.location}</td></tr>
                     <tr><td style="padding:8px;background:#f8fafc;font-weight:600;">Notes</td><td style="padding:8px;">${req.notes || '—'}</td></tr>
                 </table>
-                <p style="color:#64748b;font-size:0.85rem;">Reply directly to this email to contact ${req.name}.</p>
+                ${photosHtml}
+                <p style="color:#64748b;font-size:0.85rem;margin-top:16px;">Reply directly to this email to contact ${req.name}.</p>
             </div>
         `,
     });
@@ -318,4 +407,4 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail };
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail };

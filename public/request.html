@@ -68,19 +68,78 @@
                 <input type="number" id="req_width" placeholder="e.g. 36" required min="1">
             </div>
         </div>
-        <div class="form-group">
-            <label>Your Location (City, State) *</label>
-            <input type="text" id="req_location" placeholder="e.g. Boston, MA" required>
+        <div class="form-row">
+            <div class="form-group">
+                <label>State *</label>
+                <select id="req_state" required onchange="loadMetros()">
+                    <option value="">Select state...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Metro Area *</label>
+                <select id="req_metro" required>
+                    <option value="">Select state first</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
             <label>Additional Notes</label>
             <textarea id="req_notes" rows="3" placeholder="Thickness, budget, timeline, or anything else helpful..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.95rem;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:8px;color:#374151;">Photos <span style="color:#94a3b8;font-weight:400;">(optional, up to 5)</span></label>
+            <input type="file" id="req_photos" multiple accept="image/*,.heic,.heif" onchange="previewPhotos(this)">
+            <p style="margin:6px 0 0 0;color:#94a3b8;font-size:0.8rem;">Helps fabricators match your stone &mdash; JPG, PNG, HEIC accepted</p>
+            <div id="req_photoPreviews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="submitBtn">Submit Request</button>
     </form>
 </div>
 
 <script>
+    async function loadStates() {
+        const res = await fetch('/api/listings/states');
+        const states = await res.json();
+        const sel = document.getElementById('req_state');
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    async function loadMetros() {
+        const stateId = document.getElementById('req_state').value;
+        const metroSel = document.getElementById('req_metro');
+        metroSel.innerHTML = '<option value="">Loading...</option>';
+        if (!stateId) { metroSel.innerHTML = '<option value="">Select state first</option>'; return; }
+        const res = await fetch(`/api/listings/states/${stateId}/metros`);
+        const metros = await res.json();
+        metroSel.innerHTML = '<option value="">Select metro area...</option>';
+        metros.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            metroSel.appendChild(opt);
+        });
+    }
+
+    function previewPhotos(input) {
+        const previews = document.getElementById('req_photoPreviews');
+        previews.innerHTML = '';
+        Array.from(input.files).slice(0, 5).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;';
+                previews.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     document.getElementById('requestForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertBox = document.getElementById('alertBox');
@@ -90,20 +149,22 @@
         submitBtn.textContent = 'Submitting...';
 
         try {
+            const formData = new FormData();
+            formData.append('name', document.getElementById('req_name').value);
+            formData.append('email', document.getElementById('req_email').value);
+            formData.append('phone', document.getElementById('req_phone').value);
+            formData.append('material', document.getElementById('req_material').value);
+            formData.append('color', document.getElementById('req_color').value);
+            formData.append('length', document.getElementById('req_length').value);
+            formData.append('width', document.getElementById('req_width').value);
+            formData.append('state_id', document.getElementById('req_state').value);
+            formData.append('metro_id', document.getElementById('req_metro').value);
+            formData.append('notes', document.getElementById('req_notes').value);
+            Array.from(document.getElementById('req_photos').files).slice(0, 5).forEach(f => formData.append('photos', f));
+
             const res = await fetch('/api/request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: document.getElementById('req_name').value,
-                    email: document.getElementById('req_email').value,
-                    phone: document.getElementById('req_phone').value,
-                    material: document.getElementById('req_material').value,
-                    color: document.getElementById('req_color').value,
-                    length: document.getElementById('req_length').value,
-                    width: document.getElementById('req_width').value,
-                    location: document.getElementById('req_location').value,
-                    notes: document.getElementById('req_notes').value,
-                }),
+                body: formData,
             });
 
             const data = await res.json();
@@ -128,6 +189,8 @@
             submitBtn.textContent = 'Submit Request';
         }
     });
+
+    loadStates();
 </script>
 </body>
 </html>

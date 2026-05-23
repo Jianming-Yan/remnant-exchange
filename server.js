@@ -4,8 +4,27 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
 const { initSchema, run, get } = require('./database/db');
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+function uploadToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            { folder: 'remnant-exchange/requests', resource_type: 'image' },
+            (error, result) => error ? reject(error) : resolve(result.secure_url)
+        ).end(buffer);
+    });
+}
 
 fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
@@ -21,13 +40,30 @@ app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
 
 const { sendBuyerRequestEmail } = require('./utils/email');
-app.post('/api/request', async (req, res) => {
+app.post('/api/request', upload.array('photos', 5), async (req, res) => {
     try {
-        const { name, email, material, length, width, location } = req.body;
-        if (!name || !email || !material || !length || !width || !location) {
+        const { name, email, material, length, width, state_id, metro_id } = req.body;
+        if (!name || !email || !material || !length || !width || !state_id || !metro_id) {
             return res.status(400).json({ error: 'Please fill in all required fields.' });
         }
-        await sendBuyerRequestEmail(req.body);
+
+        const photoUrls = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                try {
+                    const url = await uploadToCloudinary(file.buffer);
+                    photoUrls.push(url);
+                } catch (e) {
+                    console.error('Photo upload failed:', e.message);
+                }
+            }
+        }
+
+        const id = uuidv4();
+        await run(`INSERT INTO buyer_requests (id, name, email, phone, material, color, length, width, state_id, metro_id, notes, photos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, name, email, req.body.phone || null, material, req.body.color || null, length, width, state_id, metro_id, req.body.notes || null, photoUrls.length > 0 ? JSON.stringify(photoUrls) : null]);
+
+        await sendBuyerRequestEmail({ ...req.body, photos: photoUrls });
         res.json({ message: 'Request submitted successfully.' });
     } catch (err) {
         console.error('Buyer request error:', err);
