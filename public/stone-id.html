@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Kind of Stone Is My Countertop? — Free AI Identifier | Remnant Exchange</title>
+    <meta name="description" content="Upload a photo of your countertop or stone slab and our free AI tool will instantly identify the material and stone name. Find matching remnants near you.">
+    <meta name="keywords" content="what stone is my countertop, identify granite marble quartz, stone identifier, countertop material identifier">
+    <link rel="canonical" href="https://remnantexchange.org/stone-id.html">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .upload-zone input[type="file"] { display: none; }
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            margin-top: 28px;
+        }
+        .material-badge {
+            display: inline-block;
+            background: #1e293b;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+        .listing-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            transition: box-shadow 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .listing-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .listing-thumb {
+            width: 72px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #f1f5f9;
+            flex-shrink: 0;
+        }
+        .confidence-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 999px;
+        }
+        .conf-high { background: #dcfce7; color: #15803d; }
+        .conf-medium { background: #fef9c3; color: #854d0e; }
+        .conf-low { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
+    <div class="nav-links">
+        <a href="/">Browse</a>
+        <a href="/stone-id.html" style="color:#2563eb;font-weight:600;">Identify Stone</a>
+        <a href="/login.html" id="loginLink">Login</a>
+        <a href="/register.html" class="btn btn-primary" id="registerLink">List Your Remnants</a>
+        <a href="/dashboard.html" class="btn btn-primary" id="dashLink" style="display:none">My Dashboard</a>
+        <button class="btn btn-secondary btn-sm" id="logoutLink" style="display:none" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div style="max-width:720px;margin:0 auto;padding:48px 20px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:40px;">
+        <h1 style="font-size:2rem;margin-bottom:12px;">What Stone Is My Countertop?</h1>
+        <p style="color:#64748b;font-size:1.05rem;max-width:520px;margin:0 auto;">Upload a photo and our AI will instantly identify the material and stone name — then show you matching remnants available near you.</p>
+    </div>
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('photoInput').click()">
+        <input type="file" id="photoInput" accept="image/*" onchange="handleFile(this.files[0])">
+        <div id="uploadPrompt">
+            <div style="font-size:3rem;margin-bottom:12px;">📷</div>
+            <p style="font-weight:700;font-size:1.1rem;margin-bottom:4px;">Click to upload a photo</p>
+            <p style="color:#94a3b8;font-size:0.875rem;margin:0;">Or drag and drop — JPG, PNG, HEIC supported</p>
+        </div>
+        <div id="previewWrap" style="display:none;">
+            <img id="previewImg" style="max-height:280px;max-width:100%;border-radius:10px;object-fit:contain;">
+            <p style="margin-top:12px;color:#64748b;font-size:0.85rem;">Click to change photo</p>
+        </div>
+    </div>
+
+    <!-- Identify button -->
+    <div style="text-align:center;margin-top:20px;">
+        <button id="identifyBtn" class="btn btn-primary" onclick="identify()" style="padding:14px 40px;font-size:1rem;display:none;">
+            Identify My Stone
+        </button>
+    </div>
+
+    <!-- Alert -->
+    <div id="pageAlert" style="display:none;margin-top:20px;"></div>
+
+    <!-- Result -->
+    <div id="resultSection" style="display:none;">
+        <div class="result-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                <div>
+                    <span class="material-badge" id="resultMaterial"></span>
+                    <h2 style="margin:4px 0 0 0;font-size:1.5rem;" id="resultStoneName"></h2>
+                </div>
+                <span class="confidence-badge" id="confidenceBadge"></span>
+            </div>
+            <p id="resultDescription" style="color:#64748b;font-size:0.9rem;margin:0 0 20px 0;"></p>
+
+            <!-- Not right? -->
+            <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:8px;">
+                <p style="margin:0 0 8px 0;font-size:0.85rem;font-weight:600;">Not quite right?</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="correctionInput" placeholder="Type the correct stone name..." style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.875rem;min-width:180px;">
+                    <button class="btn btn-secondary btn-sm" onclick="searchWithCorrection()">Search</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matching listings -->
+        <div id="matchingSection" style="margin-top:32px;">
+            <h3 style="margin-bottom:6px;" id="matchingTitle">Finding matching remnants near you...</h3>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:20px;" id="matchingSubtitle"></p>
+            <div id="listingsGrid" style="display:flex;flex-direction:column;gap:12px;"></div>
+            <div id="noMatchSection" style="display:none;margin-top:8px;">
+                <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:24px;text-align:center;">
+                    <p style="font-weight:700;margin-bottom:8px;">No matching remnants found right now</p>
+                    <p style="color:#78350f;font-size:0.875rem;margin-bottom:16px;">Submit a request and we'll reach out to fabricators in your area on your behalf — for free.</p>
+                    <a href="/request.html" class="btn btn-primary">Request This Stone →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div style="margin-top:56px;padding-top:40px;border-top:1px solid #e2e8f0;">
+        <h2 style="text-align:center;margin-bottom:28px;font-size:1.3rem;">How It Works</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;text-align:center;">
+            <div>
+                <div style="font-size:2.2rem;margin-bottom:10px;">📸</div>
+                <p style="font-weight:700;margin-bottom:4px;">Upload a photo</p>
+                <p style="color:#64748b;font-size:0.85rem;">Take a clear photo of your countertop or stone slab</p>
+            </div>
+            <div>
+                <div style="font-size:2.2rem;margin-bottom:10px;">🤖</div>
+                <p style="font-weight:700;margin-bottom:4px;">AI identifies it</p>
+                <p style="color:#64748b;font-size:0.85rem;">Our AI analyzes the veining, color, and texture instantly</p>
+            </div>
+            <div>
+                <div style="font-size:2.2rem;margin-bottom:10px;">🔍</div>
+                <p style="font-weight:700;margin-bottom:4px;">Find matching remnants</p>
+                <p style="color:#64748b;font-size:0.85rem;">Browse available slabs near you at a fraction of full price</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Nav auth state
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (token && user.role) {
+        document.getElementById('loginLink').style.display = 'none';
+        document.getElementById('registerLink').style.display = 'none';
+        document.getElementById('logoutLink').style.display = 'inline-block';
+        if (user.role === 'fabricator') document.getElementById('dashLink').style.display = 'inline-block';
+    }
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+
+    // Drag and drop
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) handleFile(file);
+    });
+
+    let selectedFile = null;
+
+    function handleFile(file) {
+        if (!file) return;
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('uploadPrompt').style.display = 'none';
+            document.getElementById('previewWrap').style.display = 'block';
+            document.getElementById('identifyBtn').style.display = 'inline-block';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('pageAlert').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    let identifiedMaterial = '';
+
+    async function identify() {
+        if (!selectedFile) return;
+
+        const btn = document.getElementById('identifyBtn');
+        btn.disabled = true; btn.textContent = 'Analyzing...';
+        document.getElementById('pageAlert').style.display = 'none';
+        document.getElementById('resultSection').style.display = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('photo', selectedFile);
+
+            const res = await fetch('/api/listings/identify-stone', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.material_type) throw new Error(data.error || 'Could not identify the stone');
+
+            showResult(data.material_type, data.stone_name, data.confidence || 'medium');
+            await loadMatchingListings(data.material_type);
+        } catch (err) {
+            document.getElementById('pageAlert').className = 'alert alert-error';
+            document.getElementById('pageAlert').textContent = err.message || 'Something went wrong. Please try a clearer photo.';
+            document.getElementById('pageAlert').style.display = 'block';
+        }
+
+        btn.disabled = false; btn.textContent = 'Identify My Stone';
+    }
+
+    function showResult(material, stoneName, confidence) {
+        identifiedMaterial = material;
+        document.getElementById('resultMaterial').textContent = material.toUpperCase();
+        document.getElementById('resultStoneName').textContent = stoneName;
+
+        const descriptions = {
+            Granite: 'Granite is a natural stone known for its durability and unique grain patterns. No two slabs are identical.',
+            Marble: 'Marble is a classic natural stone prized for its elegant veining and luxurious appearance.',
+            Quartz: 'Quartz is an engineered stone combining natural quartz crystals with resins for a durable, low-maintenance surface.',
+            Quartzite: 'Quartzite is a natural metamorphic rock known for its hardness and marble-like appearance.',
+            Travertine: 'Travertine is a natural limestone with a distinctive porous texture, often used in classic and Mediterranean styles.',
+            Limestone: 'Limestone is a natural sedimentary stone with a soft, matte appearance.',
+            Soapstone: 'Soapstone is a natural stone with a smooth, matte finish that darkens beautifully over time.',
+        };
+        document.getElementById('resultDescription').textContent = descriptions[material] || '';
+
+        const badge = document.getElementById('confidenceBadge');
+        if (confidence === 'high') { badge.textContent = 'High confidence'; badge.className = 'confidence-badge conf-high'; }
+        else if (confidence === 'low') { badge.textContent = 'Low confidence — please verify'; badge.className = 'confidence-badge conf-low'; }
+        else { badge.textContent = 'Medium confidence'; badge.className = 'confidence-badge conf-medium'; }
+
+        document.getElementById('resultSection').style.display = 'block';
+    }
+
+    async function loadMatchingListings(material, customSearch) {
+        const grid = document.getElementById('listingsGrid');
+        const title = document.getElementById('matchingTitle');
+        const subtitle = document.getElementById('matchingSubtitle');
+        const noMatch = document.getElementById('noMatchSection');
+        grid.innerHTML = '<p style="color:#94a3b8;font-size:0.875rem;">Searching...</p>';
+        noMatch.style.display = 'none';
+
+        try {
+            const searchTerm = customSearch || material;
+            const res = await fetch(`/api/listings?material=${encodeURIComponent(material)}&search=${encodeURIComponent(customSearch || '')}&page=1`);
+            const data = await res.json();
+            const listings = data.listings || [];
+
+            if (listings.length === 0) {
+                title.textContent = 'No matching remnants found right now';
+                subtitle.textContent = '';
+                grid.innerHTML = '';
+                noMatch.style.display = 'block';
+                return;
+            }
+
+            title.textContent = `${data.total} matching remnant${data.total !== 1 ? 's' : ''} available`;
+            subtitle.textContent = `${material} remnants from verified fabricators across the country`;
+
+            grid.innerHTML = listings.slice(0, 6).map(l => {
+                const photo = l.photos && l.photos[0] ? l.photos[0].filename : null;
+                const size = `${l.length}" × ${l.width}"`;
+                return `
+                    <a href="/?search=${encodeURIComponent(l.stone_name)}" class="listing-card">
+                        ${photo
+                            ? `<img src="${photo}" class="listing-thumb" alt="${escHtml(l.stone_name)}">`
+                            : `<div class="listing-thumb" style="display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:1.5rem;">🪨</div>`
+                        }
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:700;margin-bottom:2px;">${escHtml(l.stone_name)}</div>
+                            <div style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">${escHtml(l.material_type)} · ${size} · ${escHtml(l.thickness)}</div>
+                            <div style="font-size:0.8rem;color:#94a3b8;">${escHtml(l.metro_name)}, ${escHtml(l.state_abbr)} · ${escHtml(l.business_name)}</div>
+                        </div>
+                        <div style="color:#2563eb;font-size:1.2rem;flex-shrink:0;">→</div>
+                    </a>
+                `;
+            }).join('');
+
+            if (data.total > 6) {
+                grid.innerHTML += `
+                    <a href="/?material=${encodeURIComponent(material)}" class="btn btn-secondary" style="text-align:center;margin-top:8px;">
+                        View All ${data.total} ${material} Remnants →
+                    </a>
+                `;
+            }
+        } catch {
+            grid.innerHTML = '';
+            noMatch.style.display = 'block';
+        }
+    }
+
+    async function searchWithCorrection() {
+        const val = document.getElementById('correctionInput').value.trim();
+        if (!val) return;
+        document.getElementById('matchingTitle').textContent = `Searching for "${val}"...`;
+        await loadMatchingListings(identifiedMaterial, val);
+    }
+
+    function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+</script>
+</body>
+</html>
