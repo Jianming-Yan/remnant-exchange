@@ -175,6 +175,56 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN territory_state_id TEXT`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE users ADD COLUMN added_by_intern_id TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    await run(`CREATE TABLE IF NOT EXISTS contractor_leads (
+        id TEXT PRIMARY KEY,
+        business_name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT,
+        city TEXT,
+        state TEXT,
+        website TEXT,
+        category TEXT,
+        unsubscribe_token TEXT,
+        sent_at TEXT,
+        unsubscribed INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+
+    await run(`CREATE TABLE IF NOT EXISTS fabricator_leads (
+        id TEXT PRIMARY KEY,
+        business_name TEXT NOT NULL,
+        contact_name TEXT,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT,
+        city TEXT,
+        state TEXT,
+        website TEXT,
+        rating REAL,
+        reviews INTEGER,
+        touch_count INTEGER NOT NULL DEFAULT 0,
+        last_sent_at TEXT,
+        unsubscribe_token TEXT UNIQUE,
+        unsubscribed INTEGER NOT NULL DEFAULT 0,
+        registered INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+
+    try {
+        await run(`ALTER TABLE users ADD COLUMN source TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE users ADD COLUMN nudge_sent INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE users ADD COLUMN first_listing_congrats_sent INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 
@@ -206,6 +256,9 @@ async function seedStates() {
         OH: ['Columbus', 'Cleveland', 'Cincinnati', 'Toledo', 'Others'],
         GA: ['Atlanta', 'Savannah', 'Augusta', 'Columbus', 'Others'],
         NC: ['Charlotte', 'Raleigh', 'Greensboro', 'Durham', 'Others'],
+        NJ: ['Newark/Jersey City', 'Trenton', 'Camden', 'Atlantic City', 'Others'],
+        MD: ['Baltimore', 'DC Suburbs', 'Annapolis', 'Frederick', 'Others'],
+        VA: ['Northern Virginia', 'Richmond', 'Virginia Beach/Norfolk', 'Charlottesville', 'Others'],
     };
 
     for (const [abbr, name] of states) {

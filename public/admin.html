@@ -28,6 +28,8 @@
         <a href="#" onclick="showSection('post-for', this)">&#128247; Post For Fabricator</a>
         <a href="#" onclick="showSection('requests', this)">&#128386; Buyer Requests</a>
         <a href="#" onclick="showSection('interns', this)">&#128100; Interns</a>
+        <a href="#" onclick="showSection('contractor-outreach', this)">&#128233; Contractor Outreach</a>
+        <a href="#" onclick="showSection('fabricator-outreach', this)">&#128640; Fabricator Outreach</a>
     </div>
 
     <div class="main-panel">
@@ -469,6 +471,85 @@
             <div id="internListContent">Loading...</div>
         </div>
 
+        <!-- FABRICATOR OUTREACH -->
+        <div id="section-fabricator-outreach" style="display:none">
+            <h2 style="margin-bottom:8px;">Fabricator Outreach</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Import fabricator leads and run a 3-touch email campaign (Mon / Wed / Fri). After all 3 touches, bulk-create accounts for those who have not self-registered.</p>
+
+            <div class="stats-grid" id="fabLeadStatsGrid" style="margin-bottom:28px;">Loading...</div>
+
+            <!-- Import -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:8px;">Import Fabricator Leads</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Upload an xlsx file (Business Name, Contact Name, Email, Phone, City, State, Website, Rating, Reviews columns).</p>
+                <div id="fabLeadImportAlert" style="display:none;margin-bottom:12px;"></div>
+                <form id="fabLeadImportForm">
+                    <div class="form-group">
+                        <label>xlsx File</label>
+                        <input type="file" id="fab_lead_file" accept=".xlsx" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="fabLeadImportBtn">Import Leads</button>
+                </form>
+            </div>
+
+            <!-- Broadcast -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Send Broadcast Email</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Sends the next touch to all eligible leads (touch &lt; 3, not unsubscribed, not registered). Monday = intro, Wednesday = follow-up 1, Friday = follow-up 2.</p>
+                <div id="fabLeadBroadcastAlert" style="display:none;margin-bottom:12px;"></div>
+                <div style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="fabLeadTestMode" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="fabLeadTestMode" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;"><strong>Test mode</strong> — send only to me, don't update touch count</label>
+                </div>
+                <button class="btn btn-primary" id="fabLeadBroadcastBtn" onclick="sendFabLeadBroadcast()">Send Broadcast</button>
+            </div>
+
+            <!-- Bulk Create -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Bulk Create Accounts</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Creates user accounts for all leads who received all 3 emails but did not self-register. Marks them as <strong>bulk_imported</strong> so George knows to make cold calls.</p>
+                <div id="fabLeadBulkAlert" style="display:none;margin-bottom:12px;"></div>
+                <button class="btn btn-secondary" id="fabLeadBulkBtn" onclick="bulkCreateFabAccounts()">Bulk Create Accounts</button>
+            </div>
+        </div>
+
+        <!-- CONTRACTOR OUTREACH -->
+        <div id="section-contractor-outreach" style="display:none">
+            <h2 style="margin-bottom:8px;">Contractor Outreach</h2>
+            <p style="color:#64748b;font-size:0.875rem;margin-bottom:24px;">Import contractor leads and broadcast the Remnant Exchange marketing email to kitchen remodelers, GCs, and designers.</p>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="contractorStatsGrid" style="margin-bottom:28px;">Loading...</div>
+
+            <!-- Import -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:28px;">
+                <h3 style="margin-bottom:8px;">Import Contractor Leads</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Upload an xlsx file (Business Name, Email, Phone, City, Website columns).</p>
+                <div id="contractorImportAlert" style="display:none;margin-bottom:12px;"></div>
+                <form id="contractorImportForm">
+                    <div class="form-group">
+                        <label>xlsx File</label>
+                        <input type="file" id="contractor_file" accept=".xlsx" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="contractorImportBtn">Import Leads</button>
+                </form>
+            </div>
+
+            <!-- Broadcast -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:28px;">
+                <h3 style="margin-bottom:8px;">Send Broadcast Email</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Sends the Remnant Exchange intro email to all contractors who have not yet been contacted and have not unsubscribed.</p>
+                <div id="contractorBroadcastAlert" style="display:none;margin-bottom:12px;"></div>
+                <div style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="contractorTestMode" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="contractorTestMode" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;">
+                        <strong>Test mode</strong> — send only to me, don't mark as sent
+                    </label>
+                </div>
+                <button class="btn btn-primary" id="contractorBroadcastBtn" onclick="sendContractorBroadcast()">Send Broadcast</button>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -542,6 +623,8 @@
         if (name === 'requests') loadRequests();
         if (name === 'interns') loadInterns();
         if (name === 'bulk-import') loadBulkTerritoryStates();
+        if (name === 'contractor-outreach') loadContractorStats();
+        if (name === 'fabricator-outreach') loadFabLeadStats();
     }
 
     async function loadStats() {
@@ -1596,6 +1679,179 @@
     }
 
     loadStats();
+
+    // -------- Contractor Outreach --------
+
+    async function loadContractorStats() {
+        const res = await fetch('/api/admin/contractor-leads/stats', { headers: { Authorization: `Bearer ${token}` } });
+        const s = await res.json();
+        document.getElementById('contractorStatsGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-number">${s.total}</div><div class="stat-label">Total Leads</div></div>
+            <div class="stat-card"><div class="stat-number">${s.sent}</div><div class="stat-label">Emails Sent</div></div>
+            <div class="stat-card"><div class="stat-number">${s.pending}</div><div class="stat-label">Pending</div></div>
+            <div class="stat-card"><div class="stat-number">${s.unsubscribed}</div><div class="stat-label">Unsubscribed</div></div>
+        `;
+    }
+
+    document.getElementById('contractorImportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('contractorImportAlert');
+        const btn = document.getElementById('contractorImportBtn');
+        btn.disabled = true; btn.textContent = 'Importing...';
+
+        const file = document.getElementById('contractor_file').files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/admin/contractor-leads/import', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = res.ok
+                ? `Imported ${data.imported} leads (${data.duplicate} duplicates skipped, ${data.skipped} invalid)`
+                : data.error;
+            alertBox.style.display = 'block';
+            if (res.ok) { document.getElementById('contractorImportForm').reset(); loadContractorStats(); }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Import Leads';
+    });
+
+    // -------- Fabricator Leads Outreach --------
+
+    async function loadFabLeadStats() {
+        const res = await fetch('/api/admin/fabricator-leads/stats', { headers: { Authorization: `Bearer ${token}` } });
+        const s = await res.json();
+        document.getElementById('fabLeadStatsGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-number">${s.total}</div><div class="stat-label">Total Leads</div></div>
+            <div class="stat-card"><div class="stat-number">${s.pending}</div><div class="stat-label">Not Emailed</div></div>
+            <div class="stat-card"><div class="stat-number">${s.touch1}</div><div class="stat-label">Touch 1 Sent</div></div>
+            <div class="stat-card"><div class="stat-number">${s.touch2}</div><div class="stat-label">Touch 2 Sent</div></div>
+            <div class="stat-card"><div class="stat-number">${s.touch3}</div><div class="stat-label">All 3 Done</div></div>
+            <div class="stat-card"><div class="stat-number">${s.registered}</div><div class="stat-label">Self-Registered</div></div>
+            <div class="stat-card"><div class="stat-number">${s.unsubscribed}</div><div class="stat-label">Unsubscribed</div></div>
+        `;
+    }
+
+    document.getElementById('fabLeadImportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('fabLeadImportAlert');
+        const btn = document.getElementById('fabLeadImportBtn');
+        btn.disabled = true; btn.textContent = 'Importing...';
+
+        const file = document.getElementById('fab_lead_file').files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/admin/fabricator-leads/import', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = res.ok
+                ? `Imported ${data.imported} leads (${data.duplicate} duplicates skipped, ${data.skipped} invalid)`
+                : data.error;
+            alertBox.style.display = 'block';
+            if (res.ok) { document.getElementById('fabLeadImportForm').reset(); loadFabLeadStats(); }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Import Leads';
+    });
+
+    async function sendFabLeadBroadcast() {
+        const alertBox = document.getElementById('fabLeadBroadcastAlert');
+        const btn = document.getElementById('fabLeadBroadcastBtn');
+        const test = document.getElementById('fabLeadTestMode').checked;
+
+        if (!test && !confirm('Send the next touch email to all eligible fabricator leads? This cannot be undone.')) return;
+
+        btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
+
+        try {
+            const res = await fetch('/api/admin/fabricator-leads/broadcast', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = data.message || data.error;
+            alertBox.style.display = 'block';
+            if (res.ok && !test) loadFabLeadStats();
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Send Broadcast';
+    }
+
+    async function bulkCreateFabAccounts() {
+        const alertBox = document.getElementById('fabLeadBulkAlert');
+        const btn = document.getElementById('fabLeadBulkBtn');
+
+        if (!confirm('Bulk-create accounts for all fabricator leads who completed 3 touches and have not registered? They will be marked as bulk_imported.')) return;
+
+        btn.disabled = true; btn.textContent = 'Creating...';
+
+        try {
+            const res = await fetch('/api/admin/fabricator-leads/bulk-create', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = data.message || data.error;
+            alertBox.style.display = 'block';
+            if (res.ok) loadFabLeadStats();
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Bulk Create Accounts';
+    }
+
+    async function sendContractorBroadcast() {
+        const alertBox = document.getElementById('contractorBroadcastAlert');
+        const btn = document.getElementById('contractorBroadcastBtn');
+        const test = document.getElementById('contractorTestMode').checked;
+
+        if (!test && !confirm('Send broadcast email to all pending contractor leads? This cannot be undone.')) return;
+
+        btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
+
+        try {
+            const res = await fetch('/api/admin/contractor-leads/broadcast', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = data.message || data.error;
+            alertBox.style.display = 'block';
+            if (res.ok && !test) loadContractorStats();
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Send Broadcast';
+    }
 </script>
 </body>
 </html>

@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
-const { initSchema, run, get } = require('./database/db');
+const { initSchema, query, run, get } = require('./database/db');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -39,8 +39,27 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/intern', require('./routes/intern'));
+app.use('/api/contractor', require('./routes/contractor'));
 
-const { sendBuyerRequestEmail } = require('./utils/email');
+// Fabricator lead unsubscribe (public, no auth)
+app.get('/api/fab-leads/unsubscribe', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).send('Invalid link');
+        const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
+        if (!lead) return res.status(404).send('Link not found');
+        await run(`UPDATE fabricator_leads SET unsubscribed = 1 WHERE id = ?`, [lead.id]);
+        res.send(`<html><body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1a1a1a;">
+            <h2>You have been unsubscribed</h2>
+            <p style="color:#64748b;">You will not receive any more emails from Remnant Exchange.<br>We appreciate your time and wish you all the best.</p>
+        </body></html>`);
+    } catch (err) {
+        console.error('fab-lead unsubscribe error:', err);
+        res.status(500).send('Error');
+    }
+});
+
+const { sendBuyerRequestEmail, sendActivationNudgeEmail } = require('./utils/email');
 app.post('/api/request', upload.array('photos', 5), async (req, res) => {
     try {
         const { name, email, material, length, width, state_id, metro_id } = req.body;
@@ -85,6 +104,32 @@ async function expireListings() {
     }
 }
 
+async function sendActivationNudges() {
+    try {
+        // Self-registered fabricators, 3+ days old, zero listings, nudge not yet sent
+        const users = await query(`
+            SELECT u.id, u.name, u.email, u.business_name
+            FROM users u
+            WHERE u.role = 'fabricator'
+              AND u.source = 'self_registered'
+              AND u.nudge_sent = 0
+              AND u.created_at < datetime('now', '-3 days')
+              AND NOT EXISTS (SELECT 1 FROM listings l WHERE l.user_id = u.id AND l.status = 'active')
+        `);
+        for (const u of users) {
+            try {
+                await sendActivationNudgeEmail(u.email, u.name, u.business_name);
+                await run(`UPDATE users SET nudge_sent = 1 WHERE id = ?`, [u.id]);
+            } catch (e) {
+                console.error('Nudge email failed for', u.email, e.message);
+            }
+        }
+        if (users.length > 0) console.log(`Activation nudges sent: ${users.length}`);
+    } catch (err) {
+        console.error('Nudge job error:', err);
+    }
+}
+
 async function ensureAdmin() {
     const admin = await get(`SELECT id FROM users WHERE role = 'admin'`);
     if (!admin) {
@@ -102,6 +147,9 @@ async function start() {
 
     await expireListings();
     setInterval(() => expireListings(), 60 * 60 * 1000);
+
+    await sendActivationNudges();
+    setInterval(() => sendActivationNudges(), 60 * 60 * 1000);
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {

@@ -5,7 +5,7 @@ const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireApprovedFabricator, requireAuth } = require('../middleware/auth');
-const { sendContactMessage } = require('../utils/email');
+const { sendContactMessage, sendFirstListingCongratulationEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -158,6 +158,16 @@ router.post('/', requireApprovedFabricator, (req, res, next) => {
                 const url = await uploadToCloudinary(req.files[i].buffer);
                 await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
                     [uuidv4(), id, url, i]);
+            }
+        }
+
+        // Congratulation email on first listing for self-registered users
+        const userRecord = await get(`SELECT source, first_listing_congrats_sent, name, business_name, email FROM users WHERE id = ?`, [req.user.id]);
+        if (userRecord && userRecord.source === 'self_registered' && !userRecord.first_listing_congrats_sent) {
+            const totalListings = await get(`SELECT count(*) as cnt FROM listings WHERE user_id = ?`, [req.user.id]);
+            if (Number(totalListings.cnt) === 1) {
+                await run(`UPDATE users SET first_listing_congrats_sent = 1 WHERE id = ?`, [req.user.id]);
+                sendFirstListingCongratulationEmail(userRecord.email, userRecord.name, userRecord.business_name).catch(() => {});
             }
         }
 

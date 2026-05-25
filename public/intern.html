@@ -103,6 +103,12 @@
                 <input type="text" id="add_city" placeholder="Hartford">
             </div>
             <div class="form-group">
+                <label>State</label>
+                <select id="add_state" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;background:white;">
+                    <option value="">Loading states...</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Notes</label>
                 <textarea id="add_notes" rows="2" placeholder="Source, first impression, anything useful..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
             </div>
@@ -127,6 +133,7 @@
     document.getElementById('internGreeting').textContent = user.name || 'Intern';
 
     let allFabs = [];
+    let allStates = [];
     let activeFilter = 'all';
     let activeFabId = null;
 
@@ -137,6 +144,13 @@
         unsubscribed: '<span style="background:#fee2e2;color:#dc2626;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Unsubscribed</span>',
     };
 
+    async function loadStates() {
+        try {
+            const res = await fetch('/api/intern/states', { headers: { Authorization: `Bearer ${token}` } });
+            if (res.ok) allStates = await res.json();
+        } catch {}
+    }
+
     async function loadFabs() {
         try {
             const res = await fetch('/api/intern/fabricators', { headers: { Authorization: `Bearer ${token}` } });
@@ -145,8 +159,11 @@
             allFabs = await res.json();
             renderStats();
             renderTable();
-            const total = allFabs.length;
-            document.getElementById('territoryLabel').textContent = `${total} fabricator${total !== 1 ? 's' : ''} in your assigned territory`;
+            const own = allFabs.filter(f => Number(f.is_own_territory)).length;
+            const other = allFabs.length - own;
+            let label = `${own} fabricator${own !== 1 ? 's' : ''} in your territory`;
+            if (other > 0) label += ` · ${other} added from other states`;
+            document.getElementById('territoryLabel').textContent = label;
         } catch (err) {
             document.getElementById('fabTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:32px;">Failed to load: ${err.message}</td></tr>`;
         }
@@ -195,9 +212,13 @@
             return;
         }
 
-        tbody.innerHTML = rows.map(f => `
+        tbody.innerHTML = rows.map(f => {
+            const stateBadge = !Number(f.is_own_territory) && f.territory_state_abbr
+                ? ` <span style="background:#e0f2fe;color:#0369a1;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:999px;vertical-align:middle;">${escHtml(f.territory_state_abbr)}</span>`
+                : '';
+            return `
             <tr style="cursor:pointer;" onclick="openFab('${f.id}')">
-                <td><strong>${escHtml(f.business_name)}</strong></td>
+                <td><strong>${escHtml(f.business_name)}</strong>${stateBadge}</td>
                 <td style="font-size:0.85rem;color:#64748b;">${escHtml(f.name)}</td>
                 <td>${f.phone ? `<a href="tel:${escHtml(f.phone)}" style="color:#1e293b;text-decoration:none;" onclick="event.stopPropagation()">${escHtml(f.phone)}</a>` : '<span style="color:#cbd5e1;">—</span>'}</td>
                 <td style="font-size:0.85rem;color:#64748b;">${escHtml(f.city || '—')}</td>
@@ -208,7 +229,7 @@
                     <button class="action-btn blue" style="margin-left:4px;" onclick="quickCreds('${f.id}')">Creds</button>
                 </td>
             </tr>
-        `).join('');
+        `; }).join('');
     }
 
     function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -236,8 +257,8 @@
                     <span style="font-size:0.9rem;">${f.phone ? `<a href="tel:${escHtml(f.phone)}" style="color:#1e293b;">${escHtml(f.phone)}</a>` : '—'}</span>
                 </div>
                 <div style="background:#f8fafc;border-radius:8px;padding:12px;">
-                    <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:2px;">CITY</div>
-                    <span style="font-size:0.9rem;">${escHtml(f.city || '—')}</span>
+                    <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:2px;">CITY / STATE</div>
+                    <span style="font-size:0.9rem;">${escHtml([f.city, f.territory_state_abbr].filter(Boolean).join(', ') || '—')}</span>
                 </div>
                 <div style="background:#f8fafc;border-radius:8px;padding:12px;">
                     <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:2px;">ACTIVE LISTINGS</div>
@@ -361,6 +382,14 @@
         document.getElementById('addModalAlert').style.display = 'none';
         document.getElementById('addFabBtn').disabled = false;
         document.getElementById('addFabBtn').textContent = 'Add to My List';
+
+        // Populate state dropdown, defaulting to intern's territory
+        const sel = document.getElementById('add_state');
+        const internStateId = user.territory_state_id || '';
+        sel.innerHTML = allStates.map(s =>
+            `<option value="${s.id}"${s.id === internStateId ? ' selected' : ''}>${s.name}</option>`
+        ).join('');
+
         document.getElementById('addModal').style.display = 'block';
     }
 
@@ -383,6 +412,7 @@
                     email: document.getElementById('add_email').value.trim(),
                     phone: document.getElementById('add_phone').value.trim(),
                     city: document.getElementById('add_city').value.trim(),
+                    territory_state_id: document.getElementById('add_state').value,
                     notes: document.getElementById('add_notes').value.trim(),
                 }),
             });
@@ -410,6 +440,7 @@
         window.location.href = '/login.html';
     }
 
+    loadStates();
     loadFabs();
 </script>
 </body>

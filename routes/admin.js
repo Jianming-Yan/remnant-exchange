@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendFabricatorBroadcastEmail } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email } = require('../utils/email');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -642,6 +642,266 @@ router.delete('/seeded-listings', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to remove seeded listings' });
+    }
+});
+
+// -------- Contractor Outreach --------
+
+router.get('/contractor-leads/stats', requireAdmin, async (req, res) => {
+    try {
+        const total = await get(`SELECT count(*) as cnt FROM contractor_leads`);
+        const sent = await get(`SELECT count(*) as cnt FROM contractor_leads WHERE sent_at IS NOT NULL`);
+        const unsub = await get(`SELECT count(*) as cnt FROM contractor_leads WHERE unsubscribed = 1`);
+        const pending = await get(`SELECT count(*) as cnt FROM contractor_leads WHERE sent_at IS NULL AND unsubscribed = 0`);
+        res.json({
+            total: Number(total.cnt),
+            sent: Number(sent.cnt),
+            unsubscribed: Number(unsub.cnt),
+            pending: Number(pending.cnt),
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/contractor-leads', requireAdmin, async (req, res) => {
+    try {
+        const leads = await query(`SELECT * FROM contractor_leads ORDER BY created_at DESC LIMIT 500`);
+        res.json(leads);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/contractor-leads/import', requireAdmin, (req, res, next) => {
+    upload.single('file')(req, res, err => {
+        if (err) return res.status(400).json({ error: err.message });
+        next();
+    });
+}, async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        let imported = 0, skipped = 0, duplicate = 0;
+
+        for (const row of rows) {
+            const businessName = (row['Business Name'] || '').trim();
+            const email = (row['Email'] || '').trim().toLowerCase();
+            const phone = (row['Phone'] || '').toString().trim();
+            const city = (row['City'] || '').trim();
+            const state = (row['State'] || '').trim();
+            const website = (row['Website'] || '').trim();
+            const category = (row['Category'] || row['Type'] || '').trim();
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped++; continue; }
+            if (!businessName) { skipped++; continue; }
+
+            const existing = await get(`SELECT id FROM contractor_leads WHERE email = ?`, [email]);
+            if (existing) { duplicate++; continue; }
+
+            await run(
+                `INSERT INTO contractor_leads (id, business_name, email, phone, city, state, website, category, unsubscribe_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [uuidv4(), businessName, email, phone || null, city || null, state || null, website || null, category || null, uuidv4()]
+            );
+            imported++;
+        }
+
+        res.json({ total: rows.length, imported, skipped, duplicate });
+    } catch (err) {
+        console.error('contractor import error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/contractor-leads/broadcast', requireAdmin, async (req, res) => {
+    try {
+        const { test } = req.body;
+        let leads;
+
+        if (test) {
+            leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token' }];
+        } else {
+            leads = await query(`SELECT * FROM contractor_leads WHERE sent_at IS NULL AND unsubscribed = 0`);
+        }
+
+        let sent = 0, failed = 0;
+        for (const lead of leads) {
+            try {
+                await sendContractorBroadcastEmail(lead.email, lead.business_name, lead.unsubscribe_token);
+                if (!test) {
+                    await run(`UPDATE contractor_leads SET sent_at = datetime('now') WHERE id = ?`, [lead.id]);
+                }
+                sent++;
+                // Small delay to avoid rate limits
+                await new Promise(r => setTimeout(r, 100));
+            } catch (e) {
+                console.error(`Contractor broadcast failed for ${lead.email}:`, e.message);
+                failed++;
+            }
+        }
+
+        res.json({ message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Broadcast sent to ${sent} contractor(s)`, sent, failed });
+    } catch (err) {
+        console.error('contractor broadcast error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// -------- Fabricator Leads Outreach --------
+
+router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
+    try {
+        const total = await get(`SELECT count(*) as cnt FROM fabricator_leads`);
+        const touch0 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0`);
+        const touch1 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 1 AND unsubscribed = 0`);
+        const touch2 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 2 AND unsubscribed = 0`);
+        const touch3 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0`);
+        const unsub = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE unsubscribed = 1`);
+        const registered = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE registered = 1`);
+        res.json({
+            total: Number(total.cnt),
+            pending: Number(touch0.cnt),
+            touch1: Number(touch1.cnt),
+            touch2: Number(touch2.cnt),
+            touch3: Number(touch3.cnt),
+            unsubscribed: Number(unsub.cnt),
+            registered: Number(registered.cnt),
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/fabricator-leads', requireAdmin, async (req, res) => {
+    try {
+        const leads = await query(`SELECT * FROM fabricator_leads ORDER BY created_at DESC LIMIT 1000`);
+        res.json(leads);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/fabricator-leads/import', requireAdmin, (req, res, next) => {
+    upload.single('file')(req, res, err => {
+        if (err) return res.status(400).json({ error: err.message });
+        next();
+    });
+}, async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        let imported = 0, skipped = 0, duplicate = 0;
+
+        for (const row of rows) {
+            const businessName = (row['Business Name'] || '').trim();
+            const contactName = (row['Contact Name'] || '').trim();
+            const email = (row['Email'] || '').trim().toLowerCase();
+            const phone = (row['Phone'] || '').toString().trim();
+            const city = (row['City'] || '').trim();
+            const state = (row['State'] || '').trim();
+            const website = (row['Website'] || '').trim();
+            const rating = parseFloat(row['Rating']) || null;
+            const reviews = parseInt(row['Reviews']) || null;
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped++; continue; }
+            if (!businessName) { skipped++; continue; }
+
+            const existing = await get(`SELECT id FROM fabricator_leads WHERE email = ?`, [email]);
+            if (existing) { duplicate++; continue; }
+
+            // Check if already registered as a user
+            const alreadyUser = await get(`SELECT id FROM users WHERE email = ?`, [email]);
+
+            await run(
+                `INSERT INTO fabricator_leads (id, business_name, contact_name, email, phone, city, state, website, rating, reviews, unsubscribe_token, registered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [uuidv4(), businessName, contactName || null, email, phone || null, city || null, state || null, website || null, rating, reviews, uuidv4(), alreadyUser ? 1 : 0]
+            );
+            imported++;
+        }
+
+        res.json({ total: rows.length, imported, skipped, duplicate });
+    } catch (err) {
+        console.error('fabricator-leads import error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
+    try {
+        const { test } = req.body;
+        let leads;
+
+        if (test) {
+            leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token', touch_count: 0 }];
+        } else {
+            leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0`);
+        }
+
+        const emailFns = [sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email];
+
+        let sent = 0, failed = 0;
+        for (const lead of leads) {
+            try {
+                const touchIndex = Math.min(Number(lead.touch_count), 2);
+                await emailFns[touchIndex](lead.email, lead.business_name, lead.unsubscribe_token);
+                if (!test) {
+                    await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
+                }
+                sent++;
+                await new Promise(r => setTimeout(r, 100));
+            } catch (e) {
+                console.error(`Fab lead broadcast failed for ${lead.email}:`, e.message);
+                failed++;
+            }
+        }
+
+        res.json({ message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Broadcast sent to ${sent} lead(s)`, sent, failed });
+    } catch (err) {
+        console.error('fab lead broadcast error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
+    try {
+        // Only create accounts for leads that received all 3 emails and have not self-registered
+        const leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0`);
+
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        let created = 0, skipped = 0;
+
+        for (const lead of leads) {
+            const existingUser = await get(`SELECT id FROM users WHERE email = ?`, [lead.email]);
+            if (existingUser) {
+                // Already registered themselves — mark lead as registered
+                await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
+                skipped++;
+                continue;
+            }
+
+            const userId = uuidv4();
+            const name = lead.contact_name || lead.business_name;
+            await run(
+                `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'bulk_imported')`,
+                [userId, name, lead.business_name, lead.email, passwordHash, lead.phone || null, lead.city || null]
+            );
+            await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
+            created++;
+        }
+
+        res.json({ message: `${created} account(s) created, ${skipped} already registered`, created, skipped });
+    } catch (err) {
+        console.error('bulk-create error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 

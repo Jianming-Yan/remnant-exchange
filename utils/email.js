@@ -355,6 +355,249 @@ async function sendFabricatorBroadcastEmail(fabricatorEmail, fabricatorName, req
     });
 }
 
+async function sendContractorBroadcastEmail(email, businessName, unsubscribeToken) {
+    const resend = getResend();
+    const unsubscribeUrl = `${process.env.BASE_URL}/api/contractor/unsubscribe?token=${unsubscribeToken}`;
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'A free way to source stone remnants for your projects',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi,</p>
+
+                <p>My name is Jianming Yan — I'm a stone fabricator and founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free marketplace where fabricators list their leftover stone remnants.</p>
+
+                <p>If you work on kitchen or bathroom projects, you can browse hundreds of discounted granite, marble, quartz, and quartzite remnants near you — full slabs at a fraction of the cost.</p>
+
+                <div style="background:#f0f7ff;border-left:4px solid #2563eb;padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0;">
+                    <p style="margin:0 0 10px 0;font-weight:700;color:#1e3a8a;">Why contractors use Remnant Exchange:</p>
+                    <p style="margin:0 0 6px 0;">✓ <strong>Save 40–70%</strong> vs. buying full slabs</p>
+                    <p style="margin:0 0 6px 0;">✓ <strong>Filter by material, size, and location</strong> — find exactly what you need</p>
+                    <p style="margin:0 0 6px 0;">✓ <strong>Contact fabricators directly</strong> — no middleman</p>
+                    <p style="margin:0;">✓ <strong>Free to browse</strong> — no account needed</p>
+                </div>
+
+                <p>
+                    <a href="https://remnantexchange.org" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Browse Remnants Near You →</a>
+                </p>
+
+                <p>If you ever have a specific material or size in mind and can't find it, you can also <a href="https://remnantexchange.org/request.html" style="color:#2563eb;">submit a request</a> and we'll reach out to fabricators in your area on your behalf — for free.</p>
+
+                <p>Feel free to reply or call me anytime at <strong>(617) 606-5840</strong>.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org · (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                You received this because you are a contractor in our service area.<br>
+                <a href="${unsubscribeUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+            </div>
+        `,
+    });
+}
+
+async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
+    const resend = getResend();
+    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const registerUrl = `${process.env.BASE_URL}/register.html`;
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'A smarter way to move your stone remnants',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi,</p>
+
+                <p>My name is Jianming — I am a stone fabricator and the founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free marketplace built specifically for fabricators.</p>
+
+                <p>Here is what it does:</p>
+
+                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
+                    <li><strong>List your remnants</strong> — post leftover slabs so other shops and buyers can find and purchase them</li>
+                    <li><strong>Find remnants</strong> — search what other fabricators have instead of buying a full slab</li>
+                    <li><strong>Track your inventory</strong> — manage your in-house remnant stock privately for your own records</li>
+                </ol>
+
+                <p>It is completely free — no software fees, no commissions, no catch.</p>
+
+                <p>
+                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Create Your Free Account →</a>
+                </p>
+
+                <p>Feel free to reply or call me at <strong>(617) 606-5840</strong> if you have any questions.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                You received this because you are a stone fabricator in our service area.<br>
+                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+            </div>
+        `,
+    });
+}
+
+async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
+    const resend = getResend();
+    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const registerUrl = `${process.env.BASE_URL}/register.html`;
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Quick question — what do you do with your stone remnants?',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi,</p>
+
+                <p>I sent you a note earlier about <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> — wanted to follow up with a quick question:</p>
+
+                <p><strong>What do you currently do with your leftover stone slabs?</strong></p>
+
+                <p>Most shops we talk to either store them in the yard (taking up space), sell them at a deep discount to walk-ins, or throw them away. Remnant Exchange gives you a free, searchable listing so buyers in your area can find exactly what you have — without you doing anything extra after posting.</p>
+
+                <p>Fabricators in Connecticut, Massachusetts, and Rhode Island are already listing their remnants. If you want to see what it looks like, visit <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a>.</p>
+
+                <p>
+                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Join for Free →</a>
+                </p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+            </div>
+        `,
+    });
+}
+
+async function sendFabLeadFollowUp2Email(email, businessName, unsubToken) {
+    const resend = getResend();
+    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const registerUrl = `${process.env.BASE_URL}/register.html`;
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Last note — free stone remnant marketplace',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi,</p>
+
+                <p>This is my last email on this — I know your inbox is busy.</p>
+
+                <p>I built <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> as a fabricator myself. Every shop has remnants sitting in the yard. I wanted a better way to move them, so I built one.</p>
+
+                <p>It is free. Always will be on the base plan. No credit card, no contract.</p>
+
+                <p>If the timing is not right now, no problem — you can register whenever it makes sense. If you ever want to talk shop about remnant management, feel free to call or text me at <strong>(617) 606-5840</strong>.</p>
+
+                <p>
+                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Create a Free Account →</a>
+                </p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+            </div>
+        `,
+    });
+}
+
+async function sendFirstListingCongratulationEmail(email, name, businessName) {
+    const resend = getResend();
+    const firstName = name.split(' ')[0];
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: `Your first listing is live — Remnant Exchange`,
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <h2 style="color:#16a34a;">Your listing is live, ${firstName}!</h2>
+
+                <p>Your first remnant is now visible to buyers on <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a>. Nice work getting it posted.</p>
+
+                <p><strong>A few tips to get more inquiries:</strong></p>
+                <ul style="line-height:2;margin:12px 0 12px 20px;">
+                    <li>Upload clear photos — listings with photos get significantly more views</li>
+                    <li>Post all your remnants — more listings means more chances buyers find you</li>
+                    <li>Keep your listings updated — mark sold ones as sold so buyers stay engaged</li>
+                </ul>
+
+                <p>
+                    <a href="${process.env.BASE_URL}/dashboard.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Post More Remnants →</a>
+                </p>
+
+                <p>If you need any help or want me to post listings for you, just reply to this email or call me at <strong>(617) 606-5840</strong>.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+            </div>
+        `,
+    });
+}
+
+async function sendActivationNudgeEmail(email, name, businessName) {
+    const resend = getResend();
+    const firstName = name.split(' ')[0];
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Need help posting your first remnant?',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi ${firstName},</p>
+
+                <p>You registered on Remnant Exchange a few days ago — thank you! I noticed you have not posted a listing yet, so I wanted to check in.</p>
+
+                <p><strong>Posting your first remnant takes about 2 minutes:</strong></p>
+                <ol style="line-height:2;margin:12px 0 12px 20px;">
+                    <li>Log in at <a href="${process.env.BASE_URL}/login.html" style="color:#2563eb;">remnantexchange.org</a></li>
+                    <li>Click <strong>"Post a Remnant"</strong> on your dashboard</li>
+                    <li>Fill in material, dimensions, and your location</li>
+                    <li>Add a photo and click <strong>Post</strong> — you are done</li>
+                </ol>
+
+                <p>If posting feels like too many steps, just reply to this email with your remnant details — material, stone name, dimensions, thickness, and a photo — and <strong>I will post it for you</strong>.</p>
+
+                <p>
+                    <a href="${process.env.BASE_URL}/dashboard.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Go to My Dashboard →</a>
+                </p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+            </div>
+        `,
+    });
+}
+
 async function sendBuyerRequestEmail(req) {
     const resend = getResend();
     const photosHtml = req.photos && req.photos.length > 0
@@ -407,4 +650,4 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail };
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail };

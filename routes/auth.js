@@ -30,8 +30,11 @@ router.post('/register', async (req, res) => {
         const userId = uuidv4();
         const passwordHash = await bcrypt.hash(password, 10);
 
-        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, source) VALUES (?, ?, ?, ?, ?, ?, 'self_registered')`,
             [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
+
+        // Mark fabricator lead as registered if they were in the outreach list
+        await run(`UPDATE fabricator_leads SET registered = 1 WHERE email = ?`, [email.toLowerCase()]).catch(() => {});
 
         const token = uuidv4();
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();

@@ -7,18 +7,32 @@ const { sendIntroductionEmail, sendTempPasswordEmail } = require('../utils/email
 
 const router = express.Router();
 
+router.get('/states', requireIntern, async (req, res) => {
+    try {
+        const states = await query(`SELECT id, name, abbreviation FROM states ORDER BY name ASC`);
+        res.json(states);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load states' });
+    }
+});
+
 router.get('/fabricators', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;
+        const internId = req.user.id;
         const users = await query(`
             SELECT u.id, u.name, u.business_name, u.email, u.phone, u.city, u.outreach_status, u.admin_notes, u.created_at,
-                   COUNT(l.id) as active_listings
+                   u.territory_state_id, s.name as territory_state_name, s.abbreviation as territory_state_abbr,
+                   COUNT(l.id) as active_listings,
+                   CASE WHEN u.territory_state_id = ? THEN 1 ELSE 0 END as is_own_territory
             FROM users u
             LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
-            WHERE u.role = 'fabricator' AND u.territory_state_id = ?
+            LEFT JOIN states s ON s.id = u.territory_state_id
+            WHERE u.role = 'fabricator'
+              AND (u.territory_state_id = ? OR u.added_by_intern_id = ?)
             GROUP BY u.id
-            ORDER BY u.business_name ASC
-        `, [stateId]);
+            ORDER BY is_own_territory DESC, u.business_name ASC
+        `, [stateId, stateId, internId]);
         res.json(users);
     } catch (err) {
         console.error(err);
@@ -28,7 +42,7 @@ router.get('/fabricators', requireIntern, async (req, res) => {
 
 router.post('/fabricators', requireIntern, async (req, res) => {
     try {
-        const { name, business_name, email, phone, city, notes } = req.body;
+        const { name, business_name, email, phone, city, notes, territory_state_id } = req.body;
         if (!name || !business_name || !email) return res.status(400).json({ error: 'Business name, contact name, and email are required' });
 
         const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
@@ -37,10 +51,10 @@ router.post('/fabricators', requireIntern, async (req, res) => {
         const tempPassword = '12345678';
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const userId = uuidv4();
-        const stateId = req.user.territory_state_id;
+        const stateId = territory_state_id || req.user.territory_state_id;
 
-        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, admin_notes, email_verified, approved, must_change_password, territory_state_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?)`,
-            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null, notes || null, stateId]);
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, admin_notes, email_verified, approved, must_change_password, territory_state_id, added_by_intern_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?, ?)`,
+            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null, notes || null, stateId, req.user.id]);
 
         res.json({ message: `${business_name} added to your list` });
     } catch (err) {
@@ -52,7 +66,8 @@ router.post('/fabricators', requireIntern, async (req, res) => {
 router.patch('/fabricators/:id/notes', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;
-        const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator' AND territory_state_id = ?`, [req.params.id, stateId]);
+        const internId = req.user.id;
+        const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator' AND (territory_state_id = ? OR added_by_intern_id = ?)`, [req.params.id, stateId, internId]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         await run(`UPDATE users SET admin_notes = ? WHERE id = ?`, [req.body.notes || null, req.params.id]);
@@ -66,7 +81,8 @@ router.patch('/fabricators/:id/notes', requireIntern, async (req, res) => {
 router.post('/fabricators/:id/send-introduction', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;
-        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator' AND territory_state_id = ?`, [req.params.id, stateId]);
+        const internId = req.user.id;
+        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator' AND (territory_state_id = ? OR added_by_intern_id = ?)`, [req.params.id, stateId, internId]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const unsubToken = uuidv4();
@@ -87,7 +103,8 @@ router.post('/fabricators/:id/send-introduction', requireIntern, async (req, res
 router.post('/fabricators/:id/send-credentials', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;
-        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator' AND territory_state_id = ?`, [req.params.id, stateId]);
+        const internId = req.user.id;
+        const user = await get(`SELECT * FROM users WHERE id = ? AND role = 'fabricator' AND (territory_state_id = ? OR added_by_intern_id = ?)`, [req.params.id, stateId, internId]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const tempPassword = '12345678';
