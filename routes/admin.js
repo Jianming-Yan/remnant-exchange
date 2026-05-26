@@ -836,11 +836,13 @@ router.post('/fabricator-leads/import', requireAdmin, (req, res, next) => {
 
 router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
     try {
-        const { test } = req.body;
+        const { test, newOnly } = req.body;
         let leads;
 
         if (test) {
             leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token', touch_count: 0 }];
+        } else if (newOnly) {
+            leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0`);
         } else {
             leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0`);
         }

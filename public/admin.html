@@ -497,9 +497,13 @@
                 <h3 style="margin-bottom:4px;">Send Broadcast Email</h3>
                 <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Sends the next touch to all eligible leads (touch &lt; 3, not unsubscribed, not registered). Monday = intro, Wednesday = follow-up 1, Friday = follow-up 2.</p>
                 <div id="fabLeadBroadcastAlert" style="display:none;margin-bottom:12px;"></div>
-                <div style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                <div style="margin-bottom:12px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
                     <input type="checkbox" id="fabLeadTestMode" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
                     <label for="fabLeadTestMode" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;"><strong>Test mode</strong> — send only to me, don't update touch count</label>
+                </div>
+                <div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="fabLeadNewOnly" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="fabLeadNewOnly" style="cursor:pointer;font-size:0.875rem;color:#1e3a5f;margin:0;"><strong>New leads only</strong> — send touch 1 only to leads not yet contacted</label>
                 </div>
                 <button class="btn btn-primary" id="fabLeadBroadcastBtn" onclick="sendFabLeadBroadcast()">Send Broadcast</button>
             </div>
@@ -1775,8 +1779,9 @@
         const alertBox = document.getElementById('fabLeadBroadcastAlert');
         const btn = document.getElementById('fabLeadBroadcastBtn');
         const test = document.getElementById('fabLeadTestMode').checked;
+        const newOnly = document.getElementById('fabLeadNewOnly').checked;
 
-        if (!test && !confirm('Send the next touch email to all eligible fabricator leads? This cannot be undone.')) return;
+        if (!test && !confirm(newOnly ? 'Send touch 1 to all new (not yet contacted) leads?' : 'Send the next touch email to all eligible fabricator leads? This cannot be undone.')) return;
 
         btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
 
@@ -1784,7 +1789,7 @@
             const res = await fetch('/api/admin/fabricator-leads/broadcast', {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ test }),
+                body: JSON.stringify({ test, newOnly }),
             });
             const data = await res.json();
             alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
