@@ -744,6 +744,14 @@ router.post('/contractor-leads/broadcast', requireAdmin, async (req, res) => {
             }
         }
 
+        if (!test && sent > 0) {
+            try {
+                await sendContractorBroadcastEmail(process.env.ADMIN_EMAIL, 'Boston Building Materials', 'admin-monitor');
+            } catch (e) {
+                console.error('Admin copy (contractor) failed:', e.message);
+            }
+        }
+
         res.json({ message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Broadcast sent to ${sent} contractor(s)`, sent, failed });
     } catch (err) {
         console.error('contractor broadcast error:', err);
@@ -865,6 +873,14 @@ router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
             }
         }
 
+        if (!test && sent > 0) {
+            try {
+                await sendFabLeadIntroEmail(process.env.ADMIN_EMAIL, 'Boston Building Materials', 'admin-monitor');
+            } catch (e) {
+                console.error('Admin copy (fab lead) failed:', e.message);
+            }
+        }
+
         res.json({ message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Broadcast sent to ${sent} lead(s)`, sent, failed });
     } catch (err) {
         console.error('fab lead broadcast error:', err);
@@ -912,6 +928,14 @@ router.post('/resend-welcome', requireAdmin, async (req, res) => {
             } catch (e) {
                 console.error(`Resend welcome failed for ${fab.email}:`, e.message);
                 failed++;
+            }
+        }
+
+        if (!test && sent > 0) {
+            try {
+                await sendTempPasswordEmail(process.env.ADMIN_EMAIL, 'Boston Building Materials', tempPassword, null);
+            } catch (e) {
+                console.error('Admin copy (resend-welcome) failed:', e.message);
             }
         }
 
