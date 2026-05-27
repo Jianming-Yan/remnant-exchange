@@ -756,10 +756,10 @@ router.post('/contractor-leads/broadcast', requireAdmin, async (req, res) => {
 router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
     try {
         const total = await get(`SELECT count(*) as cnt FROM fabricator_leads`);
-        const touch0 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0`);
-        const touch1 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 1 AND unsubscribed = 0`);
-        const touch2 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 2 AND unsubscribed = 0`);
-        const touch3 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0`);
+        const touch0 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0`);
+        const touch1 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 1 AND unsubscribed = 0 AND registered = 0`);
+        const touch2 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 2 AND unsubscribed = 0 AND registered = 0`);
+        const touch3 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0`);
         const unsub = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE unsubscribed = 1`);
         const registered = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE registered = 1`);
         res.json({
