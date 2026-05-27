@@ -515,6 +515,22 @@
                 <div id="fabLeadBulkAlert" style="display:none;margin-bottom:12px;"></div>
                 <button class="btn btn-secondary" id="fabLeadBulkBtn" onclick="bulkCreateFabAccounts()">Bulk Create Accounts</button>
             </div>
+
+            <!-- Resend Welcome Email -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Resend Welcome Email</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Resets each fabricator's password to <strong>12345678</strong> and sends the full welcome &amp; login email. Use this to reach registered fabricators who may have never received their onboarding email.</p>
+                <div id="resendWelcomeAlert" style="display:none;margin-bottom:12px;"></div>
+                <div style="margin-bottom:12px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="resendWelcomeTest" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="resendWelcomeTest" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;"><strong>Test mode</strong> — send only to me, don't reset passwords</label>
+                </div>
+                <div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="resendWelcomeNoListings" checked style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="resendWelcomeNoListings" style="cursor:pointer;font-size:0.875rem;color:#1e3a5f;margin:0;"><strong>No listings only</strong> — only fabricators who have not posted any listings yet (likely never logged in)</label>
+                </div>
+                <button class="btn btn-primary" id="resendWelcomeBtn" onclick="resendWelcomeEmails()">Send Welcome Emails</button>
+            </div>
         </div>
 
         <!-- CONTRACTOR OUTREACH -->
@@ -1828,6 +1844,35 @@
             alertBox.style.display = 'block';
         }
         btn.disabled = false; btn.textContent = 'Bulk Create Accounts';
+    }
+
+    async function resendWelcomeEmails() {
+        const test = document.getElementById('resendWelcomeTest').checked;
+        const noListings = document.getElementById('resendWelcomeNoListings').checked;
+        const alertBox = document.getElementById('resendWelcomeAlert');
+        const btn = document.getElementById('resendWelcomeBtn');
+
+        const scope = noListings ? 'fabricators with no listings' : 'ALL registered fabricators';
+        if (!test && !confirm(`This will reset passwords to "12345678" and send welcome emails to ${scope}. Continue?`)) return;
+
+        btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
+
+        try {
+            const res = await fetch('/api/admin/resend-welcome', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test, noListings }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = (data.message || data.error) + (data.failed ? ` (${data.failed} failed)` : '');
+            alertBox.style.display = 'block';
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Send Welcome Emails';
     }
 
     async function sendContractorBroadcast() {

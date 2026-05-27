@@ -872,6 +872,61 @@ router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
     }
 });
 
+router.post('/resend-welcome', requireAdmin, async (req, res) => {
+    try {
+        const { test, noListings } = req.body;
+        let fabricators;
+
+        if (test) {
+            fabricators = [{ id: 'test', name: 'Admin Test', email: process.env.ADMIN_EMAIL }];
+        } else if (noListings) {
+            fabricators = await query(`
+                SELECT u.* FROM users u
+                LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
+                WHERE u.role = 'fabricator' AND u.approved = 1 AND u.email != 'seed@remnantexchange.org'
+                GROUP BY u.id
+                HAVING COUNT(l.id) = 0
+            `);
+        } else {
+            fabricators = await query(`SELECT * FROM users WHERE role = 'fabricator' AND approved = 1 AND email != 'seed@remnantexchange.org'`);
+        }
+
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        let sent = 0, failed = 0;
+
+        for (const fab of fabricators) {
+            try {
+                const magicToken = uuidv4();
+                const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                if (!test) {
+                    await run(`UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?`, [passwordHash, fab.id]);
+                    await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'magic-login'`, [fab.id]);
+                    await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+                        [uuidv4(), fab.id, magicToken, 'magic-login', magicExpires]);
+                }
+                const name = fab.name || fab.business_name || 'Fabricator';
+                await sendTempPasswordEmail(fab.email, name, tempPassword, test ? null : magicToken);
+                sent++;
+                await new Promise(r => setTimeout(r, 100));
+            } catch (e) {
+                console.error(`Resend welcome failed for ${fab.email}:`, e.message);
+                failed++;
+            }
+        }
+
+        res.json({
+            message: test
+                ? `Test welcome email sent to ${process.env.ADMIN_EMAIL}`
+                : `Welcome emails sent to ${sent} fabricator(s)`,
+            sent, failed
+        });
+    } catch (err) {
+        console.error('resend-welcome error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
     try {
         // Only create accounts for leads that received all 3 emails and have not self-registered
