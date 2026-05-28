@@ -27,50 +27,89 @@
 <div style="max-width:1100px;margin:0 auto;padding:32px 20px;">
 
     <!-- Header -->
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:16px;">
         <div>
             <h1 style="margin-bottom:4px;">Outreach Dashboard</h1>
             <p id="territoryLabel" style="color:#64748b;font-size:0.9rem;margin:0;"></p>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <div id="statBadges" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
-            <button class="btn btn-primary" onclick="openAddModal()">+ Add Fabricator</button>
-        </div>
+        <div id="statBadges" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:24px;">
+        <button id="tab-accounts" onclick="switchTab('accounts')" style="padding:10px 24px;border:none;background:none;font-size:0.95rem;font-weight:600;color:#2563eb;border-bottom:2px solid #2563eb;margin-bottom:-2px;cursor:pointer;">Accounts</button>
+        <button id="tab-leads" onclick="switchTab('leads')" style="padding:10px 24px;border:none;background:none;font-size:0.95rem;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">My Leads</button>
     </div>
 
     <!-- Alert box -->
     <div id="pageAlert" style="display:none;margin-bottom:16px;"></div>
 
-    <!-- Search + Filters -->
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
-        <input id="searchBox" type="text" placeholder="Search business, name, or email..." oninput="renderTable()"
-            style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;min-width:260px;flex:1;max-width:400px;">
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="filter-btn active" id="filter_all" onclick="setFilter('all')">All</button>
-            <button class="filter-btn" id="filter_new" onclick="setFilter('new')">New</button>
-            <button class="filter-btn" id="filter_introduction" onclick="setFilter('introduction')">Intro Sent</button>
-            <button class="filter-btn" id="filter_credentials" onclick="setFilter('credentials')">Credentials</button>
+    <!-- ACCOUNTS TAB -->
+    <div id="section-accounts">
+        <!-- Search + Filters + Add button -->
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+            <input id="searchBox" type="text" placeholder="Search business, name, or email..." oninput="renderTable()"
+                style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;min-width:260px;flex:1;max-width:400px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" id="filter_all" onclick="setFilter('all')">All</button>
+                <button class="filter-btn" id="filter_new" onclick="setFilter('new')">New</button>
+                <button class="filter-btn" id="filter_introduction" onclick="setFilter('introduction')">Intro Sent</button>
+                <button class="filter-btn" id="filter_credentials" onclick="setFilter('credentials')">Credentials</button>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Fabricator</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Business</th>
+                        <th>Contact</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th style="min-width:140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="fabTableBody">
+                    <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Business</th>
-                    <th>Contact</th>
-                    <th>Phone</th>
-                    <th>City</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                    <th style="min-width:140px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="fabTableBody">
-                <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">Loading...</td></tr>
-            </tbody>
-        </table>
+    <!-- LEADS TAB -->
+    <div id="section-leads" style="display:none;">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+            <input id="leadSearchBox" type="text" placeholder="Search business, name, or email..." oninput="renderLeads()"
+                style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;min-width:260px;flex:1;max-width:400px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" id="leadFilter_all" onclick="setLeadFilter('all')">All</button>
+                <button class="filter-btn" id="leadFilter_not_called" onclick="setLeadFilter('not_called')">Not Called</button>
+                <button class="filter-btn" id="leadFilter_interested" onclick="setLeadFilter('interested')">Interested</button>
+                <button class="filter-btn" id="leadFilter_no_answer" onclick="setLeadFilter('no_answer')">No Answer</button>
+            </div>
+            <button class="btn btn-primary" onclick="openAddLeadModal()">+ Add Lead</button>
+        </div>
+        <div id="leadStatsRow" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;"></div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Business</th>
+                        <th>Contact</th>
+                        <th>Phone</th>
+                        <th>City / State</th>
+                        <th>Call Status</th>
+                        <th>Notes</th>
+                        <th style="min-width:160px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="leadTableBody">
+                    <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -114,6 +153,77 @@
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="addFabBtn">Add to My List</button>
         </form>
+    </div>
+</div>
+
+<!-- Add Lead Modal -->
+<div id="addLeadModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto;" onclick="if(event.target===this)closeAddLeadModal()">
+    <div style="background:white;border-radius:16px;max-width:480px;margin:60px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+        <button onclick="closeAddLeadModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+        <h2 style="margin-bottom:4px;">Add New Lead</h2>
+        <p style="color:#64748b;font-size:0.875rem;margin-bottom:20px;">Add a fabricator you found. You can log your call outcome after you call them.</p>
+        <div id="addLeadModalAlert" style="display:none;margin-bottom:16px;"></div>
+        <form id="addLeadForm">
+            <div class="form-group">
+                <label>Business Name *</label>
+                <input type="text" id="lead_business" placeholder="Smith Countertops LLC" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input type="text" id="lead_name" placeholder="John Smith">
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="lead_email" placeholder="john@smithcountertops.com" required>
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" id="lead_phone" placeholder="(617) 555-1234">
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="lead_city" placeholder="Boston">
+            </div>
+            <div class="form-group">
+                <label>State</label>
+                <select id="lead_state" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;background:white;">
+                    <option value="">Select state...</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:12px;" id="addLeadBtn">Add Lead</button>
+        </form>
+    </div>
+</div>
+
+<!-- Log Call Modal -->
+<div id="logCallModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto;" onclick="if(event.target===this)closeLogCallModal()">
+    <div style="background:white;border-radius:16px;max-width:440px;margin:80px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+        <button onclick="closeLogCallModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+        <h2 style="margin-bottom:4px;">Log Call</h2>
+        <p id="logCallBizName" style="color:#64748b;font-size:0.875rem;margin-bottom:20px;"></p>
+        <div id="logCallAlert" style="display:none;margin-bottom:16px;"></div>
+        <div class="form-group">
+            <label style="font-weight:600;margin-bottom:8px;display:block;">Outcome *</label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;" id="outcomeOpt_interested">
+                    <input type="radio" name="callOutcome" value="interested" onchange="highlightOutcome()"> <span style="font-weight:600;color:#15803d;">Interested</span> <span style="color:#64748b;font-size:0.85rem;margin-left:4px;">— wants to sign up</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;" id="outcomeOpt_not_interested">
+                    <input type="radio" name="callOutcome" value="not_interested" onchange="highlightOutcome()"> <span style="font-weight:600;color:#64748b;">Not Interested</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;" id="outcomeOpt_no_answer">
+                    <input type="radio" name="callOutcome" value="no_answer" onchange="highlightOutcome()"> <span style="font-weight:600;color:#92400e;">No Answer</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;" id="outcomeOpt_voicemail">
+                    <input type="radio" name="callOutcome" value="voicemail" onchange="highlightOutcome()"> <span style="font-weight:600;color:#92400e;">Voicemail</span> <span style="color:#64748b;font-size:0.85rem;margin-left:4px;">— left a message</span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notes (optional)</label>
+            <textarea id="callNotes" rows="2" placeholder="Anything worth remembering..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:12px;" id="saveCallBtn" onclick="saveCall()">Save</button>
     </div>
 </div>
 
@@ -438,6 +548,234 @@
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login.html';
+    }
+
+    // ---- Tab switching ----
+    let activeTab = 'accounts';
+    function switchTab(tab) {
+        activeTab = tab;
+        document.getElementById('section-accounts').style.display = tab === 'accounts' ? '' : 'none';
+        document.getElementById('section-leads').style.display = tab === 'leads' ? '' : 'none';
+        document.getElementById('tab-accounts').style.color = tab === 'accounts' ? '#2563eb' : '#94a3b8';
+        document.getElementById('tab-accounts').style.borderBottomColor = tab === 'accounts' ? '#2563eb' : 'transparent';
+        document.getElementById('tab-leads').style.color = tab === 'leads' ? '#2563eb' : '#94a3b8';
+        document.getElementById('tab-leads').style.borderBottomColor = tab === 'leads' ? '#2563eb' : 'transparent';
+        if (tab === 'leads' && allLeads.length === 0) loadLeads();
+    }
+
+    // ---- Leads ----
+    let allLeads = [];
+    let activeLeadFilter = 'all';
+
+    const CALL_STATUS_HTML = {
+        interested: '<span style="background:#dcfce7;color:#15803d;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Interested</span>',
+        not_interested: '<span style="background:#f1f5f9;color:#64748b;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Not Interested</span>',
+        no_answer: '<span style="background:#fef9c3;color:#92400e;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">No Answer</span>',
+        voicemail: '<span style="background:#fef9c3;color:#92400e;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Voicemail</span>',
+    };
+
+    async function loadLeads() {
+        try {
+            const res = await fetch('/api/intern/leads', { headers: { Authorization: `Bearer ${token}` } });
+            if (!res.ok) throw new Error('Failed to load');
+            allLeads = await res.json();
+            renderLeadStats();
+            renderLeads();
+        } catch (err) {
+            document.getElementById('leadTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:32px;">Failed to load leads</td></tr>`;
+        }
+    }
+
+    function renderLeadStats() {
+        const total = allLeads.length;
+        const called = allLeads.filter(l => l.call_outcome).length;
+        const interested = allLeads.filter(l => l.call_outcome === 'interested').length;
+        const registered = allLeads.filter(l => l.registered).length;
+        document.getElementById('leadStatsRow').innerHTML = `
+            <div class="stat-pill" style="background:#f1f5f9;"><div style="font-size:1.4rem;font-weight:800;">${total}</div><div style="font-size:0.72rem;color:#64748b;">Total</div></div>
+            <div class="stat-pill" style="background:#eff6ff;"><div style="font-size:1.4rem;font-weight:800;color:#1d4ed8;">${called}</div><div style="font-size:0.72rem;color:#1d4ed8;">Called</div></div>
+            <div class="stat-pill" style="background:#dcfce7;"><div style="font-size:1.4rem;font-weight:800;color:#15803d;">${interested}</div><div style="font-size:0.72rem;color:#15803d;">Interested</div></div>
+            <div class="stat-pill" style="background:#f0fdf4;"><div style="font-size:1.4rem;font-weight:800;color:#166534;">${registered}</div><div style="font-size:0.72rem;color:#166534;">Registered</div></div>
+        `;
+    }
+
+    function setLeadFilter(f) {
+        activeLeadFilter = f;
+        document.querySelectorAll('[id^="leadFilter_"]').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`leadFilter_${f}`).classList.add('active');
+        renderLeads();
+    }
+
+    function renderLeads() {
+        const q = (document.getElementById('leadSearchBox').value || '').toLowerCase();
+        const rows = allLeads.filter(l => {
+            let matchFilter = true;
+            if (activeLeadFilter === 'not_called') matchFilter = !l.call_outcome;
+            else if (activeLeadFilter === 'interested') matchFilter = l.call_outcome === 'interested';
+            else if (activeLeadFilter === 'no_answer') matchFilter = l.call_outcome === 'no_answer' || l.call_outcome === 'voicemail';
+            const matchSearch = !q ||
+                (l.business_name || '').toLowerCase().includes(q) ||
+                (l.contact_name || '').toLowerCase().includes(q) ||
+                (l.email || '').toLowerCase().includes(q);
+            return matchFilter && matchSearch;
+        });
+
+        const tbody = document.getElementById('leadTableBody');
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">No leads found</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map(l => {
+            const statusHtml = l.registered
+                ? '<span style="background:#bbf7d0;color:#166534;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Registered</span>'
+                : (CALL_STATUS_HTML[l.call_outcome] || '<span style="background:#f1f5f9;color:#94a3b8;font-size:0.75rem;font-weight:600;padding:2px 10px;border-radius:999px;">Not Called</span>');
+            const createBtn = (l.call_outcome === 'interested' && !l.registered)
+                ? `<button class="action-btn blue" style="margin-left:4px;" onclick="createLeadAccount('${l.id}')">Create Account</button>`
+                : '';
+            return `<tr>
+                <td><strong>${escHtml(l.business_name)}</strong></td>
+                <td style="font-size:0.85rem;color:#64748b;">${escHtml(l.contact_name || '—')}</td>
+                <td>${l.phone ? `<a href="tel:${escHtml(l.phone)}" style="color:#1e293b;text-decoration:none;">${escHtml(l.phone)}</a>` : '<span style="color:#cbd5e1;">—</span>'}</td>
+                <td style="font-size:0.85rem;color:#64748b;">${escHtml([l.city, l.state].filter(Boolean).join(', ') || '—')}</td>
+                <td>${statusHtml}</td>
+                <td style="font-size:0.8rem;color:#64748b;max-width:160px;">${l.call_notes ? `<span title="${escAttr(l.call_notes)}">${l.call_notes.length > 40 ? escHtml(l.call_notes.substring(0,40))+'…' : escHtml(l.call_notes)}</span>` : ''}</td>
+                <td>
+                    <button class="action-btn" onclick="openLogCall('${l.id}')">${l.call_outcome ? 'Update Call' : 'Log Call'}</button>
+                    ${createBtn}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ---- Add Lead Modal ----
+    function openAddLeadModal() {
+        document.getElementById('addLeadForm').reset();
+        document.getElementById('addLeadModalAlert').style.display = 'none';
+        document.getElementById('addLeadBtn').disabled = false;
+        document.getElementById('addLeadBtn').textContent = 'Add Lead';
+        const sel = document.getElementById('lead_state');
+        const internStateAbbr = user.territory_state_abbr || '';
+        sel.innerHTML = '<option value="">Select state...</option>' + allStates.map(s =>
+            `<option value="${s.abbreviation}"${s.abbreviation === internStateAbbr ? ' selected' : ''}>${s.name}</option>`
+        ).join('');
+        document.getElementById('addLeadModal').style.display = 'block';
+    }
+    function closeAddLeadModal() { document.getElementById('addLeadModal').style.display = 'none'; }
+
+    document.getElementById('addLeadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('addLeadModalAlert');
+        const btn = document.getElementById('addLeadBtn');
+        btn.disabled = true; btn.textContent = 'Adding...';
+        try {
+            const res = await fetch('/api/intern/leads', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    business_name: document.getElementById('lead_business').value.trim(),
+                    contact_name: document.getElementById('lead_name').value.trim(),
+                    email: document.getElementById('lead_email').value.trim(),
+                    phone: document.getElementById('lead_phone').value.trim(),
+                    city: document.getElementById('lead_city').value.trim(),
+                    state: document.getElementById('lead_state').value,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeAddLeadModal();
+                await loadLeads();
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Failed to add lead';
+                alertBox.style.display = 'block';
+                btn.disabled = false; btn.textContent = 'Add Lead';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Network error. Please try again.';
+            alertBox.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Add Lead';
+        }
+    });
+
+    // ---- Log Call Modal ----
+    let activeLeadId = null;
+    function openLogCall(id) {
+        const lead = allLeads.find(l => l.id === id);
+        if (!lead) return;
+        activeLeadId = id;
+        document.getElementById('logCallBizName').textContent = lead.business_name;
+        document.getElementById('callNotes').value = lead.call_notes || '';
+        document.getElementById('logCallAlert').style.display = 'none';
+        document.getElementById('saveCallBtn').disabled = false;
+        document.getElementById('saveCallBtn').textContent = 'Save';
+        document.querySelectorAll('input[name="callOutcome"]').forEach(r => { r.checked = r.value === lead.call_outcome; });
+        highlightOutcome();
+        document.getElementById('logCallModal').style.display = 'block';
+    }
+    function closeLogCallModal() { document.getElementById('logCallModal').style.display = 'none'; activeLeadId = null; }
+
+    function highlightOutcome() {
+        ['interested','not_interested','no_answer','voicemail'].forEach(v => {
+            const el = document.getElementById(`outcomeOpt_${v}`);
+            const checked = document.querySelector(`input[name="callOutcome"][value="${v}"]`).checked;
+            el.style.border = checked ? '1.5px solid #2563eb' : '1.5px solid #e2e8f0';
+            el.style.background = checked ? '#eff6ff' : '';
+        });
+    }
+
+    async function saveCall() {
+        const outcome = document.querySelector('input[name="callOutcome"]:checked');
+        const alertBox = document.getElementById('logCallAlert');
+        if (!outcome) {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Please select an outcome.';
+            alertBox.style.display = 'block';
+            return;
+        }
+        const btn = document.getElementById('saveCallBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            const res = await fetch(`/api/intern/leads/${activeLeadId}/call`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ call_outcome: outcome.value, call_notes: document.getElementById('callNotes').value.trim() }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeLogCallModal();
+                await loadLeads();
+            } else {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Failed to save';
+                alertBox.style.display = 'block';
+                btn.disabled = false; btn.textContent = 'Save';
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Network error';
+            alertBox.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Save';
+        }
+    }
+
+    // ---- Create account from lead ----
+    async function createLeadAccount(id) {
+        const lead = allLeads.find(l => l.id === id);
+        if (!confirm(`Create a Remnant Exchange account for ${lead ? lead.business_name : id} and send them login credentials?`)) return;
+        try {
+            const res = await fetch(`/api/intern/leads/${id}/create-account`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message);
+                await loadLeads();
+            } else {
+                alert(data.error || 'Failed to create account');
+            }
+        } catch { alert('Network error'); }
     }
 
     loadStates();

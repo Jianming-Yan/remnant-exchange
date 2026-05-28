@@ -842,17 +842,42 @@ router.post('/fabricator-leads/import', requireAdmin, (req, res, next) => {
     }
 });
 
+router.get('/fabricator-leads/states-summary', requireAdmin, async (req, res) => {
+    try {
+        const rows = await query(`
+            SELECT state, COUNT(*) as count,
+                   SUM(CASE WHEN touch_count > 0 THEN 1 ELSE 0 END) as touched
+            FROM fabricator_leads
+            WHERE state IS NOT NULL AND state != '' AND unsubscribed = 0
+            GROUP BY state ORDER BY state ASC
+        `);
+        res.json(rows.map(r => ({ state: r.state, count: Number(r.count), touched: Number(r.touched) })));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
     try {
-        const { test, newOnly } = req.body;
+        const { test, newOnly, limit, state } = req.body;
         let leads;
 
         if (test) {
             leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token', touch_count: 0 }];
         } else if (newOnly) {
-            leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0`);
+            leads = await query(
+                `SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0${state ? ' AND state = ?' : ''}`,
+                state ? [state] : []
+            );
         } else {
-            leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0`);
+            leads = await query(
+                `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0${state ? ' AND state = ?' : ''}`,
+                state ? [state] : []
+            );
+        }
+
+        if (!test && limit && Number.isInteger(limit) && limit > 0) {
+            leads = leads.slice(0, limit);
         }
 
         const emailFns = [sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email];

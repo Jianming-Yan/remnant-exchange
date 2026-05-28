@@ -505,7 +505,33 @@
                     <input type="checkbox" id="fabLeadNewOnly" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
                     <label for="fabLeadNewOnly" style="cursor:pointer;font-size:0.875rem;color:#1e3a5f;margin:0;"><strong>New leads only</strong> — send touch 1 only to leads not yet contacted</label>
                 </div>
+                <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                    <label for="fabLeadStateFilter" style="font-size:0.875rem;color:#475569;white-space:nowrap;">State filter:</label>
+                    <select id="fabLeadStateFilter" style="flex:1;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.875rem;background:white;">
+                        <option value="">All states</option>
+                    </select>
+                    <span id="fabLeadStateCount" style="font-size:0.8rem;color:#94a3b8;white-space:nowrap;"></span>
+                </div>
+                <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                    <label for="fabLeadDailyLimit" style="font-size:0.875rem;color:#475569;white-space:nowrap;">Daily limit:</label>
+                    <input type="number" id="fabLeadDailyLimit" value="50" min="1" max="500" style="width:80px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.875rem;">
+                    <span style="font-size:0.8rem;color:#94a3b8;">emails max (leave blank for no limit)</span>
+                </div>
                 <button class="btn btn-primary" id="fabLeadBroadcastBtn" onclick="sendFabLeadBroadcast()">Send Broadcast</button>
+            </div>
+
+            <!-- Reset Touch Count -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Reset Touch Count by State</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Resets touch count back to 0 for all leads in a state so you can broadcast to them again from the beginning.</p>
+                <div id="resetTouchAlert" style="display:none;margin-bottom:12px;"></div>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
+                    <select id="resetTouchState" style="flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;background:white;">
+                        <option value="">Select a state...</option>
+                    </select>
+                    <span id="resetTouchCount" style="font-size:0.85rem;color:#64748b;white-space:nowrap;"></span>
+                </div>
+                <button class="btn btn-secondary" id="resetTouchBtn" onclick="resetTouchCount()">Reset Touch Count</button>
             </div>
 
             <!-- Bulk Create -->
@@ -1758,6 +1784,61 @@
             <div class="stat-card"><div class="stat-number">${s.registered}</div><div class="stat-label">Self-Registered</div></div>
             <div class="stat-card"><div class="stat-number">${s.unsubscribed}</div><div class="stat-label">Unsubscribed</div></div>
         `;
+        loadResetTouchStates();
+        loadFabLeadStateFilter();
+    }
+
+    async function loadFabLeadStateFilter() {
+        const res = await fetch('/api/admin/fabricator-leads/states-summary', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const states = await res.json();
+        const sel = document.getElementById('fabLeadStateFilter');
+        const current = sel.value;
+        sel.innerHTML = '<option value="">All states</option>' +
+            states.map(s => `<option value="${s.state}">${s.state} — ${s.count} leads (${s.touched} touched)</option>`).join('');
+        if (current) sel.value = current;
+        sel.onchange = () => {
+            const found = states.find(s => s.state === sel.value);
+            document.getElementById('fabLeadStateCount').textContent = found ? `${found.count - found.touched} untouched` : '';
+        };
+        sel.onchange();
+    }
+
+    async function loadResetTouchStates() {
+        const res = await fetch('/api/admin/fabricator-leads/states-summary', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const states = await res.json();
+        const sel = document.getElementById('resetTouchState');
+        sel.innerHTML = '<option value="">Select a state...</option>' +
+            states.map(s => `<option value="${s.state}">${s.state} — ${s.count} leads (${s.touched} touched)</option>`).join('');
+        sel.onchange = () => {
+            const found = states.find(s => s.state === sel.value);
+            document.getElementById('resetTouchCount').textContent = found ? `${found.touched} will be reset` : '';
+        };
+    }
+
+    async function resetTouchCount() {
+        const state = document.getElementById('resetTouchState').value;
+        const alertBox = document.getElementById('resetTouchAlert');
+        if (!state) { alertBox.className = 'alert alert-error'; alertBox.textContent = 'Please select a state.'; alertBox.style.display = 'block'; return; }
+        if (!confirm(`Reset touch count to 0 for all leads in ${state}? They will receive emails from the beginning again.`)) return;
+        const btn = document.getElementById('resetTouchBtn');
+        btn.disabled = true; btn.textContent = 'Resetting...';
+        try {
+            const res = await fetch('/api/admin/fabricator-leads/reset-touches', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = data.message || data.error;
+            alertBox.style.display = 'block';
+            if (res.ok) loadFabLeadStats();
+        } catch {
+            alertBox.className = 'alert alert-error'; alertBox.textContent = 'Network error'; alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Reset Touch Count';
     }
 
     document.getElementById('fabLeadImportForm').addEventListener('submit', async (e) => {
@@ -1796,8 +1877,12 @@
         const btn = document.getElementById('fabLeadBroadcastBtn');
         const test = document.getElementById('fabLeadTestMode').checked;
         const newOnly = document.getElementById('fabLeadNewOnly').checked;
+        const limitVal = document.getElementById('fabLeadDailyLimit').value;
+        const limit = limitVal ? parseInt(limitVal) : null;
+        const state = document.getElementById('fabLeadStateFilter').value || null;
 
-        if (!test && !confirm(newOnly ? 'Send touch 1 to all new (not yet contacted) leads?' : 'Send the next touch email to all eligible fabricator leads? This cannot be undone.')) return;
+        const stateLabel = state ? ` in ${state}` : '';
+        if (!test && !confirm(newOnly ? `Send touch 1 to up to ${limit || 'all'} new leads${stateLabel}?` : `Send the next touch email to up to ${limit || 'all'} eligible leads${stateLabel}? This cannot be undone.`)) return;
 
         btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
 
@@ -1805,7 +1890,7 @@
             const res = await fetch('/api/admin/fabricator-leads/broadcast', {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ test, newOnly }),
+                body: JSON.stringify({ test, newOnly, limit, state }),
             });
             const data = await res.json();
             alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';

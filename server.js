@@ -59,7 +59,7 @@ app.get('/api/fab-leads/unsubscribe', async (req, res) => {
     }
 });
 
-const { sendBuyerRequestEmail, sendActivationNudgeEmail } = require('./utils/email');
+const { sendBuyerRequestEmail, sendActivationNudgeEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email } = require('./utils/email');
 app.post('/api/request', upload.array('photos', 5), async (req, res) => {
     try {
         const { name, email, material, length, width, state_id, metro_id } = req.body;
@@ -102,6 +102,75 @@ async function expireListings() {
     } catch (err) {
         console.error('Expiry job error:', err);
     }
+}
+
+async function sendDailyFabLeadBroadcast() {
+    try {
+        const limit = parseInt(process.env.FAB_LEAD_DAILY_LIMIT || '50');
+
+        // Safety: skip if we already sent emails today (UTC date)
+        const alreadySent = await get(`SELECT COUNT(*) as cnt FROM fabricator_leads WHERE DATE(last_sent_at) = DATE('now')`);
+        if (Number(alreadySent.cnt) > 0) {
+            console.log('Daily broadcast: already sent today, skipping');
+            return;
+        }
+
+        const leads = await query(
+            `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 LIMIT ?`,
+            [limit]
+        );
+        if (!leads.length) {
+            console.log('Daily broadcast: no eligible leads');
+            return;
+        }
+
+        const emailFns = [sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email];
+        let sent = 0;
+        for (const lead of leads) {
+            try {
+                const touchIndex = Math.min(Number(lead.touch_count), 2);
+                await emailFns[touchIndex](lead.email, lead.business_name, lead.unsubscribe_token);
+                await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
+                sent++;
+                await new Promise(r => setTimeout(r, 200));
+            } catch (e) {
+                console.error(`Daily broadcast failed for ${lead.email}:`, e.message);
+            }
+        }
+
+        // Send the same email to admin as the 51st — to monitor inbox vs spam delivery
+        if (sent > 0) {
+            await sendFabLeadIntroEmail('yanjianming72@gmail.com', 'Remnant Exchange', 'admin-monitor')
+                .catch(e => console.error('Admin monitor email failed:', e.message));
+        }
+
+        console.log(`Daily fab lead broadcast: sent ${sent} emails`);
+    } catch (e) {
+        console.error('Daily fab lead broadcast error:', e.message);
+    }
+}
+
+function scheduleDailyBroadcast() {
+    // BROADCAST_HOUR_UTC: hour in UTC to send (default 12 = 8 AM Eastern Daylight Time)
+    const targetHour = parseInt(process.env.BROADCAST_HOUR_UTC || '12');
+
+    const now = new Date();
+    const next = new Date();
+    next.setUTCHours(targetHour, 0, 0, 0);
+
+    // If we're past today's target time, move to tomorrow
+    if (now >= next) next.setUTCDate(next.getUTCDate() + 1);
+
+    // Skip Sunday (0)
+    while (next.getUTCDay() === 0) next.setUTCDate(next.getUTCDate() + 1);
+
+    const delay = next - now;
+    console.log(`Next broadcast scheduled for ${next.toUTCString()} (in ${Math.round(delay / 60000)} minutes)`);
+
+    setTimeout(async () => {
+        await sendDailyFabLeadBroadcast();
+        scheduleDailyBroadcast(); // schedule the next day
+    }, delay);
 }
 
 async function sendActivationNudges() {
@@ -150,6 +219,8 @@ async function start() {
 
     await sendActivationNudges();
     setInterval(() => sendActivationNudges(), 60 * 60 * 1000);
+
+    scheduleDailyBroadcast();
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {

@@ -225,6 +225,22 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN first_listing_congrats_sent INTEGER NOT NULL DEFAULT 0`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN call_outcome TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN call_notes TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN called_at TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN added_by_intern_id TEXT`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 
