@@ -150,27 +150,17 @@ async function sendDailyFabLeadBroadcast() {
     }
 }
 
-function scheduleDailyBroadcast() {
+async function checkDailyBroadcast() {
     // BROADCAST_HOUR_UTC: hour in UTC to send (default 12 = 8 AM Eastern Daylight Time)
     const targetHour = parseInt(process.env.BROADCAST_HOUR_UTC || '12');
-
     const now = new Date();
-    const next = new Date();
-    next.setUTCHours(targetHour, 0, 0, 0);
+    const currentHour = now.getUTCHours();
+    const dayOfWeek = now.getUTCDay(); // 0 = Sunday
 
-    // If we're past today's target time, move to tomorrow
-    if (now >= next) next.setUTCDate(next.getUTCDate() + 1);
+    // Only run Mon-Sat (1-6) at the target hour
+    if (dayOfWeek === 0 || currentHour !== targetHour) return;
 
-    // Skip Sunday (0)
-    while (next.getUTCDay() === 0) next.setUTCDate(next.getUTCDate() + 1);
-
-    const delay = next - now;
-    console.log(`Next broadcast scheduled for ${next.toUTCString()} (in ${Math.round(delay / 60000)} minutes)`);
-
-    setTimeout(async () => {
-        await sendDailyFabLeadBroadcast();
-        scheduleDailyBroadcast(); // schedule the next day
-    }, delay);
+    await sendDailyFabLeadBroadcast();
 }
 
 async function sendActivationNudges() {
@@ -220,7 +210,8 @@ async function start() {
     await sendActivationNudges();
     setInterval(() => sendActivationNudges(), 60 * 60 * 1000);
 
-    scheduleDailyBroadcast();
+    await checkDailyBroadcast();
+    setInterval(() => checkDailyBroadcast(), 60 * 60 * 1000);
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
