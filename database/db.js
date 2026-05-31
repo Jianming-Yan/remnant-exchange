@@ -226,6 +226,10 @@ async function initSchema() {
     } catch (e) { /* column already exists */ }
 
     try {
+        await run(`ALTER TABLE users ADD COLUMN extra_territories TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
         await run(`ALTER TABLE fabricator_leads ADD COLUMN call_outcome TEXT`);
     } catch (e) { /* column already exists */ }
 

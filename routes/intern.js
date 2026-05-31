@@ -20,6 +20,10 @@ router.get('/fabricators', requireIntern, async (req, res) => {
     try {
         const stateId = req.user.territory_state_id;
         const internId = req.user.id;
+        const extraTerritories = req.user.extra_territories ? JSON.parse(req.user.extra_territories) : [];
+        const allTerritoryIds = [stateId, ...extraTerritories].filter(Boolean);
+        const placeholders = allTerritoryIds.map(() => '?').join(',');
+
         const users = await query(`
             SELECT u.id, u.name, u.business_name, u.email, u.phone, u.city, u.outreach_status, u.admin_notes, u.created_at,
                    u.territory_state_id, s.name as territory_state_name, s.abbreviation as territory_state_abbr,
@@ -29,10 +33,10 @@ router.get('/fabricators', requireIntern, async (req, res) => {
             LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
             LEFT JOIN states s ON s.id = u.territory_state_id
             WHERE u.role = 'fabricator'
-              AND (u.territory_state_id = ? OR u.added_by_intern_id = ?)
+              AND (u.territory_state_id IN (${placeholders}) OR u.added_by_intern_id = ?)
             GROUP BY u.id
             ORDER BY is_own_territory DESC, u.business_name ASC
-        `, [stateId, stateId, internId]);
+        `, [stateId, ...allTerritoryIds, internId]);
         res.json(users);
     } catch (err) {
         console.error(err);
