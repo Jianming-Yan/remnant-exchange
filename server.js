@@ -140,7 +140,7 @@ async function sendDailyFabLeadBroadcast() {
 
         // Send the same email to admin as the 51st — to monitor inbox vs spam delivery
         if (sent > 0) {
-            await sendFabLeadIntroEmail('yanjianming72@gmail.com', 'Remnant Exchange', 'admin-monitor')
+            await sendFabLeadIntroEmail(process.env.ADMIN_EMAIL, 'Remnant Exchange', 'admin-monitor')
                 .catch(e => console.error('Admin monitor email failed:', e.message));
         }
 
