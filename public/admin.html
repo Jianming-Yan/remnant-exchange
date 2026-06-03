@@ -542,6 +542,18 @@
                 <button class="btn btn-secondary" id="fabLeadBulkBtn" onclick="bulkCreateFabAccounts()">Bulk Create Accounts</button>
             </div>
 
+            <!-- Thank You Activation Email -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Send Thank-You & Activation Email</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Sends a personal message from Jianming thanking fabricators for registering and encouraging them to post their first remnant.</p>
+                <div id="thankYouAlert" style="display:none;margin-bottom:12px;"></div>
+                <div style="margin-bottom:16px;padding:12px 16px;background:#fef9c3;border:1.5px solid #fcd34d;border-radius:8px;display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="thankYouTest" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                    <label for="thankYouTest" style="cursor:pointer;font-size:0.875rem;color:#78350f;margin:0;"><strong>Test mode</strong> — send only to me</label>
+                </div>
+                <button class="btn btn-primary" id="thankYouBtn" onclick="sendThankYouEmail()">Send to All Fabricators</button>
+            </div>
+
             <!-- Resend Welcome Email -->
             <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
                 <h3 style="margin-bottom:4px;">Resend Welcome Email</h3>
@@ -1929,6 +1941,30 @@
             alertBox.style.display = 'block';
         }
         btn.disabled = false; btn.textContent = 'Bulk Create Accounts';
+    }
+
+    async function sendThankYouEmail() {
+        const test = document.getElementById('thankYouTest').checked;
+        const alertBox = document.getElementById('thankYouAlert');
+        const btn = document.getElementById('thankYouBtn');
+        if (!test && !confirm('Send thank-you activation email to all registered fabricators?')) return;
+        btn.disabled = true; btn.textContent = test ? 'Sending test...' : 'Sending...';
+        try {
+            const res = await fetch('/api/admin/send-thank-you', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = res.ok ? data.message : data.error;
+            alertBox.style.display = 'block';
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Send to All Fabricators';
     }
 
     async function resendWelcomeEmails() {

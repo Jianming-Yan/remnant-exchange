@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const XLSX = require('xlsx');
 const { query, run, get } = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email } = require('../utils/email');
+const { sendApprovalEmail, sendRejectionEmail, sendTempPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendThankYouActivationEmail } = require('../utils/email');
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -1007,6 +1007,39 @@ router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
         res.json({ message: `${created} account(s) created, ${skipped} already registered`, created, skipped });
     } catch (err) {
         console.error('bulk-create error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/send-thank-you', requireAdmin, async (req, res) => {
+    try {
+        const { test } = req.body;
+        let fabricators;
+
+        if (test) {
+            fabricators = [{ id: 'test', name: 'Admin Test', email: process.env.ADMIN_EMAIL }];
+        } else {
+            fabricators = await query(`SELECT id, name, email FROM users WHERE role = 'fabricator' AND approved = 1 AND email != 'seed@remnantexchange.org'`);
+        }
+
+        let sent = 0, failed = 0;
+        for (const fab of fabricators) {
+            try {
+                await sendThankYouActivationEmail(fab.email, fab.name || fab.email);
+                sent++;
+                await new Promise(r => setTimeout(r, 100));
+            } catch (e) {
+                console.error(`Thank-you email failed for ${fab.email}:`, e.message);
+                failed++;
+            }
+        }
+
+        res.json({
+            message: test ? `Test email sent to ${process.env.ADMIN_EMAIL}` : `Thank-you email sent to ${sent} fabricator(s)`,
+            sent, failed
+        });
+    } catch (err) {
+        console.error('send-thank-you error:', err);
         res.status(500).json({ error: err.message });
     }
 });

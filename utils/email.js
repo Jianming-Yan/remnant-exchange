@@ -650,4 +650,51 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail };
+async function sendThankYouActivationEmail(email, name) {
+    const resend = getResend();
+    const firstName = name.split(' ')[0];
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Thank you for trusting Remnant Exchange',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi ${firstName},</p>
+
+                <p>I'm Jianming — a stone fabricator just like you, and the founder of Remnant Exchange.</p>
+
+                <p>I built this platform because I believe hardworking fabricators deserve a better way to manage their remnants — without paying software fees or commissions. Seeing 200+ fabricators register and trust this idea means everything to me.</p>
+
+                <p>But here's the honest truth: our success starts with registration, and the hardest part is posting your first remnant.</p>
+
+                <p>Every listing you post makes the platform more valuable — for you, and for every other fabricator on here. More postings mean more buyers find what they need, more fabricators sell what's sitting in their yard, and the whole network grows stronger.</p>
+
+                <p style="font-weight:700;">It takes 2 minutes to post your first remnant:</p>
+                <ol style="line-height:2;margin:12px 0 12px 20px;">
+                    <li>Log in at <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a></li>
+                    <li>Click <strong>"Post a Remnant"</strong> on your dashboard</li>
+                    <li>Fill in material, size, and a photo — done</li>
+                </ol>
+
+                <p>If it feels like too many steps, just reply to this email with your remnant details and I'll post it for you.</p>
+
+                <p>
+                    <a href="https://remnantexchange.org/dashboard.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Post My First Remnant →</a>
+                </p>
+
+                <p>Thank you for being part of this.</p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org · (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+            </div>
+        `,
+    });
+}
+
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail };
