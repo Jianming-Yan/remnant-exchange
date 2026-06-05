@@ -201,8 +201,6 @@ async function ensureAdmin() {
 }
 
 async function start() {
-    console.log('ADMIN_EMAIL:', process.env.ADMIN_EMAIL);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
     await initSchema();
     await ensureAdmin();
 
