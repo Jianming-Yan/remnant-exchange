@@ -455,6 +455,7 @@ router.post('/bulk-import', requireAdmin, (req, res, next) => {
                     }
                 }
 
+                await run(`UPDATE fabricator_leads SET registered = 1 WHERE email = ?`, [email]).catch(() => {});
                 imported.push({ business: businessName, email });
             } catch (rowErr) {
                 errors.push({ business: businessName, email, reason: rowErr.message });
@@ -1007,6 +1008,17 @@ router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
         res.json({ message: `${created} account(s) created, ${skipped} already registered`, created, skipped });
     } catch (err) {
         console.error('bulk-create error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/sync-fab-leads-registered', requireAdmin, async (req, res) => {
+    try {
+        await run(`UPDATE fabricator_leads SET registered = 1 WHERE email IN (SELECT email FROM users)`);
+        const count = await get(`SELECT COUNT(*) as cnt FROM fabricator_leads WHERE registered = 1`);
+        res.json({ message: `Synced — ${count.cnt} leads marked as registered` });
+    } catch (err) {
+        console.error('sync error:', err);
         res.status(500).json({ error: err.message });
     }
 });
