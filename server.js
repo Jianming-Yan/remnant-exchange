@@ -151,14 +151,12 @@ async function sendDailyFabLeadBroadcast() {
 }
 
 async function checkDailyBroadcast() {
-    // BROADCAST_HOUR_UTC: hour in UTC to send (default 12 = 8 AM Eastern Daylight Time)
-    const targetHour = parseInt(process.env.BROADCAST_HOUR_UTC || '12');
     const now = new Date();
     const currentHour = now.getUTCHours();
     const dayOfWeek = now.getUTCDay(); // 0 = Sunday
 
-    // Only run Mon-Sat (1-6) at the target hour
-    if (dayOfWeek === 0 || currentHour !== targetHour) return;
+    // Only run Mon-Sat between 12 UTC (8 AM ET) and 23 UTC
+    if (dayOfWeek === 0 || currentHour < 12) return;
 
     await sendDailyFabLeadBroadcast();
 }
