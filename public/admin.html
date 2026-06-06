@@ -534,6 +534,14 @@
                 <button class="btn btn-secondary" id="resetTouchBtn" onclick="resetTouchCount()">Reset Touch Count</button>
             </div>
 
+            <!-- Sync Registered -->
+            <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
+                <h3 style="margin-bottom:4px;">Sync Registered Status</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin-bottom:16px;">Marks all fab leads as registered if they already have a user account — stops them from receiving broadcast emails.</p>
+                <div id="syncRegisteredAlert" style="display:none;margin-bottom:12px;"></div>
+                <button class="btn btn-secondary" id="syncRegisteredBtn" onclick="syncRegistered()">Sync Now</button>
+            </div>
+
             <!-- Bulk Create -->
             <div style="background:white;border-radius:12px;padding:24px;max-width:480px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:24px;">
                 <h3 style="margin-bottom:4px;">Bulk Create Accounts</h3>
@@ -1941,6 +1949,27 @@
             alertBox.style.display = 'block';
         }
         btn.disabled = false; btn.textContent = 'Bulk Create Accounts';
+    }
+
+    async function syncRegistered() {
+        const alertBox = document.getElementById('syncRegisteredAlert');
+        const btn = document.getElementById('syncRegisteredBtn');
+        btn.disabled = true; btn.textContent = 'Syncing...';
+        try {
+            const res = await fetch('/api/admin/sync-fab-leads-registered', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = res.ok ? data.message : data.error;
+            alertBox.style.display = 'block';
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong.';
+            alertBox.style.display = 'block';
+        }
+        btn.disabled = false; btn.textContent = 'Sync Now';
     }
 
     async function sendThankYouEmail() {
