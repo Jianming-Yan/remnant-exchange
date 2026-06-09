@@ -132,7 +132,7 @@ async function sendDailyFabLeadBroadcast() {
                 await emailFns[touchIndex](lead.email, lead.business_name, lead.unsubscribe_token);
                 await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
                 sent++;
-                await new Promise(r => setTimeout(r, 200));
+                await new Promise(r => setTimeout(r, 300));
             } catch (e) {
                 console.error(`Daily broadcast failed for ${lead.email}:`, e.message);
             }

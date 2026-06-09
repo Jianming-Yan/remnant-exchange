@@ -738,7 +738,7 @@ router.post('/contractor-leads/broadcast', requireAdmin, async (req, res) => {
                 }
                 sent++;
                 // Small delay to avoid rate limits
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 300));
             } catch (e) {
                 console.error(`Contractor broadcast failed for ${lead.email}:`, e.message);
                 failed++;
@@ -892,7 +892,7 @@ router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
                     await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
                 }
                 sent++;
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 300));
             } catch (e) {
                 console.error(`Fab lead broadcast failed for ${lead.email}:`, e.message);
                 failed++;
@@ -950,7 +950,7 @@ router.post('/resend-welcome', requireAdmin, async (req, res) => {
                 const name = fab.name || fab.business_name || 'Fabricator';
                 await sendTempPasswordEmail(fab.email, name, tempPassword, test ? null : magicToken);
                 sent++;
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 300));
             } catch (e) {
                 console.error(`Resend welcome failed for ${fab.email}:`, e.message);
                 failed++;
@@ -1039,7 +1039,7 @@ router.post('/send-thank-you', requireAdmin, async (req, res) => {
             try {
                 await sendThankYouActivationEmail(fab.email, fab.name || fab.email);
                 sent++;
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 300));
             } catch (e) {
                 console.error(`Thank-you email failed for ${fab.email}:`, e.message);
                 failed++;
