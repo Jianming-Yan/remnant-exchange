@@ -772,6 +772,7 @@ router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
         const unsub = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE unsubscribed = 1`);
         const registered = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE registered = 1`);
         const bounced = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE bounced = 1`);
+        const unvalidated = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE validated_at IS NULL AND bounced = 0 AND unsubscribed = 0 AND registered = 0`);
         res.json({
             total: Number(total.cnt),
             pending: Number(touch0.cnt),
@@ -781,6 +782,7 @@ router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
             unsubscribed: Number(unsub.cnt),
             registered: Number(registered.cnt),
             bounced: Number(bounced.cnt),
+            unvalidated: Number(unvalidated.cnt),
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
