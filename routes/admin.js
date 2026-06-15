@@ -765,12 +765,13 @@ router.post('/contractor-leads/broadcast', requireAdmin, async (req, res) => {
 router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
     try {
         const total = await get(`SELECT count(*) as cnt FROM fabricator_leads`);
-        const touch0 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0`);
-        const touch1 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 1 AND unsubscribed = 0 AND registered = 0`);
-        const touch2 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 2 AND unsubscribed = 0 AND registered = 0`);
-        const touch3 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0`);
+        const touch0 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0 AND bounced = 0`);
+        const touch1 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 1 AND unsubscribed = 0 AND registered = 0 AND bounced = 0`);
+        const touch2 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count = 2 AND unsubscribed = 0 AND registered = 0 AND bounced = 0`);
+        const touch3 = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0`);
         const unsub = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE unsubscribed = 1`);
         const registered = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE registered = 1`);
+        const bounced = await get(`SELECT count(*) as cnt FROM fabricator_leads WHERE bounced = 1`);
         res.json({
             total: Number(total.cnt),
             pending: Number(touch0.cnt),
@@ -779,6 +780,7 @@ router.get('/fabricator-leads/stats', requireAdmin, async (req, res) => {
             touch3: Number(touch3.cnt),
             unsubscribed: Number(unsub.cnt),
             registered: Number(registered.cnt),
+            bounced: Number(bounced.cnt),
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -867,12 +869,12 @@ router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
             leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token', touch_count: 0 }];
         } else if (newOnly) {
             leads = await query(
-                `SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0${state ? ' AND state = ?' : ''}`,
+                `SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0 AND bounced = 0${state ? ' AND state = ?' : ''}`,
                 state ? [state] : []
             );
         } else {
             leads = await query(
-                `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0${state ? ' AND state = ?' : ''}`,
+                `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0${state ? ' AND state = ?' : ''}`,
                 state ? [state] : []
             );
         }
@@ -980,7 +982,7 @@ router.post('/resend-welcome', requireAdmin, async (req, res) => {
 router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
     try {
         // Only create accounts for leads that received all 3 emails and have not self-registered
-        const leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0`);
+        const leads = await query(`SELECT * FROM fabricator_leads WHERE touch_count >= 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0`);
 
         const tempPassword = '12345678';
         const passwordHash = await bcrypt.hash(tempPassword, 10);

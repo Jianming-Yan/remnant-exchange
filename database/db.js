@@ -245,6 +245,10 @@ async function initSchema() {
         await run(`ALTER TABLE fabricator_leads ADD COLUMN added_by_intern_id TEXT`);
     } catch (e) { /* column already exists */ }
 
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN bounced INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

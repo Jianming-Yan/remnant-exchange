@@ -59,6 +59,38 @@ app.get('/api/fab-leads/unsubscribe', async (req, res) => {
     }
 });
 
+// Resend webhook: hard bounces & spam complaints -> mark leads undeliverable so broadcasts skip them.
+// Set RESEND_WEBHOOK_SECRET, then in Resend -> Webhooks add an endpoint at
+// {BASE_URL}/api/webhooks/resend/<RESEND_WEBHOOK_SECRET> subscribed to email.bounced + email.complained.
+app.post('/api/webhooks/resend/:secret', async (req, res) => {
+    try {
+        if (!process.env.RESEND_WEBHOOK_SECRET || req.params.secret !== process.env.RESEND_WEBHOOK_SECRET) {
+            return res.status(401).json({ error: 'unauthorized' });
+        }
+        const event = req.body || {};
+        const data = event.data || {};
+        const isBounce = event.type === 'email.bounced';
+        const isComplaint = event.type === 'email.complained';
+
+        if (isBounce || isComplaint) {
+            // Soft/transient bounces are temporary — don't permanently suppress those.
+            const bounceType = (data.bounce && (data.bounce.type || data.bounce.subType)) || '';
+            if (isBounce && /soft|transient|temporary/i.test(String(bounceType))) {
+                return res.json({ ok: true, skipped: 'soft bounce' });
+            }
+            const recipients = [].concat(data.to || []).filter(Boolean);
+            for (const email of recipients) {
+                await run(`UPDATE fabricator_leads SET bounced = 1 WHERE email = ?`, [email]).catch(() => {});
+            }
+            console.log(`Resend webhook ${event.type}: suppressed ${recipients.join(', ') || '(none)'}`);
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Resend webhook error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 const { sendBuyerRequestEmail, sendActivationNudgeEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email } = require('./utils/email');
 app.post('/api/request', upload.array('photos', 5), async (req, res) => {
     try {
@@ -116,7 +148,7 @@ async function sendDailyFabLeadBroadcast() {
         }
 
         const leads = await query(
-            `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 LIMIT ?`,
+            `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0 LIMIT ?`,
             [limit]
         );
         if (!leads.length) {
