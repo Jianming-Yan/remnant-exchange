@@ -137,6 +137,12 @@ async function expireListings() {
 }
 
 async function sendDailyFabLeadBroadcast() {
+    // PAUSED 2026-06-14: do not auto-broadcast to the un-validated lead list.
+    // Re-enable by setting BROADCAST_ENABLED=true on Render AFTER list validation.
+    if (process.env.BROADCAST_ENABLED !== 'true') {
+        console.log('Daily fab lead broadcast is PAUSED (set BROADCAST_ENABLED=true to resume)');
+        return;
+    }
     try {
         const limit = parseInt(process.env.FAB_LEAD_DAILY_LIMIT || '50');
 
