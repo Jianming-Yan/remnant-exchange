@@ -697,4 +697,59 @@ async function sendThankYouActivationEmail(email, name) {
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail };
+async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsubToken) {
+    const resend = getResend();
+    const firstName = (name || 'there').split(' ')[0];
+    const loginUrl = `${process.env.BASE_URL}/login.html?magic=${magicToken}`;
+    const dashUrl = `${process.env.BASE_URL}/dashboard.html`;
+    const unsubUrl = `${process.env.BASE_URL}/api/auth/unsubscribe?token=${unsubToken}`;
+
+    await resend.emails.send({
+        from: FROM,
+        replyTo: 'jianming@remnantexchange.org',
+        to: email,
+        subject: 'Your Remnant Exchange account is ready — post your first remnant',
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+                <p>Hi ${firstName},</p>
+                <p>Your free <strong>Remnant Exchange</strong> account is set up and ready to go — but you have not posted any remnants yet. Here is how to log in and get your first one listed in about 2 minutes.</p>
+
+                <div style="background:#f0f7ff;border:2px solid #2563eb;border-radius:12px;padding:20px;margin:20px 0;">
+                    <p style="margin:0 0 4px 0;font-weight:700;color:#1e3a8a;">Step 1 — Log in</p>
+                    <p style="margin:0 0 14px 0;font-size:0.85rem;color:#64748b;">Click below to log in instantly (you will be prompted to set your own password):</p>
+                    <p style="margin:0 0 14px 0;">
+                        <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to My Account &rarr;</a>
+                    </p>
+                    <p style="margin:0 0 4px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="${process.env.BASE_URL}/login.html" style="color:#2563eb;">remnantexchange.org/login.html</a>:</p>
+                    <p style="margin:0 0 2px 0;"><strong>Email:</strong> ${email}</p>
+                    <p style="margin:0;"><strong>Temporary password:</strong> <span style="font-weight:700;letter-spacing:2px;">${tempPassword}</span></p>
+                </div>
+
+                <p style="font-weight:700;margin:0 0 6px 0;">Step 2 — Post your remnant (~2 minutes)</p>
+                <ol style="margin:0 0 12px 20px;color:#475569;font-size:0.92rem;line-height:1.9;">
+                    <li>Go to your <strong>Dashboard</strong></li>
+                    <li>Click <strong>"Post a Remnant"</strong></li>
+                    <li>Enter material, stone name, dimensions (L &times; W &times; thickness), and location</li>
+                    <li>Add a photo — clear photos get more inquiries</li>
+                    <li>Click <strong>Post</strong> — it goes live immediately</li>
+                </ol>
+
+                <p><strong>Too busy?</strong> Just reply to this email with your remnant details (material, stone name, dimensions, photo) and <strong>I will post it for you</strong>.</p>
+
+                <p style="margin:18px 0;">
+                    <a href="${dashUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Post My First Remnant &rarr;</a>
+                </p>
+
+                <p>— Jianming Yan<br>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
+                RemnantExchange.org | (617) 606-5840</span></p>
+
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange &middot; 105 Chapman Street, Canton, MA 02021<br>
+                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe / not interested</a></p>
+            </div>
+        `,
+    });
+}
+
+module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };

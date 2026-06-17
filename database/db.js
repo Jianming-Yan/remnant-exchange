@@ -230,6 +230,10 @@ async function initSchema() {
     } catch (e) { /* column already exists */ }
 
     try {
+        await run(`ALTER TABLE users ADD COLUMN reminder_sent_at TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
         await run(`ALTER TABLE fabricator_leads ADD COLUMN call_outcome TEXT`);
     } catch (e) { /* column already exists */ }
 
