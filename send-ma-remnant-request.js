@@ -18,7 +18,7 @@ const limitArg = process.argv.find(a => a.startsWith('--limit='));
 const LIMIT = limitArg ? parseInt(limitArg.split('=')[1]) : 50;
 const SENT_FILE = 'C:/Users/Shane/Downloads/ma-remnant-sent.txt';
 const FROM = 'Remnant Exchange <info@remnantexchange.org>';
-const SUBJECT = 'Looking for an MSI Midnight Corvo remnant (84x37.5 or 90x26) — Massachusetts';
+const SUBJECT = 'Looking for a Daltile Nightfall remnant (91x26) — Massachusetts';
 
 function html(unsubUrl) {
     return `
@@ -26,8 +26,8 @@ function html(unsubUrl) {
             <p>Hi there,</p>
             <p>I'm helping a fabricator who needs a specific remnant, and I'm hoping one of you has it sitting in your shop:</p>
             <ul style="line-height:2;margin:12px 0 12px 20px;">
-                <li><strong>Stone:</strong> MSI Midnight Corvo</li>
-                <li><strong>Ideal size:</strong> ~84" &times; 37&frac12;", or ~90" &times; 26" (or larger)</li>
+                <li><strong>Stone:</strong> Daltile Nightfall</li>
+                <li><strong>Ideal size:</strong> ~91" &times; 26" (or larger)</li>
                 <li><strong>Location:</strong> Massachusetts</li>
             </ul>
             <p><strong>If you have this slab as a remnant and would sell it, just reply to this email</strong> with the size, price, and a photo — I'll connect you with the buyer directly.</p>
