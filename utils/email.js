@@ -403,44 +403,40 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
 
 async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
     const resend = getResend();
+    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
+
+    const text = `Hi,
+
+I'm Ming — I used to run a stone fabrication shop here in Massachusetts, so I know firsthand what a pain it is to deal with leftover remnants.
+
+That's why I built Remnant Exchange: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.
+
+It's free and simple — just one click to enroll. No personal information, no credit card required:
+${activateUrl}
+
+If you have any questions, please reply or call me at (617) 606-5840 — happy to help.
+
+Ming Yan
+Remnant Exchange · (617) 606-5840
+
+105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: FROM,
+        from: 'Ming Yan <jianming@remnantexchange.org>',
         replyTo: 'jianming@remnantexchange.org',
         to: email,
-        subject: 'A smarter way to move your stone remnants',
+        subject: 'do you have remnants?',
+        text,
         html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
-
-                <p>My name is Jianming — I am a stone fabricator and the founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free marketplace built specifically for fabricators.</p>
-
-                <p>Here is what it does:</p>
-
-                <ol style="line-height:2.2;margin:16px 0 16px 20px;">
-                    <li><strong>List your remnants</strong> — post leftover slabs so other shops and buyers can find and purchase them</li>
-                    <li><strong>Find remnants</strong> — search what other fabricators have instead of buying a full slab</li>
-                    <li><strong>Track your inventory</strong> — manage your in-house remnant stock privately for your own records</li>
-                </ol>
-
-                <p>It is completely free — no software fees, no commissions, no catch.</p>
-
-                <p>
-                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Create Your Free Account →</a>
-                </p>
-
-                <p>Feel free to reply or call me at <strong>(617) 606-5840</strong> if you have any questions.</p>
-
-                <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
-
-                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
-                You received this because you are a stone fabricator in our service area.<br>
-                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+                <p>I'm Ming — I used to run a stone fabrication shop here in Massachusetts, so I know firsthand what a pain it is to deal with leftover remnants.</p>
+                <p>That's why I built Remnant Exchange: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.</p>
+                <p>It's free and simple — just one click to enroll. No personal information, no credit card required: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
+                <p>If you have any questions, please reply or call me at (617) 606-5840 — happy to help.</p>
+                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
@@ -448,37 +444,40 @@ async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
 
 async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
     const resend = getResend();
+    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
+
+    const text = `Hi,
+
+I reached out a few days ago — wanted to follow up with a real question: what do you currently do with your leftover slabs?
+
+When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built Remnant Exchange — a free way to list your remnants so buyers nearby can find exactly what you have.
+
+It's free and simple — just one click to enroll. No personal information, no credit card required:
+${activateUrl}
+
+Or just reply and tell me how you handle remnants now — I'm curious.
+
+Ming Yan
+Remnant Exchange · (617) 606-5840
+
+105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: FROM,
+        from: 'Ming Yan <jianming@remnantexchange.org>',
         replyTo: 'jianming@remnantexchange.org',
         to: email,
-        subject: 'Quick question — what do you do with your stone remnants?',
+        subject: 'what do you do with your leftover slabs?',
+        text,
         html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
-
-                <p>I sent you a note earlier about <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> — wanted to follow up with a quick question:</p>
-
-                <p><strong>What do you currently do with your leftover stone slabs?</strong></p>
-
-                <p>Most shops we talk to either store them in the yard (taking up space), sell them at a deep discount to walk-ins, or throw them away. Remnant Exchange gives you a free, searchable listing so buyers in your area can find exactly what you have — without you doing anything extra after posting.</p>
-
-                <p>Fabricators in Connecticut, Massachusetts, and Rhode Island are already listing their remnants. If you want to see what it looks like, visit <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a>.</p>
-
-                <p>
-                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Join for Free →</a>
-                </p>
-
-                <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
-
-                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
-                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+                <p>I reached out a few days ago — wanted to follow up with a real question: what do you currently do with your leftover slabs?</p>
+                <p>When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built Remnant Exchange — a free way to list your remnants so buyers nearby can find exactly what you have.</p>
+                <p>It's free and simple — just one click to enroll. No personal information, no credit card required: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
+                <p>Or just reply and tell me how you handle remnants now — I'm curious.</p>
+                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
@@ -486,37 +485,40 @@ async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
 
 async function sendFabLeadFollowUp2Email(email, businessName, unsubToken) {
     const resend = getResend();
+    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
+
+    const text = `Hi,
+
+This is my last note — I know you're busy.
+
+I built Remnant Exchange because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.
+
+If the timing isn't right, no problem — whenever it makes sense, it's one click to enroll. No personal information, no credit card required:
+${activateUrl}
+
+Either way, if you ever want to talk shop about remnants, call or text me at (617) 606-5840.
+
+Ming Yan
+Remnant Exchange · (617) 606-5840
+
+105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: FROM,
+        from: 'Ming Yan <jianming@remnantexchange.org>',
         replyTo: 'jianming@remnantexchange.org',
         to: email,
-        subject: 'Last note — free stone remnant marketplace',
+        subject: 'last note',
+        text,
         html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
-
-                <p>This is my last email on this — I know your inbox is busy.</p>
-
-                <p>I built <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> as a fabricator myself. Every shop has remnants sitting in the yard. I wanted a better way to move them, so I built one.</p>
-
-                <p>It is free. Always will be on the base plan. No credit card, no contract.</p>
-
-                <p>If the timing is not right now, no problem — you can register whenever it makes sense. If you ever want to talk shop about remnant management, feel free to call or text me at <strong>(617) 606-5840</strong>.</p>
-
-                <p>
-                    <a href="${registerUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Create a Free Account →</a>
-                </p>
-
-                <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
-
-                <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
-                <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
+                <p>This is my last note — I know you're busy.</p>
+                <p>I built Remnant Exchange because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.</p>
+                <p>If the timing isn't right, no problem — whenever it makes sense, it's one click to <a href="${activateUrl}" style="color:#2563eb;">create my free account</a> — no personal information, no credit card required.</p>
+                <p>Either way, if you ever want to talk shop about remnants, call or text me at (617) 606-5840.</p>
+                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
