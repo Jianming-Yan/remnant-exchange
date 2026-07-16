@@ -871,12 +871,16 @@ router.post('/fabricator-leads/broadcast', requireAdmin, async (req, res) => {
             leads = [{ id: 'test', business_name: 'Test', email: process.env.ADMIN_EMAIL, unsubscribe_token: 'test-token', touch_count: 0 }];
         } else if (newOnly) {
             leads = await query(
-                `SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0 AND bounced = 0${state ? ' AND state = ?' : ''}`,
+                `SELECT * FROM fabricator_leads WHERE touch_count = 0 AND unsubscribed = 0 AND registered = 0 AND bounced = 0
+                 AND validated_at IS NOT NULL AND email IS NOT NULL AND email != '' AND (email_guessed IS NULL OR email_guessed = 0 OR last_sent_at IS NOT NULL)${state ? ' AND state = ?' : ''}
+                 ORDER BY id`,
                 state ? [state] : []
             );
         } else {
             leads = await query(
-                `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0${state ? ' AND state = ?' : ''}`,
+                `SELECT * FROM fabricator_leads WHERE touch_count < 3 AND unsubscribed = 0 AND registered = 0 AND bounced = 0
+                 AND validated_at IS NOT NULL AND email IS NOT NULL AND email != '' AND (email_guessed IS NULL OR email_guessed = 0 OR last_sent_at IS NOT NULL)${state ? ' AND state = ?' : ''}
+                 ORDER BY touch_count ASC, id ASC`,
                 state ? [state] : []
             );
         }
