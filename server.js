@@ -59,6 +59,82 @@ app.get('/api/fab-leads/unsubscribe', async (req, res) => {
     }
 });
 
+// Simple branded landing page for the activation flow below.
+function activateResultPage(title, bodyHtml, ctaUrl, ctaLabel) {
+    const cta = ctaUrl
+        ? `<p style="margin-top:28px;"><a href="${ctaUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">${ctaLabel || 'Log In'} &rarr;</a></p>`
+        : '';
+    return `<html><body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1a1a1a;line-height:1.6;padding:0 16px;">
+        <h2>${title}</h2>
+        <p style="color:#64748b;">${bodyHtml}</p>
+        ${cta}
+    </body></html>`;
+}
+
+// Fabricator lead one-click account activation (public, no auth).
+// Cold-outreach leads already have their business name/email/phone/city in
+// fabricator_leads, so the "Create Your Free Account" button provisions the
+// account straight from the lead record and emails a temp password — no form.
+app.get('/api/fab-leads/activate', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.redirect(`${process.env.BASE_URL}/register.html`);
+
+        const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
+        // Unknown token (e.g. admin-monitor copy or forwarded/edited link) -> normal signup form.
+        if (!lead) return res.redirect(`${process.env.BASE_URL}/register.html`);
+
+        const email = (lead.email || '').toLowerCase();
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email]);
+        if (existing) {
+            // Already has an account — never reset their password; just point them to login.
+            await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
+            return res.send(activateResultPage(
+                'You already have an account',
+                `An account for <strong>${email}</strong> already exists. Log in below — or use "Forgot password" on the login page if you need to reset it.`,
+                `${process.env.BASE_URL}/login.html`, 'Log In'
+            ));
+        }
+
+        // Provision the account from the lead record (mirrors admin create-fabricator).
+        const tempPassword = '12345678';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        const userId = uuidv4();
+        const name = lead.contact_name || lead.business_name;
+        await run(
+            `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'lead_activated')`,
+            [userId, name, lead.business_name, email, passwordHash, lead.phone || null, lead.city || null]
+        );
+        await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
+
+        // Fresh single-use magic-login token so the CTA + emailed link log them straight in.
+        const magicToken = uuidv4();
+        const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'magic-login'`, [userId]);
+        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), userId, magicToken, 'magic-login', magicExpires]);
+
+        try {
+            await sendTempPasswordEmail(email, name, tempPassword, magicToken);
+        } catch (emailErr) {
+            console.error('Activation temp-password email failed:', emailErr.message);
+        }
+
+        return res.send(activateResultPage(
+            'Your account is ready! &#127881;',
+            `We have created your free Remnant Exchange account and emailed your login details to <strong>${email}</strong>. Click below to log in — your temporary password is in that email.`,
+            `${process.env.BASE_URL}/login.html?magic=${magicToken}`, 'Log In Now'
+        ));
+    } catch (err) {
+        console.error('fab-lead activate error:', err);
+        res.status(500).send(activateResultPage(
+            'Something went wrong',
+            'We could not activate your account automatically. Please register directly instead.',
+            `${process.env.BASE_URL}/register.html`, 'Register'
+        ));
+    }
+});
+
 // Resend webhook: hard bounces & spam complaints -> mark leads undeliverable so broadcasts skip them.
 // Set RESEND_WEBHOOK_SECRET, then in Resend -> Webhooks add an endpoint at
 // {BASE_URL}/api/webhooks/resend/<RESEND_WEBHOOK_SECRET> subscribed to email.bounced + email.complained.
@@ -91,7 +167,7 @@ app.post('/api/webhooks/resend/:secret', async (req, res) => {
     }
 });
 
-const { sendBuyerRequestEmail, sendActivationNudgeEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email } = require('./utils/email');
+const { sendBuyerRequestEmail, sendActivationNudgeEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendTempPasswordEmail } = require('./utils/email');
 app.post('/api/request', upload.array('photos', 5), async (req, res) => {
     try {
         const { name, email, material, length, width, state_id, metro_id } = req.body;

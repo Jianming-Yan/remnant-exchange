@@ -404,7 +404,7 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
 async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
     const resend = getResend();
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/register.html`;
+    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
 
     await resend.emails.send({
         from: FROM,
@@ -449,7 +449,7 @@ async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
 async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
     const resend = getResend();
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/register.html`;
+    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
 
     await resend.emails.send({
         from: FROM,
@@ -487,7 +487,7 @@ async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
 async function sendFabLeadFollowUp2Email(email, businessName, unsubToken) {
     const resend = getResend();
     const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
-    const registerUrl = `${process.env.BASE_URL}/register.html`;
+    const registerUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
 
     await resend.emails.send({
         from: FROM,
