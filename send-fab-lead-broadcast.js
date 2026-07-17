@@ -32,12 +32,29 @@ const SENT_ON = sentOnArg ? sentOnArg.split('=')[1] : null;
 // stays in the sequence. --include-guessed forces even never-sent guesses in
 // (only in tiny monitored batches).
 const INCLUDE_GUESSED = process.argv.includes('--include-guessed');
+// Override the "already sent today" guard — use ONLY to recover a failed/partial
+// send on the same day (not to stack a fresh full batch).
+const FORCE = process.argv.includes('--force');
 // Drip pacing: space out sends so a state doesn't go out as one bulk burst
 // (a big Gmail Promotions signal). Default 0.3s (fast). Pass e.g. --gap=20 to put
 // ~20s between sends so ~150 leads spread over ~45-60 min instead of ~1 min. A
 // ±30% random jitter is applied so the cadence looks human, not machine-regular.
 const gapArg = process.argv.find(a => a.startsWith('--gap='));
 const GAP_MS = gapArg ? Math.max(0, parseFloat(gapArg.split('=')[1]) * 1000) : 300;
+
+// Retry transient network failures (e.g. a dropped connection) so one blip
+// doesn't permanently drop a lead mid-run. 3 tries with growing backoff.
+async function sendWithRetry(fn, tries = 3) {
+    let lastErr;
+    for (let i = 0; i < tries; i++) {
+        try { return await fn(); }
+        catch (e) {
+            lastErr = e;
+            if (i < tries - 1) await new Promise(r => setTimeout(r, 4000 * (i + 1)));
+        }
+    }
+    throw lastErr;
+}
 
 async function main() {
     if (!STATE || STATE.startsWith('--')) {
@@ -49,7 +66,8 @@ async function main() {
     const alreadySent = await get(`SELECT COUNT(*) as cnt FROM fabricator_leads WHERE DATE(last_sent_at) = DATE('now')`);
     if (Number(alreadySent.cnt) > 0) {
         console.log(`NOTE: ${alreadySent.cnt} lead(s) already have last_sent_at = today. Proceeding would add to today's volume.`);
-        if (COMMIT) { console.log('Refusing to --commit on top of today\'s sends. Re-run tomorrow, or remove this guard intentionally.'); process.exit(1); }
+        if (COMMIT && !FORCE) { console.log('Refusing to --commit on top of today\'s sends. Re-run tomorrow, or pass --force to override (e.g. recovering a failed send).'); process.exit(1); }
+        if (COMMIT && FORCE) console.log('--force: overriding same-day guard (recovery send).');
     }
 
     const leads = await query(
@@ -85,7 +103,7 @@ async function main() {
                 token = uuidv4();
                 await run(`UPDATE fabricator_leads SET unsubscribe_token = ? WHERE id = ?`, [token, lead.id]);
             }
-            await emailFns[touchIndex](lead.email, lead.business_name, token);
+            await sendWithRetry(() => emailFns[touchIndex](lead.email, lead.business_name, token));
             await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
             sent++;
             const jitter = GAP_MS * (0.7 + Math.random() * 0.6); // ±30% so cadence isn't machine-regular
