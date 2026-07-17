@@ -32,10 +32,16 @@ const SENT_ON = sentOnArg ? sentOnArg.split('=')[1] : null;
 // stays in the sequence. --include-guessed forces even never-sent guesses in
 // (only in tiny monitored batches).
 const INCLUDE_GUESSED = process.argv.includes('--include-guessed');
+// Drip pacing: space out sends so a state doesn't go out as one bulk burst
+// (a big Gmail Promotions signal). Default 0.3s (fast). Pass e.g. --gap=20 to put
+// ~20s between sends so ~150 leads spread over ~45-60 min instead of ~1 min. A
+// ±30% random jitter is applied so the cadence looks human, not machine-regular.
+const gapArg = process.argv.find(a => a.startsWith('--gap='));
+const GAP_MS = gapArg ? Math.max(0, parseFloat(gapArg.split('=')[1]) * 1000) : 300;
 
 async function main() {
     if (!STATE || STATE.startsWith('--')) {
-        console.error('Usage: node send-fab-lead-broadcast.js <STATE> [--commit] [--limit=N]');
+        console.error('Usage: node send-fab-lead-broadcast.js <STATE> [--commit] [--limit=N] [--gap=SECONDS]');
         process.exit(1);
     }
 
@@ -82,7 +88,8 @@ async function main() {
             await emailFns[touchIndex](lead.email, lead.business_name, token);
             await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
             sent++;
-            await new Promise(r => setTimeout(r, 300));
+            const jitter = GAP_MS * (0.7 + Math.random() * 0.6); // ±30% so cadence isn't machine-regular
+            await new Promise(r => setTimeout(r, jitter));
         } catch (e) {
             console.error(`Failed for ${lead.email}:`, e.message);
             failed++;
