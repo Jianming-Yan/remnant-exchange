@@ -109,8 +109,8 @@ app.get('/api/fab-leads/activate', async (req, res) => {
         const userId = uuidv4();
         const name = lead.contact_name || lead.business_name;
         await run(
-            `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'lead_activated')`,
-            [userId, name, lead.business_name, email, passwordHash, lead.phone || null, lead.city || null]
+            `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, state, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'lead_activated')`,
+            [userId, name, lead.business_name, email, passwordHash, lead.phone || null, lead.city || null, lead.state || null]
         );
         await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
 

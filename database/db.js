@@ -132,6 +132,20 @@ async function initSchema() {
         await run(`ALTER TABLE users ADD COLUMN city TEXT`);
     } catch (e) { /* column already exists */ }
 
+    // Fabricator location — state (2-letter abbrev, matches fabricator_leads.state),
+    // plus metro_id for future metro allocation and address for future collection.
+    try {
+        await run(`ALTER TABLE users ADD COLUMN state TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE users ADD COLUMN metro_id TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
+        await run(`ALTER TABLE users ADD COLUMN address TEXT`);
+    } catch (e) { /* column already exists */ }
+
     try {
         await run(`ALTER TABLE users ADD COLUMN admin_notes TEXT`);
     } catch (e) { /* column already exists */ }
