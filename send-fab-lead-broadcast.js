@@ -35,6 +35,16 @@ const INCLUDE_GUESSED = process.argv.includes('--include-guessed');
 // Override the "already sent today" guard — use ONLY to recover a failed/partial
 // send on the same day (not to stack a fresh full batch).
 const FORCE = process.argv.includes('--force');
+// --brand=trading sends from the parallel remnanttrading.com identity (a fresh
+// sending domain for the Primary-inbox experiment): different from-address,
+// brand name, and link base. Default (no flag) = the Remnant Exchange identity.
+const BRAND = (process.argv.find(a => a.startsWith('--brand=')) || '').split('=')[1] || '';
+const BRAND_OPTS = BRAND === 'trading' ? {
+    baseUrl: 'https://remnanttrading.com',
+    from: 'Ming Yan <ming@remnanttrading.com>',
+    replyTo: 'ming@remnanttrading.com',
+    brand: 'Remnant Trading',
+} : {};
 // Drip pacing: space out sends so a state doesn't go out as one bulk burst
 // (a big Gmail Promotions signal). Default 0.3s (fast). Pass e.g. --gap=20 to put
 // ~20s between sends so ~150 leads spread over ~45-60 min instead of ~1 min. A
@@ -103,7 +113,7 @@ async function main() {
                 token = uuidv4();
                 await run(`UPDATE fabricator_leads SET unsubscribe_token = ? WHERE id = ?`, [token, lead.id]);
             }
-            await sendWithRetry(() => emailFns[touchIndex](lead.email, lead.business_name, token));
+            await sendWithRetry(() => emailFns[touchIndex](lead.email, lead.business_name, token, BRAND_OPTS));
             await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
             sent++;
             const jitter = GAP_MS * (0.7 + Math.random() * 0.6); // ±30% so cadence isn't machine-regular
@@ -116,7 +126,7 @@ async function main() {
 
     // Admin monitor copy (intro template), same as the server job.
     if (COMMIT && sent > 0 && process.env.ADMIN_EMAIL) {
-        await sendFabLeadIntroEmail(process.env.ADMIN_EMAIL, 'Remnant Exchange', 'admin-monitor')
+        await sendFabLeadIntroEmail(process.env.ADMIN_EMAIL, 'Admin monitor', 'admin-monitor', BRAND_OPTS)
             .catch(e => console.error('Admin monitor email failed:', e.message));
     }
 
