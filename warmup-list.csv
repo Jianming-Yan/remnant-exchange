@@ -1,0 +1,11 @@
+# Warm-up recipient list for warmup-send.js
+# One friend per line.  Format:  email   OR   email,FirstName
+# Lines starting with # are ignored.  Gmail addresses are ideal (that's the inbox we care about).
+#
+# Replace the examples below with your real friends, then run:
+#   node warmup-send.js              (dry run — shows who it WOULD send to)
+#   node warmup-send.js --commit     (actually send)
+#
+# dave@gmail.com,Dave
+# sarah@gmail.com
+# mike@gmail.com,Mike
