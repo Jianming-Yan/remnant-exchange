@@ -29,6 +29,7 @@ function uploadToCloudinary(buffer) {
 fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
 const app = express();
+app.set('trust proxy', true); // behind Cloudflare + Render, so req.protocol/host reflect the original request
 
 app.use(cors());
 app.use(express.json());
@@ -77,12 +78,18 @@ function activateResultPage(title, bodyHtml, ctaUrl, ctaLabel) {
 // account straight from the lead record and emails a temp password — no form.
 app.get('/api/fab-leads/activate', async (req, res) => {
     try {
+        // Build links from the REQUEST host so a click on a remnanttrading.com email
+        // stays on remnanttrading.com (matching from-domain + link-domain). Falls back
+        // to BASE_URL if the host header is somehow missing.
+        const base = req.get('host') ? `${req.protocol}://${req.get('host')}` : process.env.BASE_URL;
+        const brand = /remnanttrading/i.test(req.get('host') || '') ? 'Remnant Trading' : 'Remnant Exchange';
+
         const { token } = req.query;
-        if (!token) return res.redirect(`${process.env.BASE_URL}/register.html`);
+        if (!token) return res.redirect(`${base}/register.html`);
 
         const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
         // Unknown token (e.g. admin-monitor copy or forwarded/edited link) -> normal signup form.
-        if (!lead) return res.redirect(`${process.env.BASE_URL}/register.html`);
+        if (!lead) return res.redirect(`${base}/register.html`);
 
         const email = (lead.email || '').toLowerCase();
         const existing = await get(`SELECT id FROM users WHERE email = ?`, [email]);
@@ -92,7 +99,7 @@ app.get('/api/fab-leads/activate', async (req, res) => {
             return res.send(activateResultPage(
                 'You already have an account',
                 `An account for <strong>${email}</strong> already exists. Log in below — or use "Forgot password" on the login page if you need to reset it.`,
-                `${process.env.BASE_URL}/login.html`, 'Log In'
+                `${base}/login.html`, 'Log In'
             ));
         }
 
@@ -122,8 +129,8 @@ app.get('/api/fab-leads/activate', async (req, res) => {
 
         return res.send(activateResultPage(
             'Your account is ready! &#127881;',
-            `We have created your free Remnant Exchange account and emailed your login details to <strong>${email}</strong>. Click below to log in — your temporary password is in that email.`,
-            `${process.env.BASE_URL}/login.html?magic=${magicToken}`, 'Log In Now'
+            `We have created your free ${brand} account and emailed your login details to <strong>${email}</strong>. Click below to log in — your temporary password is in that email.`,
+            `${base}/login.html?magic=${magicToken}`, 'Log In Now'
         ));
     } catch (err) {
         console.error('fab-lead activate error:', err);

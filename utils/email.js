@@ -401,16 +401,20 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
     });
 }
 
-async function sendFabLeadIntroEmail(email, businessName, unsubToken) {
+async function sendFabLeadIntroEmail(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
-    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
-    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const baseUrl = opts.baseUrl || process.env.BASE_URL;
+    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
+    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const brand = opts.brand || 'Remnant Exchange';
+    const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
+    const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
     const text = `Hi,
 
 I'm Ming — I used to run a stone fabrication shop here in Massachusetts, so I know firsthand what a pain it is to deal with leftover remnants.
 
-That's why I built Remnant Exchange: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.
+That's why I built ${brand}: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.
 
 It's free and simple — just one click to enroll. No personal information, no credit card required:
 ${activateUrl}
@@ -418,13 +422,13 @@ ${activateUrl}
 If you have any questions, please reply or call me at (617) 606-5840 — happy to help.
 
 Ming Yan
-Remnant Exchange · (617) 606-5840
+${brand} · (617) 606-5840
 
 105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: 'Ming Yan <jianming@remnantexchange.org>',
-        replyTo: 'jianming@remnantexchange.org',
+        from,
+        replyTo,
         to: email,
         subject: 'do you have remnants?',
         text,
@@ -432,26 +436,30 @@ Remnant Exchange · (617) 606-5840
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
                 <p>I'm Ming — I used to run a stone fabrication shop here in Massachusetts, so I know firsthand what a pain it is to deal with leftover remnants.</p>
-                <p>That's why I built Remnant Exchange: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.</p>
+                <p>That's why I built ${brand}: a free platform where fabricators can list their leftover slabs so buyers nearby can find them, find remnants from other shops instead of buying a whole new slab, and keep track of their own inventory.</p>
                 <p>It's free and simple — just one click to enroll. No personal information, no credit card required: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
                 <p>If you have any questions, please reply or call me at (617) 606-5840 — happy to help.</p>
-                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p>Ming Yan<br>${brand} · (617) 606-5840</p>
                 <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
 }
 
-async function sendFabLeadFollowUp1Email(email, businessName, unsubToken) {
+async function sendFabLeadFollowUp1Email(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
-    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
-    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const baseUrl = opts.baseUrl || process.env.BASE_URL;
+    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
+    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const brand = opts.brand || 'Remnant Exchange';
+    const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
+    const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
     const text = `Hi,
 
 I reached out a few days ago — wanted to follow up with a real question: what do you currently do with your leftover slabs?
 
-When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built Remnant Exchange — a free way to list your remnants so buyers nearby can find exactly what you have.
+When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built ${brand} — a free way to list your remnants so buyers nearby can find exactly what you have.
 
 It's free and simple — just one click to enroll. No personal information, no credit card required:
 ${activateUrl}
@@ -459,13 +467,13 @@ ${activateUrl}
 Or just reply and tell me how you handle remnants now — I'm curious.
 
 Ming Yan
-Remnant Exchange · (617) 606-5840
+${brand} · (617) 606-5840
 
 105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: 'Ming Yan <jianming@remnantexchange.org>',
-        replyTo: 'jianming@remnantexchange.org',
+        from,
+        replyTo,
         to: email,
         subject: 'what do you do with your leftover slabs?',
         text,
@@ -473,26 +481,30 @@ Remnant Exchange · (617) 606-5840
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
                 <p>I reached out a few days ago — wanted to follow up with a real question: what do you currently do with your leftover slabs?</p>
-                <p>When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built Remnant Exchange — a free way to list your remnants so buyers nearby can find exactly what you have.</p>
+                <p>When I ran my own shop, mine just piled up in the yard until I sold them cheap or threw them out. That's the whole reason I built ${brand} — a free way to list your remnants so buyers nearby can find exactly what you have.</p>
                 <p>It's free and simple — just one click to enroll. No personal information, no credit card required: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
                 <p>Or just reply and tell me how you handle remnants now — I'm curious.</p>
-                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p>Ming Yan<br>${brand} · (617) 606-5840</p>
                 <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
 }
 
-async function sendFabLeadFollowUp2Email(email, businessName, unsubToken) {
+async function sendFabLeadFollowUp2Email(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
-    const activateUrl = `${process.env.BASE_URL}/api/fab-leads/activate?token=${unsubToken}`;
-    const unsubUrl = `${process.env.BASE_URL}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+    const baseUrl = opts.baseUrl || process.env.BASE_URL;
+    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
+    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const brand = opts.brand || 'Remnant Exchange';
+    const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
+    const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
     const text = `Hi,
 
 This is my last note — I know you're busy.
 
-I built Remnant Exchange because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.
+I built ${brand} because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.
 
 If the timing isn't right, no problem — whenever it makes sense, it's one click to enroll. No personal information, no credit card required:
 ${activateUrl}
@@ -500,13 +512,13 @@ ${activateUrl}
 Either way, if you ever want to talk shop about remnants, call or text me at (617) 606-5840.
 
 Ming Yan
-Remnant Exchange · (617) 606-5840
+${brand} · (617) 606-5840
 
 105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from: 'Ming Yan <jianming@remnantexchange.org>',
-        replyTo: 'jianming@remnantexchange.org',
+        from,
+        replyTo,
         to: email,
         subject: 'last note',
         text,
@@ -514,10 +526,10 @@ Remnant Exchange · (617) 606-5840
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
                 <p>This is my last note — I know you're busy.</p>
-                <p>I built Remnant Exchange because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.</p>
+                <p>I built ${brand} because I ran a fab shop myself and got tired of remnants piling up with no good way to move them. It's free, and it stays free on the base plan.</p>
                 <p>If the timing isn't right, no problem — whenever it makes sense, it's one click to <a href="${activateUrl}" style="color:#2563eb;">create my free account</a> — no personal information, no credit card required.</p>
                 <p>Either way, if you ever want to talk shop about remnants, call or text me at (617) 606-5840.</p>
-                <p>Ming Yan<br>Remnant Exchange · (617) 606-5840</p>
+                <p>Ming Yan<br>${brand} · (617) 606-5840</p>
                 <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
