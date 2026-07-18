@@ -208,8 +208,8 @@ router.post('/leads/:id/create-account', requireIntern, async (req, res) => {
         const contactName = lead.contact_name || lead.business_name;
 
         await run(
-            `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, territory_state_id, added_by_intern_id, source) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?, ?, ?)`,
-            [userId, contactName, lead.business_name, lead.email, passwordHash, lead.phone || null, lead.city || null, stateId, req.user.id, 'intern_lead']
+            `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, state, email_verified, approved, must_change_password, territory_state_id, added_by_intern_id, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, ?, ?, ?)`,
+            [userId, contactName, lead.business_name, lead.email, passwordHash, lead.phone || null, lead.city || null, lead.state || null, stateId, req.user.id, 'intern_lead']
         );
 
         const magicToken = uuidv4();

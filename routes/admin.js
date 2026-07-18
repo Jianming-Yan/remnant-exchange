@@ -29,7 +29,7 @@ const router = express.Router();
 
 router.post('/create-fabricator', requireAdmin, async (req, res) => {
     try {
-        const { name, business_name, email, phone, city } = req.body;
+        const { name, business_name, email, phone, city, state } = req.body;
         if (!name || !business_name || !email) return res.status(400).json({ error: 'Name, business name, and email are required' });
 
         const existing = await get(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
@@ -39,8 +39,8 @@ router.post('/create-fabricator', requireAdmin, async (req, res) => {
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const userId = uuidv4();
 
-        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1)`,
-            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null]);
+        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, city, state, email_verified, approved, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)`,
+            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null, city || null, state || null]);
 
         const magicToken = uuidv4();
         const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -1006,8 +1006,8 @@ router.post('/fabricator-leads/bulk-create', requireAdmin, async (req, res) => {
             const userId = uuidv4();
             const name = lead.contact_name || lead.business_name;
             await run(
-                `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'bulk_imported')`,
-                [userId, name, lead.business_name, lead.email, passwordHash, lead.phone || null, lead.city || null]
+                `INSERT INTO users (id, name, business_name, email, password_hash, phone, city, state, email_verified, approved, must_change_password, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 'bulk_imported')`,
+                [userId, name, lead.business_name, lead.email, passwordHash, lead.phone || null, lead.city || null, lead.state || null]
             );
             await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
             created++;
