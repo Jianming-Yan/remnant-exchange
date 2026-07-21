@@ -55,6 +55,21 @@ async function initSchema() {
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
+    // Self-registration is held here until the applicant clicks the verify link.
+    // Only on verification is a real users row created — so an unverified (e.g. bot)
+    // signup never becomes a registered user. Rows expire via expires_at.
+    await run(`CREATE TABLE IF NOT EXISTS pending_registrations (
+        id TEXT PRIMARY KEY,
+        token TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        phone TEXT,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+
     await run(`CREATE TABLE IF NOT EXISTS states (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,

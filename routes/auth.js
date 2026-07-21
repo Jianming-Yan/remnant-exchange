@@ -35,19 +35,18 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        const userId = uuidv4();
+        // Deferred registration: DO NOT create a users row here. An unverified
+        // signup (e.g. a bot) must never become a registered user. We stash the
+        // signup in pending_registrations and only create the real users row when
+        // the applicant clicks the verify link (see /verify-email below).
         const passwordHash = await bcrypt.hash(password, 10);
-
-        await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, source) VALUES (?, ?, ?, ?, ?, ?, 'self_registered')`,
-            [userId, name, business_name, email.toLowerCase(), passwordHash, phone || null]);
-
-        // Mark fabricator lead as registered if they were in the outreach list
-        await run(`UPDATE fabricator_leads SET registered = 1 WHERE email = ?`, [email.toLowerCase()]).catch(() => {});
-
         const token = uuidv4();
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
-            [uuidv4(), userId, token, 'verify', expires]);
+
+        // Replace any earlier un-verified attempt for this email so a resend works.
+        await run(`DELETE FROM pending_registrations WHERE email = ?`, [email.toLowerCase()]).catch(() => {});
+        await run(`INSERT INTO pending_registrations (id, token, name, business_name, email, password_hash, phone, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), token, name, business_name, email.toLowerCase(), passwordHash, phone || null, expires]);
 
         try {
             await sendVerificationEmail(email, name, token);
@@ -67,9 +66,44 @@ router.get('/verify-email', async (req, res) => {
         const { token } = req.query;
         if (!token) return res.status(400).json({ error: 'Invalid token' });
 
+        // New flow: the signup is waiting in pending_registrations. Clicking the
+        // link is what actually creates the verified users row — so an unverified
+        // signup never becomes a registered user.
+        const pending = await get(`SELECT * FROM pending_registrations WHERE token = ?`, [token]);
+        if (pending) {
+            if (new Date(pending.expires_at) < new Date()) {
+                await run(`DELETE FROM pending_registrations WHERE id = ?`, [pending.id]).catch(() => {});
+                return res.status(400).json({ error: 'Verification link has expired' });
+            }
+
+            // Guard against a duplicate account if two links for the same email are clicked.
+            const already = await get(`SELECT id FROM users WHERE email = ?`, [pending.email]);
+            if (already) {
+                await run(`DELETE FROM pending_registrations WHERE id = ?`, [pending.id]).catch(() => {});
+                return res.redirect('/email-verified.html');
+            }
+
+            const userId = uuidv4();
+            await run(`INSERT INTO users (id, name, business_name, email, password_hash, phone, source, email_verified, approved) VALUES (?, ?, ?, ?, ?, ?, 'self_registered', 1, 1)`,
+                [userId, pending.name, pending.business_name, pending.email, pending.password_hash, pending.phone || null]);
+
+            // Now that the email is proven, mark the matching outreach lead registered.
+            await run(`UPDATE fabricator_leads SET registered = 1 WHERE email = ?`, [pending.email]).catch(() => {});
+            await run(`DELETE FROM pending_registrations WHERE id = ?`, [pending.id]).catch(() => {});
+
+            const user = await get(`SELECT * FROM users WHERE id = ?`, [userId]);
+            try {
+                await sendAdminNotification(user);
+            } catch (emailErr) {
+                console.error('Admin notification failed:', emailErr.message);
+            }
+            return res.redirect('/email-verified.html');
+        }
+
+        // Backward-compat: tokens issued by the OLD flow point at an already-created
+        // users row via email_tokens. Keep honoring those until they age out.
         const record = await get(`SELECT * FROM email_tokens WHERE token = ? AND type = 'verify'`, [token]);
         if (!record) return res.status(400).json({ error: 'Invalid or expired verification link' });
-
         if (new Date(record.expires_at) < new Date()) {
             return res.status(400).json({ error: 'Verification link has expired' });
         }
