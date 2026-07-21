@@ -214,6 +214,9 @@ app.use((err, req, res, next) => {
 async function expireListings() {
     try {
         await run(`UPDATE listings SET status = 'expired' WHERE status = 'active' AND expires_at < datetime('now')`);
+        // Sweep abandoned self-registrations whose verify link expired unclicked
+        // (bots and drop-offs). These never became users; just clear the pending rows.
+        await run(`DELETE FROM pending_registrations WHERE expires_at < datetime('now')`).catch(() => {});
     } catch (err) {
         console.error('Expiry job error:', err);
     }
