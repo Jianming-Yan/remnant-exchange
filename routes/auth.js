@@ -9,7 +9,15 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
     try {
-        const { name, business_name, email, password, phone } = req.body;
+        const { name, business_name, email, password, phone, company_website } = req.body;
+
+        // Honeypot: the hidden company_website field is invisible to real users, so any
+        // value means an automated bot filled every field. Return a fake success (no
+        // account created) so the bot thinks it worked and doesn't retry/adapt.
+        if (company_website) {
+            console.log(`[honeypot] blocked bot registration: email=${(email || '').toLowerCase()} name="${name || ''}"`);
+            return res.status(200).json({ message: 'Registration successful. Please check your email to verify your account.' });
+        }
 
         if (!name || !business_name || !email || !password) {
             return res.status(400).json({ error: 'All fields are required' });
