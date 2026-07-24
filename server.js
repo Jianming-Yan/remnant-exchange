@@ -33,6 +33,7 @@ app.set('trust proxy', true); // behind Cloudflare + Render, so req.protocol/hos
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // activation confirm form posts urlencoded
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -42,10 +43,44 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/intern', require('./routes/intern'));
 app.use('/api/contractor', require('./routes/contractor'));
 
-// Fabricator lead unsubscribe (public, no auth)
+// Fabricator lead unsubscribe (public, no auth).
+//
+// TWO STEPS ON PURPOSE — same reason as the activate endpoint below. A GET that
+// set unsubscribed=1 could be triggered by email link scanners (Safe Links etc.)
+// pre-fetching the link, silently unsubscribing leads who never asked — which
+// would quietly suppress future sends. Scanners fetch URLs (GET) but don't submit
+// forms (POST), so: GET shows a confirm page; the button POSTs to unsubscribe.
+// No List-Unsubscribe header points here (body link only), so there's no RFC 8058
+// one-click flow to preserve. A single confirm page + button is CAN-SPAM compliant.
 app.get('/api/fab-leads/unsubscribe', async (req, res) => {
     try {
+        const { base } = activateContext(req);
         const { token } = req.query;
+        if (!token) return res.status(400).send('Invalid link');
+        const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
+        if (!lead) return res.status(404).send('Link not found');
+        if (lead.unsubscribed) {
+            return res.send(`<html><body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1a1a1a;">
+                <h2>You're already unsubscribed</h2>
+                <p style="color:#64748b;">You will not receive any more emails from Remnant Exchange.</p>
+            </body></html>`);
+        }
+        res.send(`<html><body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1a1a1a;line-height:1.6;padding:0 16px;">
+            <h2>Unsubscribe from Remnant Exchange?</h2>
+            <p style="color:#64748b;">Click below to stop receiving emails at <strong>${(lead.email || '').toLowerCase()}</strong>.</p>
+            <form method="POST" action="${base}/api/fab-leads/unsubscribe?token=${encodeURIComponent(token)}" style="margin-top:28px;">
+                <button type="submit" style="background:#dc2626;color:white;padding:12px 28px;border:none;border-radius:6px;font-weight:bold;font-size:15px;cursor:pointer;">Unsubscribe me</button>
+            </form>
+        </body></html>`);
+    } catch (err) {
+        console.error('fab-lead unsubscribe (GET) error:', err);
+        res.status(500).send('Error');
+    }
+});
+
+app.post('/api/fab-leads/unsubscribe', async (req, res) => {
+    try {
+        const token = req.query.token || (req.body && req.body.token);
         if (!token) return res.status(400).send('Invalid link');
         const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
         if (!lead) return res.status(404).send('Link not found');
@@ -55,7 +90,7 @@ app.get('/api/fab-leads/unsubscribe', async (req, res) => {
             <p style="color:#64748b;">You will not receive any more emails from Remnant Exchange.<br>We appreciate your time and wish you all the best.</p>
         </body></html>`);
     } catch (err) {
-        console.error('fab-lead unsubscribe error:', err);
+        console.error('fab-lead unsubscribe (POST) error:', err);
         res.status(500).send('Error');
     }
 });
@@ -72,23 +107,77 @@ function activateResultPage(title, bodyHtml, ctaUrl, ctaLabel) {
     </body></html>`;
 }
 
-// Fabricator lead one-click account activation (public, no auth).
-// Cold-outreach leads already have their business name/email/phone/city in
-// fabricator_leads, so the "Create Your Free Account" button provisions the
-// account straight from the lead record and emails a temp password — no form.
+// Fabricator lead account activation (public, no auth).
+//
+// TWO STEPS ON PURPOSE — do NOT collapse this back into a single GET that creates
+// the account. Corporate email security scanners (Microsoft Defender Safe Links,
+// Proofpoint, Mimecast, antivirus) automatically PRE-FETCH every link in an email.
+// When account creation lived on the GET, those scanners silently "activated"
+// leads who never clicked: as of 2026-07-23, 63% of lead_activated accounts were
+// created <30s after send and 100% never logged in or posted a listing — they were
+// bots, not people (George's calls confirmed 3/3 "registered" leads had no idea).
+// Scanners fetch URLs (GET) but do not SUBMIT FORMS (POST), so:
+//   GET  -> shows a confirm page with a button (no mutation, safe to pre-fetch)
+//   POST -> the human clicked the button; provisions the account for real.
+function activateContext(req) {
+    // Build links from the REQUEST host so a click on a remnanttrading.com email
+    // stays on remnanttrading.com (matching from-domain + link-domain). Falls back
+    // to BASE_URL if the host header is somehow missing.
+    const base = req.get('host') ? `${req.protocol}://${req.get('host')}` : process.env.BASE_URL;
+    const brand = /remnanttrading/i.test(req.get('host') || '') ? 'Remnant Trading' : 'Remnant Exchange';
+    return { base, brand };
+}
+
+function activateConfirmPage(base, token, email, brand) {
+    return `<html><body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;text-align:center;color:#1a1a1a;line-height:1.6;padding:0 16px;">
+        <h2>Activate your free ${brand} account</h2>
+        <p style="color:#64748b;">One click creates your free account for <strong>${email}</strong> — no form to fill out, no credit card.</p>
+        <form method="POST" action="${base}/api/fab-leads/activate?token=${encodeURIComponent(token)}" style="margin-top:28px;">
+            <button type="submit" style="background:#2563eb;color:white;padding:12px 28px;border:none;border-radius:6px;font-weight:bold;font-size:15px;cursor:pointer;">Create my free account &rarr;</button>
+        </form>
+    </body></html>`;
+}
+
+// Step 1 (GET): SAFE — no account is created here. Renders the confirm page (or a
+// login prompt if the account already exists). Safe for link scanners to pre-fetch.
 app.get('/api/fab-leads/activate', async (req, res) => {
     try {
-        // Build links from the REQUEST host so a click on a remnanttrading.com email
-        // stays on remnanttrading.com (matching from-domain + link-domain). Falls back
-        // to BASE_URL if the host header is somehow missing.
-        const base = req.get('host') ? `${req.protocol}://${req.get('host')}` : process.env.BASE_URL;
-        const brand = /remnanttrading/i.test(req.get('host') || '') ? 'Remnant Trading' : 'Remnant Exchange';
-
+        const { base, brand } = activateContext(req);
         const { token } = req.query;
         if (!token) return res.redirect(`${base}/register.html`);
 
         const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
         // Unknown token (e.g. admin-monitor copy or forwarded/edited link) -> normal signup form.
+        if (!lead) return res.redirect(`${base}/register.html`);
+
+        const email = (lead.email || '').toLowerCase();
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email]);
+        if (existing) {
+            return res.send(activateResultPage(
+                'You already have an account',
+                `An account for <strong>${email}</strong> already exists. Log in below — or use "Forgot password" on the login page if you need to reset it.`,
+                `${base}/login.html`, 'Log In'
+            ));
+        }
+        return res.send(activateConfirmPage(base, token, email, brand));
+    } catch (err) {
+        console.error('fab-lead activate (GET) error:', err);
+        res.status(500).send(activateResultPage(
+            'Something went wrong',
+            'Please register directly instead.',
+            `${process.env.BASE_URL}/register.html`, 'Register'
+        ));
+    }
+});
+
+// Step 2 (POST): the human clicked "Create my free account". Provision for real.
+app.post('/api/fab-leads/activate', async (req, res) => {
+    try {
+        const { base, brand } = activateContext(req);
+        const token = req.query.token || (req.body && req.body.token);
+        if (!token) return res.redirect(`${base}/register.html`);
+
+        const lead = await get(`SELECT * FROM fabricator_leads WHERE unsubscribe_token = ?`, [token]);
         if (!lead) return res.redirect(`${base}/register.html`);
 
         const email = (lead.email || '').toLowerCase();
@@ -133,7 +222,7 @@ app.get('/api/fab-leads/activate', async (req, res) => {
             `${base}/login.html?magic=${magicToken}`, 'Log In Now'
         ));
     } catch (err) {
-        console.error('fab-lead activate error:', err);
+        console.error('fab-lead activate (POST) error:', err);
         res.status(500).send(activateResultPage(
             'Something went wrong',
             'We could not activate your account automatically. Please register directly instead.',
