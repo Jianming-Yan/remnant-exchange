@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireIntern } = require('../middleware/auth');
-const { sendIntroductionEmail, sendTempPasswordEmail } = require('../utils/email');
+const { sendIntroductionEmail, sendTempPasswordEmail, sendInternIntroEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -255,6 +255,43 @@ router.post('/leads/:id/create-account', requireIntern, async (req, res) => {
         res.json({ message: `Account created and credentials sent to ${lead.email}` });
     } catch (err) {
         res.status(500).json({ error: 'Failed to create account: ' + err.message });
+    }
+});
+
+// Send the Remnant Trading intro to a lead, from George's own mailbox
+// (george@remnanttrading.com via Resend -- remnanttrading is Resend-verified, so it
+// sends authenticated; Reply-To routes replies to George's GoDaddy inbox). Marks
+// touch_count/last_sent_at. Personalization is light, so George should still call
+// back to drive the engagement that warms the domain.
+router.post('/leads/:id/send-intro', requireIntern, async (req, res) => {
+    try {
+        const abbrs = await territoryAbbrs(req.user);
+        const terr = abbrs.length ? ` OR state IN (${abbrs.map(() => '?').join(',')})` : '';
+        const lead = await get(
+            `SELECT * FROM fabricator_leads WHERE id = ? AND (added_by_intern_id = ?${terr})`,
+            [req.params.id, req.user.id, ...abbrs]
+        );
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+        if (!lead.email) return res.status(400).json({ error: 'This lead has no email address' });
+
+        let token = lead.unsubscribe_token;
+        if (!token) {
+            token = uuidv4();
+            await run(`UPDATE fabricator_leads SET unsubscribe_token = ? WHERE id = ?`, [token, lead.id]);
+        }
+
+        await sendInternIntroEmail(lead.email, lead.business_name, token, {
+            baseUrl: 'https://remnanttrading.com',
+            from: 'George at Remnant Trading <george@remnanttrading.com>',
+            replyTo: 'george@remnanttrading.com',
+            brand: 'Remnant Trading',
+            senderName: 'George',
+        });
+        await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
+        res.json({ message: `Intro sent to ${lead.email}` });
+    } catch (err) {
+        console.error('intern send-intro error:', err);
+        res.status(500).json({ error: 'Failed to send intro: ' + err.message });
     }
 });
 

@@ -430,7 +430,7 @@ ${brand} · (617) 606-5840
         from,
         replyTo,
         to: email,
-        subject: 'do you have remnants?',
+        subject: opts.subject || 'do you have remnants?',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
@@ -475,7 +475,7 @@ ${brand} · (617) 606-5840
         from,
         replyTo,
         to: email,
-        subject: 'what do you do with your leftover slabs?',
+        subject: opts.subject || 'what do you do with your leftover slabs?',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
@@ -520,7 +520,7 @@ ${brand} · (617) 606-5840
         from,
         replyTo,
         to: email,
-        subject: 'last note',
+        subject: opts.subject || 'last note',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
@@ -766,4 +766,53 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
     });
 }
 
-module.exports = { sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };
+// Intro sent BY an intern (e.g. George) to one of their leads, from the intern's
+// own mailbox/brand. Reads as a 1:1 note (not Ming's broadcast copy). Reply-To is
+// the intern so replies reach them. From/replyTo/baseUrl/brand come from opts so it
+// can go out authenticated as remnanttrading.com (Resend-verified) with the right
+// sender. The activate CTA points at opts.baseUrl (remnanttrading.com serves it).
+async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) {
+    const resend = getResend();
+    const baseUrl = opts.baseUrl || process.env.BASE_URL;
+    const from = opts.from || 'Remnant Trading <ming@remnanttrading.com>';
+    const replyTo = opts.replyTo || 'ming@remnanttrading.com';
+    const brand = opts.brand || 'Remnant Trading';
+    const senderName = opts.senderName || 'George';
+    const phoneLine = opts.phone ? ` or call me at ${opts.phone}` : '';
+    const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
+    const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+
+    const text = `Hi,
+
+This is ${senderName} with ${brand} — we run a free marketplace where stone fabricators list their leftover slab remnants so nearby buyers can find and buy them.
+
+If you've got remnants taking up space, you can list them in about a minute — no cost, no commitment:
+${activateUrl}
+
+Any questions, just reply${phoneLine} — happy to help you get set up.
+
+${senderName}
+${brand}
+
+105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
+
+    await resend.emails.send({
+        from,
+        replyTo,
+        to: email,
+        subject: opts.subject || 'your leftover slabs',
+        text,
+        html: `
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
+                <p>Hi,</p>
+                <p>This is ${senderName} with ${brand} — we run a free marketplace where stone fabricators list their leftover slab remnants so nearby buyers can find and buy them.</p>
+                <p>If you've got remnants taking up space, you can list them in about a minute — no cost, no commitment: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
+                <p>Any questions, just reply${phoneLine} — happy to help you get set up.</p>
+                <p>${senderName}<br>${brand}</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
+            </div>
+        `,
+    });
+}
+
+module.exports = { sendInternIntroEmail, sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };

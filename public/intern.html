@@ -641,6 +641,7 @@
                 <td style="font-size:0.8rem;color:#64748b;max-width:160px;">${l.call_notes ? `<span title="${escAttr(l.call_notes)}">${l.call_notes.length > 40 ? escHtml(l.call_notes.substring(0,40))+'…' : escHtml(l.call_notes)}</span>` : ''}</td>
                 <td>
                     <button class="action-btn" onclick="openLogCall('${l.id}')">${l.call_outcome ? 'Update Call' : 'Log Call'}</button>
+                    ${l.email ? `<button class="action-btn blue" style="margin-left:4px;" onclick="sendLeadIntro('${l.id}', this)">Send Intro</button>` : ''}
                     ${createBtn}
                 </td>
             </tr>`;
@@ -776,6 +777,30 @@
                 alert(data.error || 'Failed to create account');
             }
         } catch { alert('Network error'); }
+    }
+
+    // ---- Send Remnant Trading intro to a lead (from George's mailbox, via platform) ----
+    async function sendLeadIntro(id, btn) {
+        const l = allLeads.find(x => x.id === id);
+        if (!l) return;
+        if (!confirm(`Send the Remnant Trading intro email to ${l.business_name} (${l.email})?`)) return;
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+        try {
+            const res = await fetch(`/api/intern/leads/${id}/send-intro`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (res.ok) {
+                if (btn) { btn.textContent = 'Intro Sent ✓'; btn.style.color = '#16a34a'; btn.disabled = true; }
+            } else {
+                alert(data.error || 'Failed to send intro');
+                if (btn) { btn.disabled = false; btn.textContent = 'Send Intro'; }
+            }
+        } catch {
+            alert('Network error');
+            if (btn) { btn.disabled = false; btn.textContent = 'Send Intro'; }
+        }
     }
 
     loadStates();
