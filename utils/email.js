@@ -766,11 +766,22 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
     });
 }
 
-// Intro sent BY an intern (e.g. George) to one of their leads, from the intern's
-// own mailbox/brand. Reads as a 1:1 note (not Ming's broadcast copy). Reply-To is
-// the intern so replies reach them. From/replyTo/baseUrl/brand come from opts so it
-// can go out authenticated as remnanttrading.com (Resend-verified) with the right
-// sender. The activate CTA points at opts.baseUrl (remnanttrading.com serves it).
+// Shared "who we are / what we do" block, so the intro and the login-help email
+// both fully explain Remnant Trading (registered leads may never have read a word
+// from us). Returns { text, html } paragraphs.
+function internValueBlock(senderName, brand) {
+    return {
+        text: `This is ${senderName} with ${brand}. We run a free online marketplace built specifically for stone fabricators, and I'd like to help you put it to work.
+
+Here's what it does for you: instead of leftover slab remnants piling up and taking space in your shop, you list them on ${brand} — and nearby buyers (other fabricators, contractors, and homeowners) find and buy them. You turn dead inventory into cash, at no cost. And when you need a piece yourself, you can browse other shops' remnants nearby instead of paying for a whole new slab.`,
+        html: `<p>This is ${senderName} with <strong>${brand}</strong>. We run a <strong>free online marketplace built specifically for stone fabricators</strong>, and I'd like to help you put it to work.</p>
+                <p><strong>Here's what it does for you:</strong> instead of leftover slab remnants piling up and taking space in your shop, you list them on ${brand} — and nearby buyers (other fabricators, contractors, and homeowners) find and buy them. You turn dead inventory into cash, at no cost. And when you need a piece yourself, you can browse other shops' remnants nearby instead of paying for a whole new slab.</p>`,
+    };
+}
+
+// Intro sent BY an intern (e.g. George) to a FRESH lead (no account yet). Detailed
+// so it stands on its own. From/replyTo/baseUrl/brand/senderName/phone come from
+// opts so it goes out authenticated as remnanttrading.com with George's identity.
 async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
@@ -778,18 +789,19 @@ async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) 
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Trading';
     const senderName = opts.senderName || 'George';
-    const phoneLine = opts.phone ? ` or call me at ${opts.phone}` : '';
+    const contact = opts.phone ? `reply to this email or call/text me at ${opts.phone}` : 'just reply to this email';
+    const v = internValueBlock(senderName, brand);
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
     const text = `Hi,
 
-This is ${senderName} with ${brand} — we run a free marketplace where stone fabricators list their leftover slab remnants so nearby buyers can find and buy them.
+${v.text}
 
-If you've got remnants taking up space, you can list them in about a minute — no cost, no commitment:
+It's free to list and takes about a minute. Click here to create your free account and post your first remnant:
 ${activateUrl}
 
-Any questions, just reply${phoneLine} — happy to help you get set up.
+Any questions at all, ${contact} — I'm glad to walk you through it.
 
 ${senderName}
 ${brand}
@@ -797,17 +809,15 @@ ${brand}
 105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
 
     await resend.emails.send({
-        from,
-        replyTo,
-        to: email,
-        subject: opts.subject || 'your leftover slabs',
+        from, replyTo, to: email,
+        subject: opts.subject || 'Turn your leftover slab remnants into cash — Remnant Trading',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
-                <p>This is ${senderName} with ${brand} — we run a free marketplace where stone fabricators list their leftover slab remnants so nearby buyers can find and buy them.</p>
-                <p>If you've got remnants taking up space, you can list them in about a minute — no cost, no commitment: <a href="${activateUrl}" style="color:#2563eb;">create my free account</a>.</p>
-                <p>Any questions, just reply${phoneLine} — happy to help you get set up.</p>
+                ${v.html}
+                <p>It's free to list and takes about a minute. <a href="${activateUrl}" style="color:#2563eb;">Create your free account and post your first remnant &rarr;</a></p>
+                <p>Any questions at all, ${contact} — I'm glad to walk you through it.</p>
                 <p>${senderName}<br>${brand}</p>
                 <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
@@ -815,4 +825,50 @@ ${brand}
     });
 }
 
-module.exports = { sendInternIntroEmail, sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };
+// Login-help sent to a REGISTERED lead (account already exists — likely created by
+// a scanner, so they may never have read anything from us). Same full explanation,
+// but the CTA is a one-click magic login (opts.magicToken) instead of sign-up.
+async function sendInternLoginHelpEmail(email, businessName, unsubToken, opts = {}) {
+    const resend = getResend();
+    const baseUrl = opts.baseUrl || process.env.BASE_URL;
+    const from = opts.from || 'Remnant Trading <ming@remnanttrading.com>';
+    const replyTo = opts.replyTo || 'ming@remnanttrading.com';
+    const brand = opts.brand || 'Remnant Trading';
+    const senderName = opts.senderName || 'George';
+    const contact = opts.phone ? `reply to this email or call/text me at ${opts.phone}` : 'just reply to this email';
+    const v = internValueBlock(senderName, brand);
+    const loginUrl = opts.magicToken ? `${baseUrl}/login.html?magic=${opts.magicToken}` : `${baseUrl}/login.html`;
+    const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
+
+    const text = `Hi,
+
+${v.text}
+
+To make it easy, I've already set up a free account for you — no sign-up needed. Just click here to log in and list your first remnant (one click, no password):
+${loginUrl}
+
+It takes about a minute. Any questions at all, ${contact} — I'm glad to walk you through it.
+
+${senderName}
+${brand}
+
+105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
+
+    await resend.emails.send({
+        from, replyTo, to: email,
+        subject: opts.subject || 'Your Remnant Trading account is ready — turn remnants into cash',
+        text,
+        html: `
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
+                <p>Hi,</p>
+                ${v.html}
+                <p><strong>To make it easy, I've already set up a free account for you</strong> — no sign-up needed. <a href="${loginUrl}" style="color:#2563eb;">Log in and list your first remnant &rarr;</a> (one click, no password.)</p>
+                <p>It takes about a minute. Any questions at all, ${contact} — I'm glad to walk you through it.</p>
+                <p>${senderName}<br>${brand}</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
+            </div>
+        `,
+    });
+}
+
+module.exports = { sendInternIntroEmail, sendInternLoginHelpEmail, sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };

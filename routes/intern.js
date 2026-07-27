@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { query, run, get } = require('../database/db');
 const { requireIntern } = require('../middleware/auth');
-const { sendIntroductionEmail, sendTempPasswordEmail, sendInternIntroEmail } = require('../utils/email');
+const { sendIntroductionEmail, sendTempPasswordEmail, sendInternIntroEmail, sendInternLoginHelpEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -280,18 +280,35 @@ router.post('/leads/:id/send-intro', requireIntern, async (req, res) => {
             await run(`UPDATE fabricator_leads SET unsubscribe_token = ? WHERE id = ?`, [token, lead.id]);
         }
 
-        await sendInternIntroEmail(lead.email, lead.business_name, token, {
+        // George's own cell (set on his intern user record — updatable without a deploy).
+        const sender = await get(`SELECT phone FROM users WHERE id = ?`, [req.user.id]);
+        const baseOpts = {
             baseUrl: 'https://remnanttrading.com',
             from: 'George at Remnant Trading <george@remnanttrading.com>',
             replyTo: 'george@remnanttrading.com',
             brand: 'Remnant Trading',
             senderName: 'George',
-        });
+            phone: sender && sender.phone ? sender.phone : null,
+        };
+
+        // Registered lead (account already exists) -> login-help with a one-click magic
+        // login. Fresh lead -> the create-account intro. Same detailed copy either way.
+        const existingUser = await get(`SELECT id FROM users WHERE lower(email) = ?`, [lead.email.toLowerCase()]);
+        if (existingUser) {
+            const magicToken = uuidv4();
+            const magicExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            await run(`DELETE FROM email_tokens WHERE user_id = ? AND type = 'magic-login'`, [existingUser.id]);
+            await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
+                [uuidv4(), existingUser.id, magicToken, 'magic-login', magicExpires]);
+            await sendInternLoginHelpEmail(lead.email, lead.business_name, token, { ...baseOpts, magicToken });
+        } else {
+            await sendInternIntroEmail(lead.email, lead.business_name, token, baseOpts);
+        }
         await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
-        res.json({ message: `Intro sent to ${lead.email}` });
+        res.json({ message: `Email sent to ${lead.email}` });
     } catch (err) {
         console.error('intern send-intro error:', err);
-        res.status(500).json({ error: 'Failed to send intro: ' + err.message });
+        res.status(500).json({ error: 'Failed to send email: ' + err.message });
     }
 });
 
