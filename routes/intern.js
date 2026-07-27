@@ -7,6 +7,19 @@ const { sendIntroductionEmail, sendTempPasswordEmail } = require('../utils/email
 
 const router = express.Router();
 
+// Leads an intern may work = ones they personally added PLUS any master-pool lead
+// in their territory state(s). territory_state_id is a states.id; fabricator_leads.state
+// is a 2-letter abbreviation, so map the id(s) to abbreviations first.
+async function territoryAbbrs(user) {
+    let extra = [];
+    try { extra = user.extra_territories ? JSON.parse(user.extra_territories) : []; } catch (e) { extra = []; }
+    const ids = [user.territory_state_id, ...extra].filter(Boolean);
+    if (!ids.length) return [];
+    const ph = ids.map(() => '?').join(',');
+    const rows = await query(`SELECT abbreviation FROM states WHERE id IN (${ph})`, ids);
+    return rows.map(r => r.abbreviation).filter(Boolean);
+}
+
 router.get('/states', requireIntern, async (req, res) => {
     try {
         const states = await query(`SELECT id, name, abbreviation FROM states ORDER BY name ASC`);
@@ -133,12 +146,27 @@ router.post('/fabricators/:id/send-credentials', requireIntern, async (req, res)
 
 router.get('/leads', requireIntern, async (req, res) => {
     try {
-        const leads = await query(
-            `SELECT * FROM fabricator_leads WHERE added_by_intern_id = ? ORDER BY created_at DESC`,
-            [req.user.id]
-        );
+        const abbrs = await territoryAbbrs(req.user);
+        let leads;
+        if (abbrs.length) {
+            const ph = abbrs.map(() => '?').join(',');
+            // Own-added leads + every master lead in the intern's territory state(s).
+            // Uncalled first so George works down a fresh list; then by business name.
+            leads = await query(
+                `SELECT * FROM fabricator_leads
+                 WHERE added_by_intern_id = ? OR state IN (${ph})
+                 ORDER BY (called_at IS NULL) DESC, business_name ASC`,
+                [req.user.id, ...abbrs]
+            );
+        } else {
+            leads = await query(
+                `SELECT * FROM fabricator_leads WHERE added_by_intern_id = ? ORDER BY created_at DESC`,
+                [req.user.id]
+            );
+        }
         res.json(leads);
     } catch (err) {
+        console.error('intern leads load error:', err);
         res.status(500).json({ error: 'Failed to load leads' });
     }
 });
@@ -168,9 +196,11 @@ router.post('/leads', requireIntern, async (req, res) => {
 
 router.patch('/leads/:id/call', requireIntern, async (req, res) => {
     try {
+        const abbrs = await territoryAbbrs(req.user);
+        const terr = abbrs.length ? ` OR state IN (${abbrs.map(() => '?').join(',')})` : '';
         const lead = await get(
-            `SELECT id FROM fabricator_leads WHERE id = ? AND added_by_intern_id = ?`,
-            [req.params.id, req.user.id]
+            `SELECT id FROM fabricator_leads WHERE id = ? AND (added_by_intern_id = ?${terr})`,
+            [req.params.id, req.user.id, ...abbrs]
         );
         if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
@@ -187,9 +217,11 @@ router.patch('/leads/:id/call', requireIntern, async (req, res) => {
 
 router.post('/leads/:id/create-account', requireIntern, async (req, res) => {
     try {
+        const abbrs = await territoryAbbrs(req.user);
+        const terr = abbrs.length ? ` OR state IN (${abbrs.map(() => '?').join(',')})` : '';
         const lead = await get(
-            `SELECT * FROM fabricator_leads WHERE id = ? AND added_by_intern_id = ?`,
-            [req.params.id, req.user.id]
+            `SELECT * FROM fabricator_leads WHERE id = ? AND (added_by_intern_id = ?${terr})`,
+            [req.params.id, req.user.id, ...abbrs]
         );
         if (!lead) return res.status(404).json({ error: 'Lead not found' });
 

@@ -38,7 +38,7 @@
     <!-- Tabs -->
     <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:24px;">
         <button id="tab-accounts" onclick="switchTab('accounts')" style="padding:10px 24px;border:none;background:none;font-size:0.95rem;font-weight:600;color:#2563eb;border-bottom:2px solid #2563eb;margin-bottom:-2px;cursor:pointer;">Accounts</button>
-        <button id="tab-leads" onclick="switchTab('leads')" style="padding:10px 24px;border:none;background:none;font-size:0.95rem;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">My Leads</button>
+        <button id="tab-leads" onclick="switchTab('leads')" style="padding:10px 24px;border:none;background:none;font-size:0.95rem;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">Leads</button>
     </div>
 
     <!-- Alert box -->
@@ -634,7 +634,7 @@
                 : '';
             return `<tr>
                 <td><strong>${escHtml(l.business_name)}</strong></td>
-                <td style="font-size:0.85rem;color:#64748b;">${escHtml(l.contact_name || '—')}</td>
+                <td style="font-size:0.85rem;color:#64748b;">${escHtml(l.contact_name || '—')}${l.email ? `<div style="font-size:0.75rem;color:#2563eb;word-break:break-all;">${escHtml(l.email)}</div>` : ''}</td>
                 <td>${l.phone ? `<a href="tel:${escHtml(l.phone)}" style="color:#1e293b;text-decoration:none;">${escHtml(l.phone)}</a>` : '<span style="color:#cbd5e1;">—</span>'}</td>
                 <td style="font-size:0.85rem;color:#64748b;">${escHtml([l.city, l.state].filter(Boolean).join(', ') || '—')}</td>
                 <td>${statusHtml}</td>
