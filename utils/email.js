@@ -766,22 +766,17 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
     });
 }
 
-// Shared "who we are / what we do" block, so the intro and the login-help email
-// both fully explain Remnant Trading (registered leads may never have read a word
-// from us). Returns { text, html } paragraphs.
+// Shared, concise "who we are" line — conversational, so the emails read as a
+// personal note (which lands in Primary) rather than a marketing blast (Promotions).
 function internValueBlock(senderName, brand) {
-    return {
-        text: `This is ${senderName} with ${brand}. We run a free online marketplace built specifically for stone fabricators, and I'd like to help you put it to work.
-
-Here's what it does for you: instead of leftover slab remnants piling up and taking space in your shop, you list them on ${brand} — and nearby buyers (other fabricators, contractors, and homeowners) find and buy them. You turn dead inventory into cash, at no cost. And when you need a piece yourself, you can browse other shops' remnants nearby instead of paying for a whole new slab.`,
-        html: `<p>This is ${senderName} with <strong>${brand}</strong>. We run a <strong>free online marketplace built specifically for stone fabricators</strong>, and I'd like to help you put it to work.</p>
-                <p><strong>Here's what it does for you:</strong> instead of leftover slab remnants piling up and taking space in your shop, you list them on ${brand} — and nearby buyers (other fabricators, contractors, and homeowners) find and buy them. You turn dead inventory into cash, at no cost. And when you need a piece yourself, you can browse other shops' remnants nearby instead of paying for a whole new slab.</p>`,
-    };
+    const line = `This is ${senderName} with ${brand}. We're a free marketplace where stone fabricators sell their leftover slab remnants to nearby buyers — so instead of remnants piling up in your shop, you turn them into cash.`;
+    return { text: line, html: `<p>${line}</p>` };
 }
 
-// Intro sent BY an intern (e.g. George) to a FRESH lead (no account yet). Detailed
-// so it stands on its own. From/replyTo/baseUrl/brand/senderName/phone come from
-// opts so it goes out authenticated as remnanttrading.com with George's identity.
+// Intro sent BY an intern (e.g. George) to a FRESH lead (no account yet). Short and
+// personal (George calls first, so it's reinforcement, not first-contact) — reads
+// like 1:1 mail to stay out of Promotions. Throws on a Resend error so a failed send
+// surfaces to the caller instead of a false success.
 async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
@@ -789,7 +784,7 @@ async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) 
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Trading';
     const senderName = opts.senderName || 'George';
-    const contact = opts.phone ? `reply to this email or call/text me at ${opts.phone}` : 'just reply to this email';
+    const contact = opts.phone ? `reply or call/text me at ${opts.phone}` : 'just reply to this email';
     const v = internValueBlock(senderName, brand);
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
@@ -798,36 +793,36 @@ async function sendInternIntroEmail(email, businessName, unsubToken, opts = {}) 
 
 ${v.text}
 
-It's free to list and takes about a minute. Click here to create your free account and post your first remnant:
-${activateUrl}
+If you've got a few sitting around, you can list them in about a minute here: ${activateUrl}
 
-Any questions at all, ${contact} — I'm glad to walk you through it.
+Any questions, ${contact} — happy to help.
 
 ${senderName}
 ${brand}
 
-105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
+105 Chapman Street, Canton, MA 02021. Unsubscribe: ${unsubUrl}`;
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
         from, replyTo, to: email,
-        subject: opts.subject || 'Turn your leftover slab remnants into cash — Remnant Trading',
+        subject: opts.subject || 'your leftover slabs',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
                 ${v.html}
-                <p>It's free to list and takes about a minute. <a href="${activateUrl}" style="color:#2563eb;">Create your free account and post your first remnant &rarr;</a></p>
-                <p>Any questions at all, ${contact} — I'm glad to walk you through it.</p>
+                <p>If you've got a few sitting around, you can <a href="${activateUrl}" style="color:#2563eb;">list them here</a> — takes about a minute.</p>
+                <p>Any questions, ${contact} — happy to help.</p>
                 <p>${senderName}<br>${brand}</p>
-                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
+    if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
-// Login-help sent to a REGISTERED lead (account already exists — likely created by
-// a scanner, so they may never have read anything from us). Same full explanation,
+// Login-help sent to a REGISTERED lead (account already exists). Same personal tone,
 // but the CTA is a one-click magic login (opts.magicToken) instead of sign-up.
+// Throws on a Resend error so a failed send surfaces instead of a false success.
 async function sendInternLoginHelpEmail(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
@@ -835,7 +830,7 @@ async function sendInternLoginHelpEmail(email, businessName, unsubToken, opts = 
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Trading';
     const senderName = opts.senderName || 'George';
-    const contact = opts.phone ? `reply to this email or call/text me at ${opts.phone}` : 'just reply to this email';
+    const contact = opts.phone ? `reply or call/text me at ${opts.phone}` : 'just reply to this email';
     const v = internValueBlock(senderName, brand);
     const loginUrl = opts.magicToken ? `${baseUrl}/login.html?magic=${opts.magicToken}` : `${baseUrl}/login.html`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
@@ -844,31 +839,31 @@ async function sendInternLoginHelpEmail(email, businessName, unsubToken, opts = 
 
 ${v.text}
 
-To make it easy, I've already set up a free account for you — no sign-up needed. Just click here to log in and list your first remnant (one click, no password):
-${loginUrl}
+I've already set up a free account for you — nothing to sign up for. Just log in here and add your first remnant (one click, no password): ${loginUrl}
 
-It takes about a minute. Any questions at all, ${contact} — I'm glad to walk you through it.
+Any questions, ${contact} — happy to walk you through it.
 
 ${senderName}
 ${brand}
 
-105 Chapman Street, Canton, MA 02021. Not interested? Unsubscribe: ${unsubUrl}`;
+105 Chapman Street, Canton, MA 02021. Unsubscribe: ${unsubUrl}`;
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
         from, replyTo, to: email,
-        subject: opts.subject || 'Your Remnant Trading account is ready — turn remnants into cash',
+        subject: opts.subject || 'your Remnant Trading account',
         text,
         html: `
             <div style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.6;max-width:560px;">
                 <p>Hi,</p>
                 ${v.html}
-                <p><strong>To make it easy, I've already set up a free account for you</strong> — no sign-up needed. <a href="${loginUrl}" style="color:#2563eb;">Log in and list your first remnant &rarr;</a> (one click, no password.)</p>
-                <p>It takes about a minute. Any questions at all, ${contact} — I'm glad to walk you through it.</p>
+                <p>I've already set up a free account for you — nothing to sign up for. Just <a href="${loginUrl}" style="color:#2563eb;">log in here</a> and add your first remnant (one click, no password).</p>
+                <p>Any questions, ${contact} — happy to walk you through it.</p>
                 <p>${senderName}<br>${brand}</p>
-                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. Not interested? <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
+                <p style="color:#94a3b8;font-size:12px;margin-top:20px;">105 Chapman Street, Canton, MA 02021. <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe</a>.</p>
             </div>
         `,
     });
+    if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 module.exports = { sendInternIntroEmail, sendInternLoginHelpEmail, sendVerificationEmail, sendAdminNotification, sendApprovalEmail, sendRejectionEmail, sendContactMessage, sendTempPasswordEmail, sendResetPasswordEmail, sendIntroductionEmail, sendUnsubscribeConfirmationEmail, sendReactivationWelcomeEmail, sendBuyerRequestEmail, sendFabricatorBroadcastEmail, sendContractorBroadcastEmail, sendFabLeadIntroEmail, sendFabLeadFollowUp1Email, sendFabLeadFollowUp2Email, sendFirstListingCongratulationEmail, sendActivationNudgeEmail, sendThankYouActivationEmail, sendUserReminderEmail };
