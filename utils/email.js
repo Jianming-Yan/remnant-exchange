@@ -4,7 +4,7 @@ function getResend() {
     return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM = 'Remnant Exchange <info@remnantexchange.org>';
+const FROM = 'Ming at Remnant Trading <ming@remnanttrading.com>';
 
 async function sendVerificationEmail(email, name, token) {
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
@@ -13,7 +13,7 @@ async function sendVerificationEmail(email, name, token) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'info@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: `Welcome to Remnant Exchange, ${firstName}!`,
         html: `
@@ -132,7 +132,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'info@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: `Welcome to Remnant Exchange — Your Login & Quick Start Guide`,
         html: `
@@ -227,7 +227,7 @@ async function sendIntroductionEmail(email, businessName, unsubscribeToken) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'Hello from Jianming — Remnant Exchange',
         html: `
@@ -266,7 +266,7 @@ async function sendUnsubscribeConfirmationEmail(email, businessName) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'You have been unsubscribed — Remnant Exchange',
         html: `
@@ -296,7 +296,7 @@ async function sendReactivationWelcomeEmail(email, name) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: `Welcome back to Remnant Exchange, ${firstName}!`,
         html: `
@@ -323,7 +323,7 @@ async function sendFabricatorBroadcastEmail(fabricatorEmail, fabricatorName, req
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: fabricatorEmail,
         subject: `Customer Looking for ${request.material} Remnant in ${metroName}`,
         html: `
@@ -361,7 +361,7 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'A free way to source stone remnants for your projects',
         html: `
@@ -404,8 +404,8 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
 async function sendFabLeadIntroEmail(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
-    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
-    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
+    const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Exchange';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
@@ -449,8 +449,8 @@ ${brand} · (617) 606-5840
 async function sendFabLeadFollowUp1Email(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
-    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
-    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
+    const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Exchange';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
@@ -494,8 +494,8 @@ ${brand} · (617) 606-5840
 async function sendFabLeadFollowUp2Email(email, businessName, unsubToken, opts = {}) {
     const resend = getResend();
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
-    const from = opts.from || 'Ming Yan <jianming@remnantexchange.org>';
-    const replyTo = opts.replyTo || 'jianming@remnantexchange.org';
+    const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
+    const replyTo = opts.replyTo || 'ming@remnanttrading.com';
     const brand = opts.brand || 'Remnant Exchange';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
@@ -542,7 +542,7 @@ async function sendFirstListingCongratulationEmail(email, name, businessName) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: `Your first listing is live — Remnant Exchange`,
         html: `
@@ -578,7 +578,7 @@ async function sendActivationNudgeEmail(email, name, businessName) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'Need help posting your first remnant?',
         html: `
@@ -670,7 +670,7 @@ async function sendThankYouActivationEmail(email, name) {
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'Thank you for trusting Remnant Exchange',
         html: `
@@ -720,7 +720,7 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
 
     await resend.emails.send({
         from: FROM,
-        replyTo: 'jianming@remnantexchange.org',
+        replyTo: 'ming@remnanttrading.com',
         to: email,
         subject: 'Your Remnant Exchange account is ready — post your first remnant',
         html: `
