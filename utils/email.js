@@ -15,12 +15,12 @@ async function sendVerificationEmail(email, name, token) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: `Welcome to Remnant Exchange, ${firstName}!`,
+        subject: `Welcome to Remnant Trading, ${firstName}!`,
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <h2 style="color:#2563eb;">Welcome, ${firstName}!</h2>
 
-                <p>Thank you for registering with Remnant Exchange. Please verify your email address to activate your account.</p>
+                <p>Thank you for registering with Remnant Trading. Please verify your email address to activate your account.</p>
 
                 <p><a href="${verifyUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Verify My Email</a></p>
 
@@ -28,7 +28,7 @@ async function sendVerificationEmail(email, name, token) {
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
 
-                <p>Remnant Exchange is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
+                <p>Remnant Trading is a free online platform for stone fabricators to buy, sell, and manage leftover stone remnants. Here is what it does for you:</p>
 
                 <ol style="line-height:2.2;margin:16px 0 16px 20px;">
                     <li><strong>Post your remnants</strong> — list your leftover slabs so other shops and buyers can find and purchase them</li>
@@ -39,7 +39,7 @@ async function sendVerificationEmail(email, name, token) {
                 <p>It's completely free — no software fees, no service charges.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading</span></p>
 
                 <p style="color:#94a3b8;font-size:0.8rem;margin-top:24px;">If you did not register, please ignore this email.</p>
             </div>
@@ -75,10 +75,10 @@ async function sendApprovalEmail(email, name) {
     await resend.emails.send({
         from: FROM,
         to: email,
-        subject: 'Your Remnant Exchange account has been approved!',
+        subject: 'Your Remnant Trading account has been approved!',
         html: `
             <h2>Congratulations, ${name}!</h2>
-            <p>Your fabricator account on Remnant Exchange has been approved.</p>
+            <p>Your fabricator account on Remnant Trading has been approved.</p>
             <p>You can now log in and start posting your stone remnants.</p>
             <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Log In Now</a></p>
         `,
@@ -91,7 +91,7 @@ async function sendRejectionEmail(email, name, reason) {
     await resend.emails.send({
         from: FROM,
         to: email,
-        subject: 'Update on your Remnant Exchange application',
+        subject: 'Update on your Remnant Trading application',
         html: `
             <h2>Hello ${name},</h2>
             <p>We were unable to approve your fabricator account at this time.</p>
@@ -118,7 +118,7 @@ async function sendContactMessage(sellerEmail, sellerName, listingTitle, senderN
             <p><strong>Message:</strong></p>
             <blockquote style="border-left:4px solid #2563eb;margin:0;padding:12px 16px;background:#f0f7ff;">${message.replace(/\n/g, '<br>')}</blockquote>
             <hr>
-            <p style="color:#64748b;font-size:0.85rem;">Reply directly to this email to respond to ${senderName}. This message was sent via Remnant Exchange.</p>
+            <p style="color:#64748b;font-size:0.85rem;">Reply directly to this email to respond to ${senderName}. This message was sent via Remnant Trading.</p>
         `,
     });
 }
@@ -134,11 +134,11 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: `Welcome to Remnant Exchange — Your Login & Quick Start Guide`,
+        subject: `Welcome to Remnant Trading — Your Login & Quick Start Guide`,
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
 
-                <h2 style="color:#2563eb;margin-bottom:4px;">Welcome to Remnant Exchange, ${firstName}!</h2>
+                <h2 style="color:#2563eb;margin-bottom:4px;">Welcome to Remnant Trading, ${firstName}!</h2>
                 <p style="color:#64748b;margin-top:0;">Your free account is ready. Here is everything you need to get started.</p>
 
                 <!-- LOGIN BOX -->
@@ -148,13 +148,13 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
                     <p style="margin:0 0 16px 0;">
                         <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:1rem;">Log In to Your Account →</a>
                     </p>
-                    <p style="margin:0 0 6px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="https://remnantexchange.org/login.html" style="color:#2563eb;">remnantexchange.org</a>:</p>
+                    <p style="margin:0 0 6px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="https://remnanttrading.com/login.html" style="color:#2563eb;">remnanttrading.com</a>:</p>
                     <p style="margin:0 0 4px 0;"><strong>Email:</strong> <span style="font-weight:700;">${email}</span></p>
                     <p style="margin:0;"><strong>Temporary Password:</strong> <span style="font-size:1.3rem;font-weight:700;letter-spacing:3px;color:#1e293b;">${tempPassword}</span></p>
                 </div>
 
                 <!-- HOW TO USE -->
-                <h3 style="color:#1e293b;border-bottom:2px solid #e2e8f0;padding-bottom:8px;">How to Use Remnant Exchange</h3>
+                <h3 style="color:#1e293b;border-bottom:2px solid #e2e8f0;padding-bottom:8px;">How to Use Remnant Trading</h3>
 
                 <!-- POST LISTING -->
                 <div style="margin:20px 0;">
@@ -177,7 +177,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
                     <p style="margin:0 0 6px 0;font-size:1rem;font-weight:700;">🔍 Find Remnants From Other Shops</p>
                     <p style="margin:0 0 8px 0;color:#475569;font-size:0.9rem;">Need a specific stone for a smaller job? Browse remnants near you instead of buying a full slab.</p>
                     <ol style="margin:0;padding-left:20px;color:#475569;font-size:0.9rem;line-height:2;">
-                        <li>Go to <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a></li>
+                        <li>Go to <a href="https://remnanttrading.com" style="color:#2563eb;">remnanttrading.com</a></li>
                         <li>Filter by material, state, and metro area</li>
                         <li>Click on a listing to see photos and details</li>
                         <li>Contact the seller directly through the listing</li>
@@ -191,13 +191,13 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
                     <p style="margin:0 0 6px 0;font-size:1rem;font-weight:700;color:#92400e;">🎯 Can't Find What You Need?</p>
                     <p style="margin:0 0 10px 0;color:#78350f;font-size:0.9rem;">Submit a remnant request and we will search our fabricator network for you — for free.</p>
                     <ol style="margin:0 0 12px 0;padding-left:20px;color:#78350f;font-size:0.9rem;line-height:2;">
-                        <li>Visit <a href="https://remnantexchange.org/request.html" style="color:#d97706;font-weight:600;">remnantexchange.org/request.html</a></li>
+                        <li>Visit <a href="https://remnanttrading.com/request.html" style="color:#d97706;font-weight:600;">remnanttrading.com/request.html</a></li>
                         <li>Describe what you need — material, size, and your location</li>
                         <li>Submit the form — we will reach out to fabricators in your area</li>
                         <li>We will contact you within 1 business day</li>
                     </ol>
                     <p style="margin:0;">
-                        <a href="https://remnantexchange.org/request.html" style="background:#d97706;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:0.9rem;">Submit a Remnant Request →</a>
+                        <a href="https://remnanttrading.com/request.html" style="background:#d97706;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;font-size:0.9rem;">Submit a Remnant Request →</a>
                     </p>
                 </div>
 
@@ -210,11 +210,11 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
 
                 <br>
                 <p style="margin:0;">— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a> · (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                <a href="https://remnanttrading.com" style="color:#2563eb;">RemnantTrading.com</a> · (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Trading · 105 Chapman Street, Canton, MA 02021<br>
                 If you'd rather not be listed, simply ignore this email and no action is needed.</p>
             </div>
         `,
@@ -229,12 +229,12 @@ async function sendIntroductionEmail(email, businessName, unsubscribeToken) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: 'Hello from Jianming — Remnant Exchange',
+        subject: 'Hello from Jianming — Remnant Trading',
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <p>Hi,</p>
 
-                <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am the founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free platform built for stone fabricators.</p>
+                <p>I tried to reach you by phone but missed you. My name is Jianming Yan — I am the founder of <strong><a href="https://remnanttrading.com" style="color:#2563eb;">RemnantTrading.com</a></strong>, a free platform built for stone fabricators.</p>
 
                 <p>Here is what it does:</p>
 
@@ -249,11 +249,11 @@ async function sendIntroductionEmail(email, businessName, unsubscribeToken) {
                 <p>I would love to set up a free account for <strong>${businessName}</strong> and walk you through it. Feel free to call or text me anytime at <strong>(617) 606-5840</strong>, or simply reply to this email.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Trading · 105 Chapman Street, Canton, MA 02021<br>
                 You received this because we thought you might benefit from our platform.<br>
                 <a href="${unsubscribeUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
             </div>
@@ -268,23 +268,23 @@ async function sendUnsubscribeConfirmationEmail(email, businessName) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: 'You have been unsubscribed — Remnant Exchange',
+        subject: 'You have been unsubscribed — Remnant Trading',
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <p>Hi,</p>
 
-                <p>You have been successfully unsubscribed from Remnant Exchange. Your account for <strong>${businessName}</strong> has been disabled and you will not receive any further emails from us.</p>
+                <p>You have been successfully unsubscribed from Remnant Trading. Your account for <strong>${businessName}</strong> has been disabled and you will not receive any further emails from us.</p>
 
-                <p>If you change your mind in the future, you can always create a new account for free at <a href="https://remnantexchange.org/register.html" style="color:#2563eb;">remnantexchange.org</a>.</p>
+                <p>If you change your mind in the future, you can always create a new account for free at <a href="https://remnanttrading.com/register.html" style="color:#2563eb;">remnanttrading.com</a>.</p>
 
                 <p>Thank you for your time, and we wish you all the best.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Trading · 105 Chapman Street, Canton, MA 02021</p>
             </div>
         `,
     });
@@ -298,20 +298,20 @@ async function sendReactivationWelcomeEmail(email, name) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: `Welcome back to Remnant Exchange, ${firstName}!`,
+        subject: `Welcome back to Remnant Trading, ${firstName}!`,
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
                 <h2 style="color:#2563eb;">Welcome back, ${firstName}!</h2>
 
-                <p>Your Remnant Exchange account has been reactivated. You can now log in and start listing your stone remnants.</p>
+                <p>Your Remnant Trading account has been reactivated. You can now log in and start listing your stone remnants.</p>
 
                 <p><a href="${process.env.BASE_URL}/login.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In Now</a></p>
 
                 <p>Feel free to call or text me anytime at <strong>(617) 606-5840</strong> if you need help getting started.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
             </div>
         `,
     });
@@ -342,14 +342,14 @@ async function sendFabricatorBroadcastEmail(fabricatorEmail, fabricatorName, req
 
                 <p>If you have something that matches or comes close, please reply to this email or call me at <strong>(617) 606-5840</strong> and I will connect you with the customer directly.</p>
 
-                <p>If you are not yet listed on <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a>, this is a great time to join — it is completely free and puts your remnants in front of buyers like this one.</p>
+                <p>If you are not yet listed on <a href="https://remnanttrading.com" style="color:#2563eb;">RemnantTrading.com</a>, this is a great time to join — it is completely free and puts your remnants in front of buyers like this one.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Trading · 105 Chapman Street, Canton, MA 02021</p>
             </div>
         `,
     });
@@ -368,12 +368,12 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
                 <p>Hi,</p>
 
-                <p>My name is Jianming Yan — I'm a stone fabricator and founder of <strong><a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a></strong>, a free marketplace where fabricators list their leftover stone remnants.</p>
+                <p>My name is Jianming Yan — I'm a stone fabricator and founder of <strong><a href="https://remnanttrading.com" style="color:#2563eb;">RemnantTrading.com</a></strong>, a free marketplace where fabricators list their leftover stone remnants.</p>
 
                 <p>If you work on kitchen or bathroom projects, you can browse hundreds of discounted granite, marble, quartz, and quartzite remnants near you — full slabs at a fraction of the cost.</p>
 
                 <div style="background:#f0f7ff;border-left:4px solid #2563eb;padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0;">
-                    <p style="margin:0 0 10px 0;font-weight:700;color:#1e3a8a;">Why contractors use Remnant Exchange:</p>
+                    <p style="margin:0 0 10px 0;font-weight:700;color:#1e3a8a;">Why contractors use Remnant Trading:</p>
                     <p style="margin:0 0 6px 0;">✓ <strong>Save 40–70%</strong> vs. buying full slabs</p>
                     <p style="margin:0 0 6px 0;">✓ <strong>Filter by material, size, and location</strong> — find exactly what you need</p>
                     <p style="margin:0 0 6px 0;">✓ <strong>Contact fabricators directly</strong> — no middleman</p>
@@ -381,19 +381,19 @@ async function sendContractorBroadcastEmail(email, businessName, unsubscribeToke
                 </div>
 
                 <p>
-                    <a href="https://remnantexchange.org" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Browse Remnants Near You →</a>
+                    <a href="https://remnanttrading.com" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Browse Remnants Near You →</a>
                 </p>
 
-                <p>If you ever have a specific material or size in mind and can't find it, you can also <a href="https://remnantexchange.org/request.html" style="color:#2563eb;">submit a request</a> and we'll reach out to fabricators in your area on your behalf — for free.</p>
+                <p>If you ever have a specific material or size in mind and can't find it, you can also <a href="https://remnanttrading.com/request.html" style="color:#2563eb;">submit a request</a> and we'll reach out to fabricators in your area on your behalf — for free.</p>
 
                 <p>Feel free to reply or call me anytime at <strong>(617) 606-5840</strong>.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org · (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com · (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021<br>
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Trading · 105 Chapman Street, Canton, MA 02021<br>
                 You received this because you are a contractor in our service area.<br>
                 <a href="${unsubscribeUrl}" style="color:#94a3b8;">Unsubscribe</a></p>
             </div>
@@ -406,7 +406,7 @@ async function sendFabLeadIntroEmail(email, businessName, unsubToken, opts = {})
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
     const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
-    const brand = opts.brand || 'Remnant Exchange';
+    const brand = opts.brand || 'Remnant Trading';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
@@ -451,7 +451,7 @@ async function sendFabLeadFollowUp1Email(email, businessName, unsubToken, opts =
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
     const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
-    const brand = opts.brand || 'Remnant Exchange';
+    const brand = opts.brand || 'Remnant Trading';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
@@ -496,7 +496,7 @@ async function sendFabLeadFollowUp2Email(email, businessName, unsubToken, opts =
     const baseUrl = opts.baseUrl || process.env.BASE_URL;
     const from = opts.from || 'Ming at Remnant Trading <ming@remnanttrading.com>';
     const replyTo = opts.replyTo || 'ming@remnanttrading.com';
-    const brand = opts.brand || 'Remnant Exchange';
+    const brand = opts.brand || 'Remnant Trading';
     const activateUrl = `${baseUrl}/api/fab-leads/activate?token=${unsubToken}`;
     const unsubUrl = `${baseUrl}/api/fab-leads/unsubscribe?token=${unsubToken}`;
 
@@ -544,12 +544,12 @@ async function sendFirstListingCongratulationEmail(email, name, businessName) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: `Your first listing is live — Remnant Exchange`,
+        subject: `Your first listing is live — Remnant Trading`,
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
                 <h2 style="color:#16a34a;">Your listing is live, ${firstName}!</h2>
 
-                <p>Your first remnant is now visible to buyers on <a href="https://remnantexchange.org" style="color:#2563eb;">RemnantExchange.org</a>. Nice work getting it posted.</p>
+                <p>Your first remnant is now visible to buyers on <a href="https://remnanttrading.com" style="color:#2563eb;">RemnantTrading.com</a>. Nice work getting it posted.</p>
 
                 <p><strong>A few tips to get more inquiries:</strong></p>
                 <ul style="line-height:2;margin:12px 0 12px 20px;">
@@ -565,8 +565,8 @@ async function sendFirstListingCongratulationEmail(email, name, businessName) {
                 <p>If you need any help or want me to post listings for you, just reply to this email or call me at <strong>(617) 606-5840</strong>.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
             </div>
         `,
     });
@@ -585,11 +585,11 @@ async function sendActivationNudgeEmail(email, name, businessName) {
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
                 <p>Hi ${firstName},</p>
 
-                <p>You registered on Remnant Exchange a few days ago — thank you! I noticed you have not posted a listing yet, so I wanted to check in.</p>
+                <p>You registered on Remnant Trading a few days ago — thank you! I noticed you have not posted a listing yet, so I wanted to check in.</p>
 
                 <p><strong>Posting your first remnant takes about 2 minutes:</strong></p>
                 <ol style="line-height:2;margin:12px 0 12px 20px;">
-                    <li>Log in at <a href="${process.env.BASE_URL}/login.html" style="color:#2563eb;">remnantexchange.org</a></li>
+                    <li>Log in at <a href="https://remnanttrading.com/login.html" style="color:#2563eb;">remnanttrading.com</a></li>
                     <li>Click <strong>"Post a Remnant"</strong> on your dashboard</li>
                     <li>Fill in material, dimensions, and your location</li>
                     <li>Add a photo and click <strong>Post</strong> — you are done</li>
@@ -602,11 +602,11 @@ async function sendActivationNudgeEmail(email, name, businessName) {
                 </p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Trading · 105 Chapman Street, Canton, MA 02021</p>
             </div>
         `,
     });
@@ -651,9 +651,9 @@ async function sendResetPasswordEmail(email, name, tempPassword) {
     await resend.emails.send({
         from: FROM,
         to: email,
-        subject: 'Your Remnant Exchange password has been reset',
+        subject: 'Your Remnant Trading password has been reset',
         html: `
-            <h2>Password Reset — Remnant Exchange</h2>
+            <h2>Password Reset — Remnant Trading</h2>
             <p>Hi ${name}, here are your login credentials:</p>
             <p><strong>Login Email:</strong> ${email}<br>
             <strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:4px 8px;border-radius:4px;font-size:1.1em;">${tempPassword}</code></p>
@@ -672,12 +672,12 @@ async function sendThankYouActivationEmail(email, name) {
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: 'Thank you for trusting Remnant Exchange',
+        subject: 'Thank you for trusting Remnant Trading',
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
                 <p>Hi ${firstName},</p>
 
-                <p>I'm Jianming — a stone fabricator just like you, and the founder of Remnant Exchange.</p>
+                <p>I'm Jianming — a stone fabricator just like you, and the founder of Remnant Trading.</p>
 
                 <p>I built this platform because I believe hardworking fabricators deserve a better way to manage their remnants — without paying software fees or commissions. Seeing 200+ fabricators register and trust this idea means everything to me.</p>
 
@@ -687,7 +687,7 @@ async function sendThankYouActivationEmail(email, name) {
 
                 <p style="font-weight:700;">It takes 2 minutes to post your first remnant:</p>
                 <ol style="line-height:2;margin:12px 0 12px 20px;">
-                    <li>Log in at <a href="https://remnantexchange.org" style="color:#2563eb;">remnantexchange.org</a></li>
+                    <li>Log in at <a href="https://remnanttrading.com" style="color:#2563eb;">remnanttrading.com</a></li>
                     <li>Click <strong>"Post a Remnant"</strong> on your dashboard</li>
                     <li>Fill in material, size, and a photo — done</li>
                 </ol>
@@ -695,17 +695,17 @@ async function sendThankYouActivationEmail(email, name) {
                 <p>If it feels like too many steps, just reply to this email with your remnant details and I'll post it for you.</p>
 
                 <p>
-                    <a href="https://remnantexchange.org/dashboard.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Post My First Remnant →</a>
+                    <a href="https://remnanttrading.com/dashboard.html" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Post My First Remnant →</a>
                 </p>
 
                 <p>Thank you for being part of this.</p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org · (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com · (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Exchange · 105 Chapman Street, Canton, MA 02021</p>
+                <p style="color:#94a3b8;font-size:0.75rem;">Remnant Trading · 105 Chapman Street, Canton, MA 02021</p>
             </div>
         `,
     });
@@ -722,11 +722,11 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
-        subject: 'Your Remnant Exchange account is ready — post your first remnant',
+        subject: 'Your Remnant Trading account is ready — post your first remnant',
         html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;line-height:1.6;">
                 <p>Hi ${firstName},</p>
-                <p>Your free <strong>Remnant Exchange</strong> account is set up and ready to go — but you have not posted any remnants yet. Here is how to log in and get your first one listed in about 2 minutes.</p>
+                <p>Your free <strong>Remnant Trading</strong> account is set up and ready to go — but you have not posted any remnants yet. Here is how to log in and get your first one listed in about 2 minutes.</p>
 
                 <div style="background:#f0f7ff;border:2px solid #2563eb;border-radius:12px;padding:20px;margin:20px 0;">
                     <p style="margin:0 0 4px 0;font-weight:700;color:#1e3a8a;">Step 1 — Log in</p>
@@ -734,7 +734,7 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
                     <p style="margin:0 0 14px 0;">
                         <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Log In to My Account &rarr;</a>
                     </p>
-                    <p style="margin:0 0 4px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="${process.env.BASE_URL}/login.html" style="color:#2563eb;">remnantexchange.org/login.html</a>:</p>
+                    <p style="margin:0 0 4px 0;font-size:0.85rem;color:#64748b;">Or log in manually at <a href="https://remnanttrading.com/login.html" style="color:#2563eb;">remnanttrading.com/login.html</a>:</p>
                     <p style="margin:0 0 2px 0;"><strong>Email:</strong> ${email}</p>
                     <p style="margin:0;"><strong>Temporary password:</strong> <span style="font-weight:700;letter-spacing:2px;">${tempPassword}</span></p>
                 </div>
@@ -755,11 +755,11 @@ async function sendUserReminderEmail(email, name, tempPassword, magicToken, unsu
                 </p>
 
                 <p>— Jianming Yan<br>
-                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Exchange<br>
-                RemnantExchange.org | (617) 606-5840</span></p>
+                <span style="color:#64748b;font-size:0.9rem;">Founder, Remnant Trading<br>
+                RemnantTrading.com | (617) 606-5840</span></p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Exchange &middot; 105 Chapman Street, Canton, MA 02021<br>
+                <p style="color:#94a3b8;font-size:0.75rem;margin:0;">Remnant Trading &middot; 105 Chapman Street, Canton, MA 02021<br>
                 <a href="${unsubUrl}" style="color:#94a3b8;">Unsubscribe / not interested</a></p>
             </div>
         `,
