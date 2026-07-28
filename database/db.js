@@ -286,6 +286,12 @@ async function initSchema() {
         await run(`ALTER TABLE fabricator_leads ADD COLUMN validated_at TEXT`);
     } catch (e) { /* column already exists */ }
 
+    // Set when an intern sends the intro/login-help from the dashboard (distinct from
+    // last_sent_at, which the bulk broadcasts also set) — powers the "Sent" marker.
+    try {
+        await run(`ALTER TABLE fabricator_leads ADD COLUMN intern_sent_at TEXT`);
+    } catch (e) { /* column already exists */ }
+
     await seedStates();
 }
 

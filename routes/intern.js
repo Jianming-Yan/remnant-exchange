@@ -304,7 +304,7 @@ router.post('/leads/:id/send-intro', requireIntern, async (req, res) => {
         } else {
             await sendInternIntroEmail(lead.email, lead.business_name, token, baseOpts);
         }
-        await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
+        await run(`UPDATE fabricator_leads SET touch_count = touch_count + 1, last_sent_at = datetime('now'), intern_sent_at = datetime('now') WHERE id = ?`, [lead.id]);
         res.json({ message: `Email sent to ${lead.email}` });
     } catch (err) {
         console.error('intern send-intro error:', err);
