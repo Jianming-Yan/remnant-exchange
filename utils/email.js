@@ -130,7 +130,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
         ? `${process.env.BASE_URL}/login.html?magic=${magicToken}`
         : `${process.env.BASE_URL}/login.html`;
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
@@ -219,6 +219,7 @@ async function sendTempPasswordEmail(email, name, tempPassword, magicToken) {
             </div>
         `,
     });
+    if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 async function sendIntroductionEmail(email, businessName, unsubscribeToken) {
