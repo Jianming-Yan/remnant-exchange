@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard â€” Remnant Exchange</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,12 +75,20 @@
                         <input type="text" id="stone_name" placeholder="e.g. Black Galaxy" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Shape *</label>
-                    <select id="shape" onchange="toggleShape(this)">
-                        <option value="rectangular">Rectangular</option>
-                        <option value="lshape">L-Shape</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Shape *</label>
+                        <select id="shape" onchange="toggleShape(this)">
+                            <option value="rectangular">Rectangular</option>
+                            <option value="lshape">L-Shape</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Finish</label>
+                        <select id="finish">
+                            <option value="">Select finish (optional)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -328,6 +337,7 @@
             <div class="detail-item"><label>Shape</label><span>${isL ? 'L-Shape' : 'Rectangular'}</span></div>
             <div class="detail-item"><label>Dimensions</label><span>${dims}</span></div>
             <div class="detail-item"><label>Thickness</label><span>${l.thickness}</span></div>
+            ${l.finish ? `<div class="detail-item"><label>Finish</label><span>${l.finish}</span></div>` : ''}
             ${l.vendor_name ? `<div class="detail-item"><label>Vendor</label><span>${l.vendor_name}</span></div>` : ''}
             ${l.bundle_number ? `<div class="detail-item"><label>Bundle #</label><span>${l.bundle_number}</span></div>` : ''}
             <div class="detail-item"><label>Location</label><span>${l.metro_name}, ${l.state_abbr}</span></div>
@@ -362,6 +372,7 @@
         document.getElementById('material_type').value = l.material_type || '';
         document.getElementById('stone_name').value = l.stone_name || l.color || '';
         document.getElementById('shape').value = l.shape || 'rectangular';
+        document.getElementById('finish').value = l.finish || '';
         document.getElementById('lshapeDims').style.display = l.shape === 'lshape' ? 'flex' : 'none';
         document.getElementById('length').value = l.length || '';
         document.getElementById('width').value = l.width || '';
@@ -423,12 +434,14 @@
     }
 
     async function loadFormData() {
-        const [statesRes, materialsRes] = await Promise.all([
+        const [statesRes, materialsRes, finishesRes] = await Promise.all([
             fetch('/api/listings/states'),
             fetch('/api/listings/materials'),
+            fetch('/api/listings/finishes'),
         ]);
         const states = await statesRes.json();
         const materials = await materialsRes.json();
+        const finishes = await finishesRes.json();
 
         const stateSel = document.getElementById('state_id');
         states.forEach(s => {
@@ -459,6 +472,14 @@
             opt.textContent = m;
             matSel.appendChild(opt);
         });
+
+        const finSel = document.getElementById('finish');
+        finishes.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            finSel.appendChild(opt);
+        });
     }
 
     function previewPhotos(input) {
@@ -486,6 +507,7 @@
         formData.append('material_type', document.getElementById('material_type').value);
         formData.append('stone_name', document.getElementById('stone_name').value);
         formData.append('shape', document.getElementById('shape').value);
+        formData.append('finish', document.getElementById('finish').value);
         formData.append('length', document.getElementById('length').value);
         formData.append('width', document.getElementById('width').value);
         const l2 = document.getElementById('length2').value;

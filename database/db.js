@@ -144,6 +144,10 @@ async function initSchema() {
     } catch (e) { /* column already exists */ }
 
     try {
+        await run(`ALTER TABLE listings ADD COLUMN finish TEXT`);
+    } catch (e) { /* column already exists */ }
+
+    try {
         await run(`ALTER TABLE users ADD COLUMN city TEXT`);
     } catch (e) { /* column already exists */ }
 

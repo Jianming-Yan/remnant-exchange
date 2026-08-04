@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Dark rounded tile so the mark stays visible on both light and dark browser tabs -->
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+
+  <!-- Two remnant pieces, split apart — same mark as the nav logo, simplified for 16px -->
+  <path d="M13,10 L30,10 L25,24 L31,32 L25,40 L30,54 L13,54 Z" fill="#94a3b8"/>
+  <path d="M33,10 L51,10 L51,54 L33,54 L28,40 L34,32 L28,24 Z" fill="#3b82f6"/>
+</svg>

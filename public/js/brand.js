@@ -19,10 +19,22 @@
             });
         });
 
-        // 2) Document title
+        // 2) Wordmark images. The nav icon (logo-icon.svg) has no text so it serves both
+        //    brands, but the full logos spell out EXCHANGE and can't be rewritten as text.
+        document.querySelectorAll('img').forEach(function (img) {
+            var src = img.getAttribute('src') || '';
+            if (/logo-white\.svg$/.test(src)) img.setAttribute('src', src.replace(/logo-white\.svg$/, 'logo-trading-white.svg'));
+            else if (/logo\.svg$/.test(src)) img.setAttribute('src', src.replace(/logo\.svg$/, 'logo-trading.svg'));
+            var alt = img.getAttribute('alt');
+            if (alt && alt.indexOf('Remnant Exchange') !== -1) {
+                img.setAttribute('alt', alt.replace(/Remnant Exchange/g, 'Remnant Trading'));
+            }
+        });
+
+        // 3) Document title
         document.title = document.title.replace(/Remnant Exchange/g, 'Remnant Trading');
 
-        // 3) Body copy — only the full phrase "Remnant Exchange", so email/domain
+        // 4) Body copy — only the full phrase "Remnant Exchange", so email/domain
         //    strings (remnantexchange.org, info@remnantexchange.org) stay intact.
         var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
         var hits = [];

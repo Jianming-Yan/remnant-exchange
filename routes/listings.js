@@ -53,7 +53,7 @@ async function deleteFromCloudinary(url) {
 }
 
 router.get('/', async (req, res) => {
-    const { state, metro, material, search, page = 1 } = req.query;
+    const { state, metro, material, finish, search, page = 1 } = req.query;
     const limit = 24;
     const offset = (parseInt(page) - 1) * limit;
 
@@ -71,6 +71,7 @@ router.get('/', async (req, res) => {
     if (state) { sql += ` AND l.state_id = ?`; params.push(state); }
     if (metro) { sql += ` AND l.metro_id = ?`; params.push(metro); }
     if (material) { sql += ` AND l.material_type = ?`; params.push(material); }
+    if (finish) { sql += ` AND l.finish = ?`; params.push(finish); }
     if (search) {
         sql += ` AND (l.material_type LIKE ? OR l.stone_name LIKE ? OR l.color LIKE ? OR l.description LIKE ?)`;
         params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
@@ -84,11 +85,14 @@ router.get('/', async (req, res) => {
         listing.photos = await query(`SELECT filename FROM listing_photos WHERE listing_id = ? ORDER BY display_order ASC`, [listing.id]);
     }
 
-    let countSql = `SELECT count(*) as cnt FROM listings l WHERE l.status = 'active'`;
+    // Mirror the filters above exactly, including visibility — otherwise the total counts
+    // private listings the browse page never shows and pagination reports phantom pages.
+    let countSql = `SELECT count(*) as cnt FROM listings l WHERE l.status = 'active' AND (l.visibility IS NULL OR l.visibility = 'public')`;
     const countParams = [];
     if (state) { countSql += ` AND l.state_id = ?`; countParams.push(state); }
     if (metro) { countSql += ` AND l.metro_id = ?`; countParams.push(metro); }
     if (material) { countSql += ` AND l.material_type = ?`; countParams.push(material); }
+    if (finish) { countSql += ` AND l.finish = ?`; countParams.push(finish); }
     if (search) {
         countSql += ` AND (l.material_type LIKE ? OR l.stone_name LIKE ? OR l.color LIKE ? OR l.description LIKE ?)`;
         countParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
@@ -124,7 +128,7 @@ router.post('/', requireApprovedFabricator, (req, res, next) => {
 }, async (req, res) => {
     try {
         const { material_type, stone_name, length, width, thickness, state_id, metro_id, description,
-                shape, length2, width2, vendor_name, bundle_number, visibility, remnant_owner } = req.body;
+                shape, length2, width2, vendor_name, bundle_number, visibility, remnant_owner, finish } = req.body;
 
         if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
             return res.status(400).json({ error: 'All required fields must be filled' });
@@ -145,13 +149,14 @@ router.post('/', requireApprovedFabricator, (req, res, next) => {
         const slabShape = shape || 'rectangular';
         const vis = visibility === 'private' ? 'private' : 'public';
 
-        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at, visibility, remnant_owner)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, vendor_name, bundle_number, state_id, metro_id, description, expires_at, visibility, remnant_owner, finish)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, req.user.id, material_type, stone_name, stone_name, slabShape,
              parseFloat(length), parseFloat(width), thickness,
              length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
              vendor_name || null, bundle_number || null,
-             state_id, metro_id, description || null, expiresAt, vis, remnant_owner || null]);
+             state_id, metro_id, description || null, expiresAt, vis, remnant_owner || null,
+             finish || null]);
 
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
@@ -228,7 +233,7 @@ router.put('/:id', requireApprovedFabricator, (req, res, next) => {
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
         const { material_type, stone_name, shape, length, width, thickness, length2, width2,
-                vendor_name, bundle_number, state_id, metro_id, description, visibility, remnant_owner } = req.body;
+                vendor_name, bundle_number, state_id, metro_id, description, visibility, remnant_owner, finish } = req.body;
 
         if (!material_type || !stone_name || !length || !width || !thickness || !state_id || !metro_id) {
             return res.status(400).json({ error: 'All required fields must be filled' });
@@ -243,14 +248,14 @@ router.put('/:id', requireApprovedFabricator, (req, res, next) => {
             length2 = ?, width2 = ?,
             vendor_name = ?, bundle_number = ?,
             state_id = ?, metro_id = ?, description = ?,
-            visibility = ?, remnant_owner = ?
+            visibility = ?, remnant_owner = ?, finish = ?
             WHERE id = ?`,
             [material_type, stone_name, stone_name, slabShape,
              parseFloat(length), parseFloat(width), thickness,
              length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
              vendor_name || null, bundle_number || null,
              state_id, metro_id, description || null,
-             vis, remnant_owner || null,
+             vis, remnant_owner || null, finish || null,
              req.params.id]);
 
         if (req.files && req.files.length > 0) {
@@ -321,8 +326,61 @@ router.get('/states/:stateId/metros', async (req, res) => {
     res.json(metros);
 });
 
+// Full canonical list — for the POST/EDIT form, where every supported material must be
+// offered even if nobody has listed one yet.
+const MATERIALS = ['Granite', 'Marble', 'Quartz', 'Quartzite', 'Travertine', 'Limestone', 'Soapstone', 'Slate', 'Onyx', 'Other'];
+const FINISHES = ['Polished', 'Honed', 'Leathered', 'Brushed', 'Flamed', 'Dual Finish'];
+
 router.get('/materials', (req, res) => {
-    res.json(['Granite', 'Marble', 'Quartz', 'Quartzite', 'Travertine', 'Limestone', 'Soapstone', 'Slate', 'Onyx', 'Other']);
+    res.json(MATERIALS);
+});
+
+router.get('/finishes', (req, res) => {
+    res.json(FINISHES);
+});
+
+// Only materials that actually have an active public listing, with counts — for the BROWSE
+// filter. Offering the full list there produced dead ends: a buyer picked Quartzite, got an
+// empty page, and reasonably concluded the filter was broken (reported by a fabricator
+// 2026-08-04). Ordered by the canonical list so the dropdown stays in a familiar order.
+router.get('/materials/available', async (req, res) => {
+    try {
+        const rows = await query(`
+            SELECT material_type AS material, count(*) AS count
+            FROM listings
+            WHERE status = 'active' AND (visibility IS NULL OR visibility = 'public')
+            GROUP BY material_type`);
+        const counts = new Map(rows.map(r => [r.material, Number(r.count)]));
+        const ordered = MATERIALS.filter(m => counts.has(m)).map(m => ({ material: m, count: counts.get(m) }));
+        // Anything stored that isn't in the canonical list still deserves to be filterable.
+        for (const [material, count] of counts) {
+            if (!MATERIALS.includes(material)) ordered.push({ material, count });
+        }
+        res.json(ordered);
+    } catch (err) {
+        console.error('materials/available error:', err);
+        res.status(500).json({ error: 'Failed to load materials' });
+    }
+});
+
+router.get('/finishes/available', async (req, res) => {
+    try {
+        const rows = await query(`
+            SELECT finish, count(*) AS count
+            FROM listings
+            WHERE status = 'active' AND (visibility IS NULL OR visibility = 'public')
+              AND finish IS NOT NULL AND finish != ''
+            GROUP BY finish`);
+        const counts = new Map(rows.map(r => [r.finish, Number(r.count)]));
+        const ordered = FINISHES.filter(f => counts.has(f)).map(f => ({ finish: f, count: counts.get(f) }));
+        for (const [finish, count] of counts) {
+            if (!FINISHES.includes(finish)) ordered.push({ finish, count });
+        }
+        res.json(ordered);
+    } catch (err) {
+        console.error('finishes/available error:', err);
+        res.status(500).json({ error: 'Failed to load finishes' });
+    }
 });
 
 module.exports = router;

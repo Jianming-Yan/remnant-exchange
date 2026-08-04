@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stone Remnants For Sale â€” Granite, Marble, Quartz | Remnant Exchange</title>
     <meta name="description" content="Find discounted granite, marble, quartz and quartzite stone remnants from verified fabricators near you. Perfect for countertops, backsplashes, and home projects.">
@@ -56,6 +57,9 @@
         </select>
         <select id="filterMaterial">
             <option value="">All Materials</option>
+        </select>
+        <select id="filterFinish">
+            <option value="">All Finishes</option>
         </select>
         <input type="text" id="filterSearch" placeholder="Search color, material...">
         <button class="btn btn-primary" onclick="applyFilters()">Search</button>
@@ -179,16 +183,33 @@
         });
     }
 
+    // Only offer materials/finishes that actually have listings, with counts. Offering the
+    // full catalogue here just produces empty result pages that look like a broken filter.
     async function loadMaterials() {
-        const res = await fetch('/api/listings/materials');
-        const materials = await res.json();
+        const [matRes, finRes] = await Promise.all([
+            fetch('/api/listings/materials/available'),
+            fetch('/api/listings/finishes/available'),
+        ]);
+        const materials = await matRes.json();
+        const finishes = await finRes.json();
+
         const sel = document.getElementById('filterMaterial');
         materials.forEach(m => {
             const opt = document.createElement('option');
-            opt.value = m;
-            opt.textContent = m;
+            opt.value = m.material;
+            opt.textContent = `${m.material} (${m.count})`;
             sel.appendChild(opt);
         });
+
+        const finSel = document.getElementById('filterFinish');
+        finishes.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.finish;
+            opt.textContent = `${f.finish} (${f.count})`;
+            finSel.appendChild(opt);
+        });
+        // Nothing has a finish recorded yet — hide the control rather than show a dead dropdown.
+        finSel.style.display = finishes.length ? '' : 'none';
     }
 
     async function loadListings(page = 1) {
@@ -274,10 +295,12 @@
         const state = document.getElementById('filterState').value;
         const metro = document.getElementById('filterMetro').value;
         const material = document.getElementById('filterMaterial').value;
+        const finish = document.getElementById('filterFinish').value;
         const search = document.getElementById('filterSearch').value.trim();
         if (state) currentFilters.state = state;
         if (metro) currentFilters.metro = metro;
         if (material) currentFilters.material = material;
+        if (finish) currentFilters.finish = finish;
         if (search) currentFilters.search = search;
         loadListings(1);
     }
@@ -301,6 +324,7 @@
             <div class="detail-item"><label>Shape</label><span>${isL ? 'L-Shape' : 'Rectangular'}</span></div>
             <div class="detail-item"><label>Dimensions</label><span>${dims}</span></div>
             <div class="detail-item"><label>Thickness</label><span>${listing.thickness}</span></div>
+            ${listing.finish ? `<div class="detail-item"><label>Finish</label><span>${listing.finish}</span></div>` : ''}
             ${listing.vendor_name ? `<div class="detail-item"><label>Vendor</label><span>${listing.vendor_name}</span></div>` : ''}
             ${listing.bundle_number ? `<div class="detail-item"><label>Bundle #</label><span>${listing.bundle_number}</span></div>` : ''}
             <div class="detail-item"><label>Location</label><span>${listing.metro_name}, ${listing.state_name}</span></div>
