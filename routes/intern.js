@@ -249,10 +249,23 @@ router.post('/leads/:id/create-account', requireIntern, async (req, res) => {
         await run(`INSERT INTO email_tokens (id, user_id, token, type, expires_at) VALUES (?, ?, ?, ?, ?)`,
             [uuidv4(), userId, magicToken, 'magic-login', magicExpires]);
 
-        await sendTempPasswordEmail(lead.email, contactName, tempPassword, magicToken);
+        // send_email=false creates the account silently, for when the caller intends to write
+        // their own 1:1 intro+credentials note. Without this the platform welcome goes out too
+        // and the shop receives two different sets of login instructions.
+        const sendEmail = req.body?.send_email !== false;
+        if (sendEmail) {
+            await sendTempPasswordEmail(lead.email, contactName, tempPassword, magicToken);
+        }
         await run(`UPDATE fabricator_leads SET registered = 1 WHERE id = ?`, [lead.id]);
 
-        res.json({ message: `Account created and credentials sent to ${lead.email}` });
+        res.json({
+            message: sendEmail
+                ? `Account created and credentials sent to ${lead.email}`
+                : `Account created for ${lead.email}. No email sent — send them your own note.`,
+            email: lead.email,
+            temp_password: tempPassword,
+            email_sent: sendEmail,
+        });
     } catch (err) {
         res.status(500).json({ error: 'Failed to create account: ' + err.message });
     }

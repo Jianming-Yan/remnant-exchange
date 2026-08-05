@@ -228,6 +228,22 @@
     </div>
 </div>
 
+<!-- Create Account Modal -->
+<div id="createAcctModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;overflow-y:auto;" onclick="if(event.target===this)closeCreateAcct()">
+    <div style="background:white;border-radius:16px;max-width:460px;margin:80px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
+        <button onclick="closeCreateAcct()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&#10005;</button>
+        <h2 style="margin-bottom:4px;">Create Account</h2>
+        <p id="createAcctBiz" style="color:#64748b;font-size:0.875rem;margin-bottom:20px;"></p>
+        <div id="createAcctAlert" style="display:none;margin-bottom:16px;"></div>
+        <div id="createAcctChoices">
+            <p style="font-size:0.875rem;color:#475569;margin-bottom:16px;">The account is created either way. The only question is whether the platform sends its automatic welcome email.</p>
+            <button class="btn btn-primary" style="width:100%;padding:12px;margin-bottom:10px;" onclick="doCreateAcct(true)">Create &amp; send welcome email</button>
+            <button class="btn btn-secondary" style="width:100%;padding:12px;" onclick="doCreateAcct(false)">Create only &mdash; I'll email them myself</button>
+            <p style="font-size:0.78rem;color:#94a3b8;margin-top:14px;line-height:1.5;">Pick <strong>Create only</strong> when you plan to write your own intro + login note, so the shop does not receive two different sets of instructions.</p>
+        </div>
+    </div>
+</div>
+
 <!-- Fabricator Detail Modal -->
 <div id="fabModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;" onclick="if(event.target===this)closeFabModal()">
     <div style="background:white;border-radius:16px;max-width:560px;margin:60px auto;padding:32px;position:relative;" onclick="event.stopPropagation()">
@@ -771,22 +787,56 @@
     }
 
     // ---- Create account from lead ----
-    async function createLeadAccount(id) {
+    // Two paths: with the platform welcome email, or silently so the caller can send their
+    // own 1:1 intro + credentials note instead.
+    let createAcctLeadId = null;
+
+    function createLeadAccount(id) {
         const lead = allLeads.find(l => l.id === id);
-        if (!confirm(`Create a Remnant Exchange account for ${lead ? lead.business_name : id} and send them login credentials?`)) return;
+        createAcctLeadId = id;
+        document.getElementById('createAcctBiz').textContent =
+            lead ? `${lead.business_name} — ${lead.email}` : id;
+        document.getElementById('createAcctAlert').style.display = 'none';
+        document.getElementById('createAcctChoices').style.display = 'block';
+        document.getElementById('createAcctModal').style.display = 'block';
+    }
+
+    function closeCreateAcct() {
+        document.getElementById('createAcctModal').style.display = 'none';
+        createAcctLeadId = null;
+    }
+
+    async function doCreateAcct(sendEmail) {
+        if (!createAcctLeadId) return;
+        const alertBox = document.getElementById('createAcctAlert');
+        const choices = document.getElementById('createAcctChoices');
+        choices.style.display = 'none';
+        alertBox.className = 'alert';
+        alertBox.textContent = 'Creating...';
+        alertBox.style.display = 'block';
         try {
-            const res = await fetch(`/api/intern/leads/${id}/create-account`, {
+            const res = await fetch(`/api/intern/leads/${createAcctLeadId}/create-account`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ send_email: sendEmail }),
             });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message);
+                alertBox.className = 'alert alert-success';
+                alertBox.innerHTML = data.email_sent
+                    ? escHtml(data.message)
+                    : `${escHtml(data.message)}<br><br><strong>Login email:</strong> ${escHtml(data.email)}<br><strong>Temp password:</strong> ${escHtml(data.temp_password)}`;
                 await loadLeads();
             } else {
-                alert(data.error || 'Failed to create account');
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = data.error || 'Failed to create account';
+                choices.style.display = 'block';
             }
-        } catch { alert('Network error'); }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Network error';
+            choices.style.display = 'block';
+        }
     }
 
     // ---- Send Remnant Trading intro to a lead (from George's mailbox, via platform) ----
