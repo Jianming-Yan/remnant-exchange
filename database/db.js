@@ -131,6 +131,11 @@ async function initSchema() {
         await run(`ALTER TABLE listings ADD COLUMN is_seeded INTEGER NOT NULL DEFAULT 0`);
     } catch (e) { /* column already exists */ }
 
+    // Throttles POST /api/auth/resend-verification so one address cannot be mail-bombed.
+    try {
+        await run(`ALTER TABLE pending_registrations ADD COLUMN last_sent_at TEXT`);
+    } catch (e) { /* column already exists */ }
+
     try {
         await run(`ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`);
     } catch (e) { /* column already exists */ }

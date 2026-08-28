@@ -11,7 +11,7 @@ async function sendVerificationEmail(email, name, token) {
     const firstName = name.split(' ')[0];
     const resend = getResend();
 
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
         from: FROM,
         replyTo: 'ming@remnanttrading.com',
         to: email,
@@ -24,7 +24,7 @@ async function sendVerificationEmail(email, name, token) {
 
                 <p><a href="${verifyUrl}" style="background:#2563eb;color:white;padding:12px 28px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Verify My Email</a></p>
 
-                <p style="color:#64748b;font-size:0.85rem;">This link expires in 24 hours.</p>
+                <p style="color:#64748b;font-size:0.85rem;">This link expires in 7 days.</p>
 
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
 
@@ -45,6 +45,10 @@ async function sendVerificationEmail(email, name, token) {
             </div>
         `,
     });
+
+    // Throw instead of resolving silently: a swallowed failure here told the
+    // applicant "check your email" for a message that was never sent.
+    if (error) throw new Error(error.message || JSON.stringify(error));
 }
 
 async function sendAdminNotification(user) {

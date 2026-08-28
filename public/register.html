@@ -212,6 +212,47 @@
         }
     });
 
+    // Builds the "resend verification email" button shown after a signup, so a
+    // verification email lost to spam or a failed send is not a dead end.
+    function resendButton(label) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-primary btn-sm';
+        btn.style.marginLeft = '12px';
+        btn.textContent = label || 'Resend verification email';
+        btn.addEventListener('click', () => resendVerification(btn));
+        return btn;
+    }
+
+    async function resendVerification(btn) {
+        const alertBox = document.getElementById('alertBox');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+            const res = await fetch('/api/auth/resend-verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: document.getElementById('email').value }),
+            });
+            const data = await res.json();
+            alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+            alertBox.textContent = res.ok ? data.message : data.error;
+            alertBox.style.display = 'block';
+            if (!res.ok) {
+                btn.disabled = false;
+                btn.textContent = 'Resend verification email';
+                alertBox.appendChild(btn);
+            }
+        } catch {
+            alertBox.className = 'alert alert-error';
+            alertBox.textContent = 'Something went wrong. Please try again.';
+            alertBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Resend verification email';
+            alertBox.appendChild(btn);
+        }
+    }
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertBox = document.getElementById('alertBox');
@@ -252,6 +293,11 @@
                     alertBox.className = 'alert alert-error';
                     alertBox.innerHTML = `${data.error} <button onclick="showReactivateForm('${emailVal}')" class="btn btn-primary btn-sm" style="margin-left:12px;">Reactivate Account</button>`;
                     alertBox.style.display = 'block';
+                } else if (data.code === 'VERIFICATION_EMAIL_FAILED') {
+                    alertBox.className = 'alert alert-error';
+                    alertBox.textContent = data.error + ' ';
+                    alertBox.appendChild(resendButton());
+                    alertBox.style.display = 'block';
                 } else {
                     alertBox.className = 'alert alert-error';
                     alertBox.textContent = data.error;
@@ -263,7 +309,8 @@
             }
 
             alertBox.className = 'alert alert-success';
-            alertBox.textContent = data.message;
+            alertBox.textContent = data.message + ' If it does not arrive, check your spam folder. ';
+            alertBox.appendChild(resendButton('Resend verification email'));
             alertBox.style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
         } catch {

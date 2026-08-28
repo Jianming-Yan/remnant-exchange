@@ -7,6 +7,15 @@ const { sendVerificationEmail, sendAdminNotification, sendResetPasswordEmail, se
 
 const router = express.Router();
 
+// How long an unverified signup waits in pending_registrations before the hourly
+// sweep in server.js discards it. Fabricators often check email only once a week,
+// so a 24h window silently deleted real signups before they ever clicked.
+const PENDING_VERIFY_DAYS = 7;
+
+// Minimum gap between verification emails to one address, so the unauthenticated
+// resend endpoint cannot be used to mail-bomb someone.
+const RESEND_THROTTLE_SECONDS = 60;
+
 router.post('/register', async (req, res) => {
     try {
         const { name, business_name, email, password, phone, company_website } = req.body;
@@ -41,23 +50,91 @@ router.post('/register', async (req, res) => {
         // the applicant clicks the verify link (see /verify-email below).
         const passwordHash = await bcrypt.hash(password, 10);
         const token = uuidv4();
-        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        const expires = new Date(Date.now() + PENDING_VERIFY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         // Replace any earlier un-verified attempt for this email so a resend works.
         await run(`DELETE FROM pending_registrations WHERE email = ?`, [email.toLowerCase()]).catch(() => {});
-        await run(`INSERT INTO pending_registrations (id, token, name, business_name, email, password_hash, phone, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        await run(`INSERT INTO pending_registrations (id, token, name, business_name, email, password_hash, phone, expires_at, last_sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
             [uuidv4(), token, name, business_name, email.toLowerCase(), passwordHash, phone || null, expires]);
 
+        // Never report success when the verification email did not go out — the
+        // applicant would sit waiting for a message that does not exist, and the
+        // pending row would be swept before anyone noticed. The row is kept so
+        // /resend-verification can retry without re-entering the form.
         try {
             await sendVerificationEmail(email, name, token);
         } catch (emailErr) {
-            console.error('Email send failed:', emailErr.message);
+            console.error('Verification email send failed for', email.toLowerCase(), '-', emailErr.message);
+            return res.status(502).json({
+                code: 'VERIFICATION_EMAIL_FAILED',
+                error: 'Your details were saved, but we could not send the verification email. Please check the address for typos and click "Resend verification email", or contact us at ming@remnanttrading.com.',
+            });
         }
 
         res.json({ message: 'Registration successful. Please check your email to verify your account.' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Registration failed' });
+    }
+});
+
+// Re-send the verification email for a signup still waiting in pending_registrations.
+// Without this, anyone whose verification email was lost, filtered to spam, or failed
+// to send had no way forward at all — their only option was to register again.
+router.post('/resend-verification', async (req, res) => {
+    try {
+        const email = (req.body.email || '').trim().toLowerCase();
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        // Already verified: registering again would only hit "Email already registered",
+        // so point them at the door they can actually walk through.
+        const existing = await get(`SELECT id FROM users WHERE email = ?`, [email]);
+        if (existing) {
+            return res.status(400).json({
+                code: 'ALREADY_REGISTERED',
+                error: 'This email already has an account. Try logging in, or use "Forgot password" to reset it.',
+            });
+        }
+
+        // Compare last_sent_at in SQL: it is written by datetime('now') and so is not
+        // in the ISO format JS Date parses reliably.
+        const pending = await get(
+            `SELECT *, (last_sent_at IS NOT NULL AND last_sent_at > datetime('now', ?)) AS throttled
+             FROM pending_registrations WHERE email = ?`,
+            [`-${RESEND_THROTTLE_SECONDS} seconds`, email]
+        );
+        if (!pending) {
+            return res.status(404).json({
+                code: 'NO_PENDING',
+                error: 'We could not find a pending signup for that email. Please register again.',
+            });
+        }
+
+        if (Number(pending.throttled)) {
+            return res.status(429).json({ error: 'A verification email was just sent. Please wait a minute before trying again.' });
+        }
+
+        // Issue a fresh token and restart the clock, so a resend is always usable
+        // even if the original link is already close to expiring.
+        const token = uuidv4();
+        const expires = new Date(Date.now() + PENDING_VERIFY_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        await run(`UPDATE pending_registrations SET token = ?, expires_at = ?, last_sent_at = datetime('now') WHERE id = ?`,
+            [token, expires, pending.id]);
+
+        try {
+            await sendVerificationEmail(pending.email, pending.name, token);
+        } catch (emailErr) {
+            console.error('Verification resend failed for', email, '-', emailErr.message);
+            return res.status(502).json({
+                code: 'VERIFICATION_EMAIL_FAILED',
+                error: 'We could not send the verification email. Please contact us at ming@remnanttrading.com and we will set up your account.',
+            });
+        }
+
+        res.json({ message: 'Verification email sent. Please check your inbox, and your spam folder.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to resend verification email' });
     }
 });
 
