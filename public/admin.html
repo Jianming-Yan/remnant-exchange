@@ -342,6 +342,18 @@
                         <option value="">-- Select fabricator --</option>
                     </select>
                 </div>
+                <div id="pfShopCard" style="display:none;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;background:#f8fafc;">
+                    <div style="font-weight:700;margin-bottom:2px;" id="pfShopTitle"></div>
+                    <div style="color:#64748b;font-size:0.82rem;margin-bottom:12px;" id="pfShopSub"></div>
+                    <div id="pfShopAlert" style="display:none"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Contact name</label><input type="text" id="pfs_name"></div>
+                        <div class="form-group"><label>Phone</label><input type="tel" id="pfs_phone"></div>
+                    </div>
+                    <div class="form-group"><label>Street address</label><input type="text" id="pfs_address" placeholder="e.g. 99 Hammond St"></div>
+                    <div class="form-group"><label>City</label><input type="text" id="pfs_city"></div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="saveShopDetails()">Save shop details</button>
+                </div>
                 <form id="postForForm" style="display:none">
                     <div class="form-row">
                         <div class="form-group">
@@ -1220,6 +1232,45 @@
         const val = document.getElementById('postFor_fabricator').value;
         document.getElementById('postForForm').style.display = val ? 'block' : 'none';
         if (val) document.getElementById('postFor_fabricator').size = 1; // collapse once chosen
+        if (val !== pfShopId) { pfShopId = val; loadShopDetails(val); }
+    }
+
+    // Shop details card: shows what we have on file for the chosen fabricator so it can be
+    // completed or corrected before posting.
+    let pfShopId = '';
+    async function loadShopDetails(id) {
+        const card = document.getElementById('pfShopCard');
+        document.getElementById('pfShopAlert').style.display = 'none';
+        if (!id) { card.style.display = 'none'; return; }
+        const res = await fetch(`/api/admin/fabricators/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok || pfShopId !== id) return;
+        const f = await res.json();
+        document.getElementById('pfShopTitle').textContent = f.business_name || '';
+        document.getElementById('pfShopSub').textContent = f.email + (f.listings ? ` · ${f.listings.filter(l => l.status === 'active').length} active listing(s)` : '');
+        document.getElementById('pfs_name').value = f.name || '';
+        document.getElementById('pfs_phone').value = f.phone || '';
+        document.getElementById('pfs_address').value = f.address || '';
+        document.getElementById('pfs_city').value = f.city || '';
+        card.style.display = 'block';
+    }
+
+    async function saveShopDetails() {
+        const box = document.getElementById('pfShopAlert');
+        const res = await fetch(`/api/admin/fabricators/${pfShopId}/contact`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+                name: document.getElementById('pfs_name').value,
+                phone: document.getElementById('pfs_phone').value,
+                address: document.getElementById('pfs_address').value,
+                city: document.getElementById('pfs_city').value,
+            }),
+        });
+        const data = await res.json().catch(() => ({}));
+        box.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+        box.textContent = res.ok ? 'Saved.' : (data.error || 'Could not save');
+        box.style.display = 'block';
+        if (res.ok) pfFabs.forEach(f => { if (f.id === pfShopId) { f.name = document.getElementById('pfs_name').value; f.city = document.getElementById('pfs_city').value; } });
     }
 
     async function pfLoadMetros() {
@@ -1296,6 +1347,7 @@
                 document.getElementById('pf_photoPreviews').innerHTML = '';
                 document.getElementById('postForForm').style.display = 'none';
                 document.getElementById('postFor_fabricator').value = '';
+                onFabricatorSelect();
                 loadStats();
             }
         } catch {

@@ -175,7 +175,7 @@ router.get('/fabricators', requireAdmin, async (req, res) => {
 
 router.get('/fabricators/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await get(`SELECT id, name, business_name, email, phone, city, plan, approved, created_at, admin_notes, outreach_status FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        const user = await get(`SELECT id, name, business_name, email, phone, city, address, plan, approved, created_at, admin_notes, outreach_status FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
         if (!user) return res.status(404).json({ error: 'Fabricator not found' });
 
         const listings = await query(`
@@ -258,6 +258,26 @@ router.patch('/fabricators/:id', requireAdmin, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to update fabricator' });
+    }
+});
+
+// Narrow edit used by the "Post For Fabricator" tab: contact name, phone, street address, city.
+// Deliberately does not touch email / business name / login, so it can't lock anyone out.
+router.patch('/fabricators/:id/contact', requireAdmin, async (req, res) => {
+    try {
+        const user = await get(`SELECT id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.id]);
+        if (!user) return res.status(404).json({ error: 'Fabricator not found' });
+
+        const clean = v => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 200) : null);
+        const name = clean(req.body.name);
+        if (!name) return res.status(400).json({ error: 'Contact name is required' });
+
+        await run(`UPDATE users SET name = ?, phone = ?, address = ?, city = ? WHERE id = ?`,
+            [name, clean(req.body.phone), clean(req.body.address), clean(req.body.city), req.params.id]);
+        res.json({ message: 'Shop details saved' });
+    } catch (err) {
+        console.error('fabricator contact update error:', err);
+        res.status(500).json({ error: 'Failed to save shop details' });
     }
 });
 
