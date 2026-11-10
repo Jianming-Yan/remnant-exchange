@@ -39,9 +39,12 @@
         var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
         var hits = [];
         while (walker.nextNode()) {
-            if (walker.currentNode.nodeValue.indexOf('Remnant Exchange') !== -1) hits.push(walker.currentNode);
+            var v = walker.currentNode.nodeValue;
+            if (v.indexOf('Remnant Exchange') !== -1 || v.indexOf('RemnantExchange') !== -1) hits.push(walker.currentNode);
         }
-        hits.forEach(function (n) { n.nodeValue = n.nodeValue.replace(/Remnant Exchange/g, 'Remnant Trading'); });
+        hits.forEach(function (n) {
+            n.nodeValue = n.nodeValue.replace(/Remnant Exchange/g, 'Remnant Trading').replace(/RemnantExchange/g, 'RemnantTrading');
+        });
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
