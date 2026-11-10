@@ -29,6 +29,11 @@
         .msg.err { background: #7f1d1d; color: #fecaca; }
         .hint { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
         .count { color: #94a3b8; font-size: 0.85rem; }
+        #shopResults { margin-top: 6px; border-radius: 10px; overflow: hidden; }
+        #shopResults .opt { padding: 12px 14px; background: #1e293b; border-bottom: 1px solid #0f172a; cursor: pointer; }
+        #shopResults .opt:active, #shopResults .opt:hover { background: #334155; }
+        #shopResults .opt small { display: block; color: #94a3b8; font-size: 0.78rem; margin-top: 2px; }
+        #shopResults .none { padding: 12px 14px; background: #1e293b; color: #94a3b8; font-size: 0.9rem; }
         a { color: #93c5fd; }
     </style>
 </head>
@@ -39,8 +44,8 @@
 
     <form id="f" autocomplete="off">
         <label>Shop</label>
-        <input type="text" id="shopSearch" list="shopList" placeholder="Type a shop name…" required>
-        <datalist id="shopList"></datalist>
+        <input type="text" id="shopSearch" placeholder="Type part of a shop name, e.g. su" autocomplete="off" autocapitalize="off" required>
+        <div id="shopResults"></div>
         <div class="hint" id="shopInfo"></div>
 
         <label>Material</label>
@@ -124,34 +129,74 @@ async function init() {
     if (shopsRes.status === 401 || shopsRes.status === 403) { location.href = '/login.html'; return; }
     shops = await shopsRes.json();
     states = st;
-    document.getElementById('shopList').innerHTML = shops.map(s => `<option value="${shopLabel(s).replace(/"/g, '&quot;')}">`).join('');
     chips('materialChips', mats, 'material');
     chips('thicknessChips', THICK, 'thickness');
     chips('finishChips', fins, 'finish');
     document.getElementById('state').innerHTML = states.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     document.getElementById('state').onchange = e => loadMetros(e.target.value);
-    const last = sessionStorage.getItem('postAsShop');
-    if (last) { document.getElementById('shopSearch').value = last; pickShop(); }
+    let lastId = null;
+    try { lastId = sessionStorage.getItem('postAsShopId'); } catch {}
+    const last = shops.find(x => x.id === lastId);
+    if (last) selectShop(last);
 }
 
-async function pickShop() {
-    const v = document.getElementById('shopSearch').value;
-    shop = shops.find(s => shopLabel(s) === v) || null;
+async function selectShop(s) {
+    shop = s;
+    document.getElementById('shopSearch').value = shopLabel(s);
+    document.getElementById('shopResults').innerHTML = '';
+    try { sessionStorage.setItem('postAsShopId', s.id); } catch {}
     const info = document.getElementById('shopInfo');
     const loc = document.getElementById('locBox');
-    if (!shop) { info.textContent = ''; loc.style.display = 'none'; return; }
-    sessionStorage.setItem('postAsShop', v);
-    info.textContent = `${shop.active_listings} active listing(s)`;
-    if (shop.metro_id && shop.state_id) {
+    info.textContent = `${s.active_listings} active listing(s)`;
+    if (s.metro_id && s.state_id) {
         loc.style.display = 'none';
     } else {
         loc.style.display = 'block';
         info.textContent += ' — pick the metro below';
-        if (shop.state_id) document.getElementById('state').value = shop.state_id;
+        if (s.state_id) document.getElementById('state').value = s.state_id;
         await loadMetros(document.getElementById('state').value);
     }
 }
-document.getElementById('shopSearch').addEventListener('input', pickShop);
+
+// Live search: every typed letter narrows the list. Matches shop name, contact name, city,
+// state and email; names that START with the typed text come first, then word starts, then
+// anywhere-in-the-name.
+function rank(s, q) {
+    const biz = (s.business_name || '').toLowerCase();
+    const hay = [s.business_name, s.name, s.city, s.state_abbr, s.email].join(' ').toLowerCase();
+    if (!hay.includes(q)) return -1;
+    if (biz.startsWith(q)) return 0;
+    if (biz.split(/[^a-z0-9]+/).some(w => w.startsWith(q))) return 1;
+    if (q.length < 2) return -1; // one letter: only names that start with it (not "contains")
+    if (biz.includes(q)) return 2;
+    return 3;
+}
+function renderResults() {
+    const q = document.getElementById('shopSearch').value.trim().toLowerCase();
+    const box = document.getElementById('shopResults');
+    shop = null;
+    document.getElementById('shopInfo').textContent = '';
+    document.getElementById('locBox').style.display = 'none';
+    if (!q) { box.innerHTML = ''; return; }
+    const hits = shops
+        .map(s => ({ s, r: rank(s, q) }))
+        .filter(x => x.r >= 0)
+        .sort((a, b) => a.r - b.r || (a.s.business_name || a.s.name || '').localeCompare(b.s.business_name || b.s.name || ''));
+    box.innerHTML = '';
+    if (!hits.length) { box.innerHTML = '<div class="none">No shop matches</div>'; return; }
+    hits.slice(0, 15).forEach(({ s }) => {
+        const d = document.createElement('div');
+        d.className = 'opt';
+        const where = [s.city, s.state_abbr].filter(Boolean).join(', ');
+        d.innerHTML = '<span></span><small></small>';
+        d.firstChild.textContent = s.business_name || s.name;
+        d.lastChild.textContent = [s.name && s.name !== s.business_name ? s.name : '', where, s.active_listings + ' listing(s)'].filter(Boolean).join(' · ');
+        d.onclick = () => selectShop(s);
+        box.appendChild(d);
+    });
+    if (hits.length > 15) box.insertAdjacentHTML('beforeend', `<div class="none">${hits.length - 15} more — keep typing</div>`);
+}
+document.getElementById('shopSearch').addEventListener('input', renderResults);
 
 document.getElementById('photos').addEventListener('change', e => {
     const box = document.getElementById('previews');

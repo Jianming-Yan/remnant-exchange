@@ -1071,7 +1071,7 @@ router.post('/send-thank-you', requireAdmin, async (req, res) => {
 
 router.get('/post-as/shops', requireAdmin, async (req, res) => {
     const shops = await query(`
-        SELECT u.id, u.name, u.business_name, u.city, u.metro_id,
+        SELECT u.id, u.name, u.business_name, u.city, u.metro_id, u.state AS state_abbr, u.email,
                COALESCE(m.state_id, st.id) AS state_id, u.metro_id AS has_metro,
                COUNT(l.id) AS active_listings
         FROM users u
