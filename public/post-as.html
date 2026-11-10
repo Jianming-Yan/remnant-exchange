@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post for a Shop — Remnant Trading</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f1f5f9; }
+        .wrap { max-width: 520px; margin: 0 auto; padding: 16px 16px 90px; }
+        h1 { font-size: 1.2rem; margin: 4px 0 14px; }
+        label { display: block; font-size: 0.8rem; color: #94a3b8; margin: 16px 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+        input, select, textarea { width: 100%; padding: 14px; font-size: 16px; background: #1e293b; color: #f1f5f9; border: 1px solid #334155; border-radius: 10px; }
+        textarea { min-height: 70px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { padding: 12px 16px; border-radius: 999px; border: 1px solid #334155; background: #1e293b; color: #cbd5e1; font-size: 0.95rem; cursor: pointer; user-select: none; }
+        .chip.on { background: #2563eb; border-color: #2563eb; color: #fff; }
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
+        .photo-btn { display: block; text-align: center; padding: 16px; border: 2px dashed #475569; border-radius: 10px; color: #94a3b8; cursor: pointer; }
+        .previews { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .previews img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; }
+        .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px; background: #0f172a; border-top: 1px solid #1e293b; }
+        .bar button { display: block; width: 100%; max-width: 520px; margin: 0 auto; padding: 16px; font-size: 1.05rem; font-weight: 700; border: 0; border-radius: 12px; background: #22c55e; color: #052e16; }
+        .bar button:disabled { opacity: .5; }
+        .msg { padding: 12px; border-radius: 10px; margin-bottom: 12px; font-size: 0.95rem; }
+        .msg.ok { background: #14532d; color: #bbf7d0; }
+        .msg.err { background: #7f1d1d; color: #fecaca; }
+        .hint { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+        .count { color: #94a3b8; font-size: 0.85rem; }
+        a { color: #93c5fd; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Post a remnant for a shop <span class="count" id="total"></span></h1>
+    <div id="msg"></div>
+
+    <form id="f" autocomplete="off">
+        <label>Shop</label>
+        <input type="text" id="shopSearch" list="shopList" placeholder="Type a shop name…" required>
+        <datalist id="shopList"></datalist>
+        <div class="hint" id="shopInfo"></div>
+
+        <label>Material</label>
+        <div class="chips" id="materialChips"></div>
+
+        <label>Stone name (optional)</label>
+        <input type="text" id="stone_name" placeholder="e.g. Black Galaxy">
+
+        <div class="row">
+            <div><label>Length (in)</label><input type="number" id="length" inputmode="decimal" min="1" required></div>
+            <div><label>Width (in)</label><input type="number" id="width" inputmode="decimal" min="1" required></div>
+        </div>
+
+        <label>Thickness</label>
+        <div class="chips" id="thicknessChips"></div>
+
+        <label>Finish (optional)</label>
+        <div class="chips" id="finishChips"></div>
+
+        <label>Photos (optional)</label>
+        <label class="photo-btn" for="photos" style="text-transform:none;letter-spacing:0;margin:0;">📷 Take or choose photos</label>
+        <input type="file" id="photos" accept="image/*" multiple style="display:none">
+        <div class="previews" id="previews"></div>
+
+        <label>Notes (optional)</label>
+        <textarea id="description" placeholder="Anything buyers should know"></textarea>
+
+        <div id="locBox" style="display:none">
+            <label>State</label><select id="state"></select>
+            <label>Metro</label><select id="metro"></select>
+        </div>
+    </form>
+</div>
+<div class="bar"><button id="save" type="button">Post remnant</button></div>
+
+<script>
+const token = localStorage.getItem('token');
+let me = {};
+try { me = JSON.parse(localStorage.getItem('user') || '{}'); } catch {}
+if (!token || me.role !== 'admin') location.href = '/login.html';
+
+const auth = { Authorization: 'Bearer ' + token };
+const THICK = ['3cm', '2cm', '3/4"', '1-1/4"', '1-1/2"'];
+const sel = { material: '', thickness: '', finish: '' };
+let shops = [], shop = null, states = [];
+
+function chips(id, items, key) {
+    const box = document.getElementById(id);
+    box.innerHTML = '';
+    items.forEach(v => {
+        const c = document.createElement('div');
+        c.className = 'chip'; c.textContent = v;
+        c.onclick = () => {
+            sel[key] = sel[key] === v ? '' : v;
+            [...box.children].forEach(x => x.classList.toggle('on', x.textContent === sel[key]));
+        };
+        box.appendChild(c);
+    });
+}
+function say(text, kind) {
+    document.getElementById('msg').innerHTML = text ? `<div class="msg ${kind}">${text}</div>` : '';
+    if (text) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function shopLabel(s) { return (s.business_name || s.name) + (s.city ? ' — ' + s.city : ''); }
+
+async function loadMetros(stateId, pick) {
+    const r = await fetch(`/api/listings/states/${stateId}/metros`);
+    const metros = await r.json();
+    const m = document.getElementById('metro');
+    m.innerHTML = metros.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+    if (pick) m.value = pick;
+}
+
+async function init() {
+    const [shopsRes, mats, fins, st] = await Promise.all([
+        fetch('/api/admin/post-as/shops', { headers: auth }),
+        fetch('/api/listings/materials').then(r => r.json()),
+        fetch('/api/listings/finishes').then(r => r.json()),
+        fetch('/api/listings/states').then(r => r.json()),
+    ]);
+    if (shopsRes.status === 401 || shopsRes.status === 403) { location.href = '/login.html'; return; }
+    shops = await shopsRes.json();
+    states = st;
+    document.getElementById('shopList').innerHTML = shops.map(s => `<option value="${shopLabel(s).replace(/"/g, '&quot;')}">`).join('');
+    chips('materialChips', mats, 'material');
+    chips('thicknessChips', THICK, 'thickness');
+    chips('finishChips', fins, 'finish');
+    document.getElementById('state').innerHTML = states.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    document.getElementById('state').onchange = e => loadMetros(e.target.value);
+    const last = sessionStorage.getItem('postAsShop');
+    if (last) { document.getElementById('shopSearch').value = last; pickShop(); }
+}
+
+async function pickShop() {
+    const v = document.getElementById('shopSearch').value;
+    shop = shops.find(s => shopLabel(s) === v) || null;
+    const info = document.getElementById('shopInfo');
+    const loc = document.getElementById('locBox');
+    if (!shop) { info.textContent = ''; loc.style.display = 'none'; return; }
+    sessionStorage.setItem('postAsShop', v);
+    info.textContent = `${shop.active_listings} active listing(s)`;
+    if (shop.metro_id && shop.state_id) {
+        loc.style.display = 'none';
+    } else {
+        loc.style.display = 'block';
+        info.textContent += ' — pick the metro below';
+        if (shop.state_id) document.getElementById('state').value = shop.state_id;
+        await loadMetros(document.getElementById('state').value);
+    }
+}
+document.getElementById('shopSearch').addEventListener('input', pickShop);
+
+document.getElementById('photos').addEventListener('change', e => {
+    const box = document.getElementById('previews');
+    box.innerHTML = '';
+    [...e.target.files].slice(0, 5).forEach(f => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        box.appendChild(img);
+    });
+});
+
+document.getElementById('save').onclick = async () => {
+    say('');
+    if (!shop) return say('Pick a shop first.', 'err');
+    const len = document.getElementById('length').value, wid = document.getElementById('width').value;
+    if (!sel.material) return say('Pick a material.', 'err');
+    if (!len || !wid) return say('Enter length and width.', 'err');
+    if (!sel.thickness) return say('Pick a thickness.', 'err');
+
+    const fd = new FormData();
+    fd.append('material_type', sel.material);
+    fd.append('stone_name', document.getElementById('stone_name').value);
+    fd.append('length', len);
+    fd.append('width', wid);
+    fd.append('thickness', sel.thickness);
+    if (sel.finish) fd.append('finish', sel.finish);
+    fd.append('description', document.getElementById('description').value);
+    if (!shop.metro_id || !shop.state_id) {
+        fd.append('state_id', document.getElementById('state').value);
+        fd.append('metro_id', document.getElementById('metro').value);
+    }
+    [...document.getElementById('photos').files].slice(0, 5).forEach(f => fd.append('photos', f));
+
+    const btn = document.getElementById('save');
+    btn.disabled = true; btn.textContent = 'Posting…';
+    try {
+        const r = await fetch('/api/admin/post-as/' + shop.id, { method: 'POST', headers: auth, body: fd });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Failed');
+        shop.active_listings++;
+        document.getElementById('shopInfo').textContent = `${shop.active_listings} active listing(s)`;
+        document.getElementById('total').textContent = `· ${data.total_active} on site`;
+        say(`Posted ${sel.material} ${len}" × ${wid}" for ${shop.business_name || shop.name}. Ready for the next one.`, 'ok');
+        // Keep shop (and location) for the next piece; clear the piece-specific fields.
+        ['stone_name', 'length', 'width', 'description'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('photos').value = '';
+        document.getElementById('previews').innerHTML = '';
+        sel.material = sel.thickness = sel.finish = '';
+        document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+    } catch (e) {
+        say(e.message, 'err');
+    } finally {
+        btn.disabled = false; btn.textContent = 'Post remnant';
+    }
+};
+
+init();
+</script>
+</body>
+</html>

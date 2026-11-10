@@ -1064,4 +1064,81 @@ router.post('/send-thank-you', requireAdmin, async (req, res) => {
     }
 });
 
+// ---- Post-as-shop (concierge posting) -------------------------------------------------
+// Admin posts a remnant on behalf of a fabricator. The listing is owned by the shop and
+// flagged posted_by_admin = 1. Only material, size and thickness are required; photo,
+// stone name and everything else are optional so it can be done fast from a phone.
+
+router.get('/post-as/shops', requireAdmin, async (req, res) => {
+    const shops = await query(`
+        SELECT u.id, u.name, u.business_name, u.city, u.metro_id,
+               COALESCE(m.state_id, st.id) AS state_id, u.metro_id AS has_metro,
+               COUNT(l.id) AS active_listings
+        FROM users u
+        LEFT JOIN metros m ON m.id = u.metro_id
+        LEFT JOIN states st ON st.abbreviation = u.state
+        LEFT JOIN listings l ON l.user_id = u.id AND l.status = 'active'
+        WHERE u.role = 'fabricator'
+        GROUP BY u.id
+        ORDER BY lower(COALESCE(NULLIF(u.business_name, ''), u.name)) ASC
+    `);
+    res.json(shops);
+});
+
+router.post('/post-as/:userId', requireAdmin, (req, res, next) => {
+    upload.array('photos', 5)(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be under 10MB' : err.message });
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const shop = await get(`SELECT id, plan, metro_id FROM users WHERE id = ? AND role = 'fabricator'`, [req.params.userId]);
+        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        const { material_type, stone_name, shape, length, width, length2, width2, thickness,
+                finish, description, state_id, metro_id } = req.body;
+
+        if (!material_type || !length || !width || !thickness) {
+            return res.status(400).json({ error: 'Material, length, width and thickness are required' });
+        }
+        const len = parseFloat(length), wid = parseFloat(width);
+        if (!(len > 0) || !(wid > 0)) return res.status(400).json({ error: 'Length and width must be positive numbers' });
+
+        // Location: what the form sent, else the shop's own metro.
+        let stateId = state_id, metroId = metro_id || shop.metro_id;
+        if (metroId && !stateId) {
+            const m = await get(`SELECT state_id FROM metros WHERE id = ?`, [metroId]);
+            stateId = m && m.state_id;
+        }
+        if (!stateId || !metroId) return res.status(400).json({ error: 'Pick a state and metro (this shop has none on file)' });
+
+        const planSettings = await get(`SELECT duration_days FROM plan_settings WHERE plan = ?`, [shop.plan]);
+        const durationDays = Number(planSettings && planSettings.duration_days) || 90;
+        const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
+        // stone_name is the canonical field and color its legacy alias — keep both identical.
+        const name = (stone_name || '').trim() || material_type;
+        const id = uuidv4();
+
+        await run(`INSERT INTO listings (id, user_id, material_type, color, stone_name, shape, length, width, thickness, length2, width2, state_id, metro_id, description, expires_at, visibility, finish, posted_by_admin)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public', ?, 1)`,
+            [id, shop.id, material_type, name, name, shape === 'lshape' ? 'lshape' : 'rectangular',
+             len, wid, thickness,
+             length2 ? parseFloat(length2) : null, width2 ? parseFloat(width2) : null,
+             stateId, metroId, description || null, expiresAt, finish || null]);
+
+        for (let i = 0; i < (req.files || []).length; i++) {
+            const url = await uploadToCloudinary(req.files[i].buffer);
+            await run(`INSERT INTO listing_photos (id, listing_id, filename, display_order) VALUES (?, ?, ?, ?)`,
+                [uuidv4(), id, url, i]);
+        }
+
+        const count = await get(`SELECT count(*) AS cnt FROM listings WHERE status = 'active' AND is_seeded = 0`);
+        res.status(201).json({ id, total_active: Number(count.cnt) });
+    } catch (err) {
+        console.error('post-as error:', err);
+        res.status(500).json({ error: 'Failed to create listing' });
+    }
+});
+
 module.exports = router;

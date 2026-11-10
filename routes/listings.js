@@ -52,16 +52,19 @@ async function deleteFromCloudinary(url) {
     } catch {}
 }
 
-router.get('/', async (req, res) => {
+// Browse is login-only and never returns who is selling. Columns are listed explicitly
+// (no l.*) so user_id, remnant_owner and any future seller field can't leak by default.
+router.get('/', requireAuth, async (req, res) => {
     const { state, metro, material, finish, search, page = 1 } = req.query;
     const limit = 24;
     const offset = (parseInt(page) - 1) * limit;
 
     let sql = `
-        SELECT l.*, u.name as seller_name, u.business_name,
+        SELECT l.id, l.material_type, l.color, l.stone_name, l.shape,
+               l.length, l.width, l.length2, l.width2, l.thickness, l.finish,
+               l.vendor_name, l.bundle_number, l.description, l.created_at,
                s.name as state_name, s.abbreviation as state_abbr, m.name as metro_name
         FROM listings l
-        JOIN users u ON l.user_id = u.id
         JOIN states s ON l.state_id = s.id
         JOIN metros m ON l.metro_id = m.id
         WHERE l.status = 'active' AND (l.visibility IS NULL OR l.visibility = 'public')
@@ -183,45 +186,6 @@ router.post('/', requireApprovedFabricator, (req, res, next) => {
     }
 });
 
-router.post('/identify-stone', upload.single('photo'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'No photo provided' });
-
-        const Anthropic = require('@anthropic-ai/sdk');
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-        const message = await client.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 256,
-            messages: [{
-                role: 'user',
-                content: [
-                    {
-                        type: 'image',
-                        source: { type: 'base64', media_type: req.file.mimetype, data: req.file.buffer.toString('base64') },
-                    },
-                    {
-                        type: 'text',
-                        text: 'This is a stone slab remnant photo. Identify the material type (one of: Granite, Marble, Quartz, Quartzite, Travertine, Limestone, Soapstone, Slate, Onyx, Other) and the stone name or color pattern. Respond in JSON only with no extra text: {"material_type": "...", "stone_name": "..."}',
-                    },
-                ],
-            }],
-        });
-
-        const text = message.content[0].text.trim();
-        let result = { material_type: '', stone_name: '' };
-        try {
-            const jsonMatch = text.match(/\{[\s\S]*?\}/);
-            if (jsonMatch) result = JSON.parse(jsonMatch[0]);
-        } catch {}
-
-        res.json(result);
-    } catch (err) {
-        console.error('Identify stone error:', err);
-        res.status(500).json({ error: 'Could not identify stone' });
-    }
-});
-
 router.put('/:id', requireApprovedFabricator, (req, res, next) => {
     upload.array('photos', 5)(req, res, err => {
         if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be under 10MB' : err.message });
@@ -290,7 +254,7 @@ router.delete('/:id', requireApprovedFabricator, async (req, res) => {
     res.json({ message: 'Listing deleted' });
 });
 
-router.post('/:id/contact', async (req, res) => {
+router.post('/:id/contact', requireAuth, async (req, res) => {
     const { sender_name, sender_email, message } = req.body;
 
     if (!sender_name || !sender_email || !message) {

@@ -36,7 +36,6 @@
     <a href="/" class="nav-logo"><img src="/logo-icon.svg" height="56" style="vertical-align:middle;margin-right:10px;">Remnant<span>Exchange</span><span style="color:#93c5fd;font-size:0.68em;font-weight:600;letter-spacing:0;">.org</span></a>
     <div class="nav-links" id="navLinks">
         <a href="/">Browse</a>
-        <a href="/stone-id.html">Identify Stone</a>
         <a href="/about.html">About</a>
         <a href="/login.html" id="loginLink">Login</a>
         <a href="/register.html" class="btn btn-primary" id="registerLink">List Your Remnants</a>
@@ -63,13 +62,6 @@
         </select>
         <input type="text" id="filterSearch" placeholder="Search color, material...">
         <button class="btn btn-primary" onclick="applyFilters()">Search</button>
-    </div>
-    <div style="text-align:center;margin-top:10px;">
-        <label style="cursor:pointer;color:#93c5fd;font-size:0.9rem;">
-            &#128247; Don't know the stone name? <span style="text-decoration:underline;">Search by photo</span>
-            <input type="file" id="buyerPhotoInput" accept="image/*" style="display:none" onchange="identifyAndSearch(this)">
-        </label>
-        <span id="identifyStatus" style="display:none;margin-left:8px;font-size:0.85rem;color:#e2e8f0;"></span>
     </div>
     <div style="text-align:center;margin-top:12px;">
         <a href="/request.html" style="color:#fbbf24;font-size:0.9rem;text-decoration:underline;">Can't find what you need? Submit a request →</a>
@@ -133,12 +125,26 @@
         await loadStates();
         await loadMaterials();
         updateNav();
+        if (!localStorage.getItem('token')) return showLoginGate();
         document.getElementById('listingsGrid').innerHTML = `
             <div class="empty-state" style="grid-column:1/-1">
                 <h3>Find Stone Remnants Near You</h3>
                 <p>Select a state, material, or enter a search term above, then click Search.</p>
             </div>`;
         document.getElementById('resultsCount').textContent = '';
+    }
+
+    // Browse results are for registered fabricators only; the API returns 401 without a token.
+    function showLoginGate() {
+        document.getElementById('listingsGrid').innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1">
+                <h3>Log in to browse remnants</h3>
+                <p style="margin-bottom:16px;">Remnant listings are available to registered fabricators.</p>
+                <a href="/login.html" class="btn btn-primary">Log In</a>
+                <a href="/register.html" class="btn btn-secondary" style="margin-left:8px;">Register</a>
+            </div>`;
+        document.getElementById('resultsCount').textContent = '';
+        document.getElementById('pagination').innerHTML = '';
     }
 
     function updateNav() {
@@ -215,7 +221,14 @@
     async function loadListings(page = 1) {
         currentPage = page;
         const params = new URLSearchParams({ page, ...currentFilters });
-        const res = await fetch(`/api/listings?${params}`);
+        const token = localStorage.getItem('token');
+        if (!token) return showLoginGate();
+        const res = await fetch(`/api/listings?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            return showLoginGate();
+        }
         const data = await res.json();
 
         const grid = document.getElementById('listingsGrid');
@@ -254,40 +267,6 @@
         }
         html += `<button ${current === total ? 'disabled' : ''} onclick="loadListings(${current + 1})">Next &raquo;</button>`;
         el.innerHTML = html;
-    }
-
-    async function identifyAndSearch(input) {
-        if (!input.files[0]) return;
-        const status = document.getElementById('identifyStatus');
-        status.textContent = 'Identifying stone...';
-        status.style.display = 'inline';
-
-        const formData = new FormData();
-        formData.append('photo', input.files[0]);
-
-        try {
-            const res = await fetch('/api/listings/identify-stone', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.material_type) {
-                const sel = document.getElementById('filterMaterial');
-                for (const opt of sel.options) {
-                    if (opt.value === data.material_type) { opt.selected = true; break; }
-                }
-            }
-            if (data.stone_name) {
-                document.getElementById('filterSearch').value = data.stone_name;
-            }
-            if (!data.stone_name) {
-                status.textContent = 'Could not identify a specific stone. Try a clearer photo.';
-                input.value = '';
-                return;
-            }
-            status.textContent = `Identified: ${data.material_type || ''}${data.stone_name ? ' â€” ' + data.stone_name : ''}`;
-            applyFilters();
-        } catch {
-            status.textContent = 'Could not identify. Try another photo.';
-        }
-        input.value = '';
     }
 
     function applyFilters() {
@@ -334,10 +313,9 @@
         document.getElementById('modalFabricator').innerHTML = `
             <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
                 <div style="width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:700;color:#1d4ed8;font-size:1rem;flex-shrink:0;">
-                    ${listing.business_name.charAt(0).toUpperCase()}
+                    &#10003;
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:0.95rem;filter:blur(5px);user-select:none;">${listing.business_name}</div>
                     <div style="font-size:0.8rem;color:#64748b;">&#128205; ${listing.metro_name}, ${listing.state_name}</div>
                     <div style="margin-top:4px;"><span style="background:#f0fdf4;color:#16a34a;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid #bbf7d0;">&#10003; Verified Fabricator</span></div>
                 </div>
@@ -367,7 +345,7 @@
         try {
             const res = await fetch(`/api/listings/${activeListingId}/contact`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
                 body: JSON.stringify({
                     sender_name: document.getElementById('contactName').value,
                     sender_email: document.getElementById('contactEmail').value,

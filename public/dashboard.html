@@ -175,8 +175,6 @@
                     </div>
                     <input type="file" id="photoInput" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/*" style="display:none" onchange="previewPhotos(this)">
                     <div class="photo-previews" id="photoPreviews"></div>
-                    <button type="button" class="btn btn-secondary" id="identifyBtn" onclick="identifyStone()" style="margin-top:10px;width:100%;">Identify Stone with AI</button>
-                    <div id="identifyResult" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:6px;color:#166534;"></div>
                 </div>
                 <div style="display:flex;gap:10px;">
                     <button type="submit" class="btn btn-primary" style="flex:1;padding:12px;" id="postBtn">Post Listing</button>
@@ -411,7 +409,6 @@
         }
 
         document.getElementById('photoPreviews').innerHTML = '';
-        document.getElementById('identifyResult').style.display = 'none';
         showSection('post');
         window.scrollTo(0, 0);
     }
@@ -558,7 +555,6 @@
                 document.getElementById('postForm').reset();
                 document.getElementById('photoPreviews').innerHTML = '';
                 document.getElementById('lshapeDims').style.display = 'none';
-                document.getElementById('identifyResult').style.display = 'none';
                 loadMyListings();
                 window.scrollTo(0, 0);
             }
@@ -597,61 +593,6 @@
 
     function toggleShape(sel) {
         document.getElementById('lshapeDims').style.display = sel.value === 'lshape' ? 'flex' : 'none';
-    }
-
-    async function identifyStone() {
-        const input = document.getElementById('photoInput');
-        if (!input.files.length) {
-            const result = document.getElementById('identifyResult');
-            result.textContent = 'Upload a photo first, then click Identify.';
-            result.style.background = '#fef9c3';
-            result.style.color = '#854d0e';
-            result.style.display = 'block';
-            return;
-        }
-
-        const btn = document.getElementById('identifyBtn');
-        const result = document.getElementById('identifyResult');
-        btn.disabled = true;
-        btn.textContent = 'Identifying...';
-        result.style.display = 'none';
-
-        const formData = new FormData();
-        formData.append('photo', input.files[0]);
-
-        try {
-            const res = await fetch('/api/listings/identify-stone', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: formData,
-            });
-            const data = await res.json();
-
-            if (res.ok && (data.stone_name || data.material_type)) {
-                if (data.stone_name) document.getElementById('stone_name').value = data.stone_name;
-                if (data.material_type) {
-                    const matSel = document.getElementById('material_type');
-                    const match = Array.from(matSel.options).find(o => o.value.toLowerCase() === data.material_type.toLowerCase());
-                    if (match) matSel.value = match.value;
-                }
-                result.textContent = `Identified: ${data.material_type} â€” ${data.stone_name}`;
-                result.style.background = '#f0fdf4';
-                result.style.color = '#166534';
-            } else {
-                result.textContent = data.error || 'Could not identify. Please fill in manually.';
-                result.style.background = '#fef2f2';
-                result.style.color = '#991b1b';
-            }
-            result.style.display = 'block';
-        } catch {
-            result.textContent = 'Identification failed. Please try again.';
-            result.style.background = '#fef2f2';
-            result.style.color = '#991b1b';
-            result.style.display = 'block';
-        }
-
-        btn.disabled = false;
-        btn.textContent = 'Identify Stone with AI';
     }
 
     document.getElementById('changePwForm').addEventListener('submit', async (e) => {

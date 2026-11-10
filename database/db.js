@@ -152,6 +152,11 @@ async function initSchema() {
         await run(`ALTER TABLE listings ADD COLUMN finish TEXT`);
     } catch (e) { /* column already exists */ }
 
+    // 1 = posted by an admin on the shop's behalf ("post as shop"); exempt from the plan cap.
+    try {
+        await run(`ALTER TABLE listings ADD COLUMN posted_by_admin INTEGER NOT NULL DEFAULT 0`);
+    } catch (e) { /* column already exists */ }
+
     try {
         await run(`ALTER TABLE users ADD COLUMN city TEXT`);
     } catch (e) { /* column already exists */ }
