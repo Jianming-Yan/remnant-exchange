@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin â€” Remnant Exchange</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .mobile-admin-menu { display: none; }
+        @media (max-width: 768px) {
+            .mobile-admin-menu { display: block; margin-bottom: 16px; }
+            .mobile-admin-menu select { width: 100%; padding: 14px; font-size: 16px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-weight: 600; }
+        }
+    </style>
 </head>
 <body>
 <nav>
@@ -34,6 +41,9 @@
     </div>
 
     <div class="main-panel">
+
+        <!-- PHONE MENU (the sidebar is hidden on small screens) -->
+        <div class="mobile-admin-menu"><select id="mobileAdminMenu" onchange="mobileMenuGo(this.value)"></select></div>
 
         <!-- OVERVIEW -->
         <div id="section-overview">
@@ -688,12 +698,37 @@
     let selectedStateId = null;
     let currentListings = [];
     let currentFabricatorId = null;
+    setTimeout(buildMobileMenu, 0);
+
+    // Phone menu: built from the sidebar links so the two never drift apart.
+    function buildMobileMenu() {
+        const sel = document.getElementById('mobileAdminMenu');
+        sel.innerHTML = '';
+        document.querySelectorAll('.sidebar a').forEach(a => {
+            const m = (a.getAttribute('onclick') || '').match(/showSection\('([^']+)'/);
+            if (!m) return;
+            const o = document.createElement('option');
+            o.value = m[1];
+            o.textContent = a.textContent.trim();
+            sel.appendChild(o);
+        });
+        const quick = document.createElement('option');
+        quick.value = '__post-as';
+        quick.textContent = 'Quick post for a shop (phone page)';
+        sel.appendChild(quick);
+    }
+    function mobileMenuGo(name) {
+        if (name === '__post-as') { window.location.href = '/post-as.html'; return; }
+        showSection(name, null);
+    }
 
     function showSection(name, el) {
         document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
         document.getElementById(`section-${name}`).style.display = 'block';
         document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
         if (el) el.classList.add('active');
+        const mm = document.getElementById('mobileAdminMenu');
+        if (mm && [...mm.options].some(o => o.value === name)) mm.value = name;
         if (name === 'pending') loadPending();
         if (name === 'fabricators') loadFabricators();
         if (name === 'seeded') loadSeeded();
