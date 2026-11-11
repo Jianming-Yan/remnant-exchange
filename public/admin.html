@@ -1341,6 +1341,21 @@
         });
     }
 
+    function pfToast(text, ok) {
+        let t = document.getElementById('pfToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'pfToast';
+            t.style.cssText = 'position:fixed;left:12px;right:12px;bottom:20px;z-index:99999;padding:16px;border-radius:12px;font-size:1.05rem;font-weight:600;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+            document.body.appendChild(t);
+        }
+        t.style.background = ok ? '#14532d' : '#7f1d1d';
+        t.style.color = ok ? '#bbf7d0' : '#fecaca';
+        t.textContent = text;
+        t.style.display = 'block';
+        clearTimeout(t._h);
+        t._h = setTimeout(() => { t.style.display = 'none'; }, ok ? 6000 : 15000);
+    }
     document.getElementById('postForForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertBox = document.getElementById('postForAlert');
@@ -1377,6 +1392,7 @@
             alertBox.className = res.ok ? 'alert alert-success' : 'alert alert-error';
             alertBox.textContent = data.message || data.error;
             alertBox.style.display = 'block';
+            pfToast(res.ok ? '✓ Posted! ' + (data.message || '') : '✗ NOT posted: ' + (data.error || 'error'), res.ok);
             if (res.ok) {
                 document.getElementById('postForForm').reset();
                 document.getElementById('pf_photoPreviews').innerHTML = '';
@@ -1389,6 +1405,7 @@
             alertBox.className = 'alert alert-error';
             alertBox.textContent = 'Something went wrong.';
             alertBox.style.display = 'block';
+            pfToast('✗ NOT posted: connection problem or photos too big. Try again.', false);
         }
         btn.disabled = false;
         btn.textContent = 'Post Listing';
